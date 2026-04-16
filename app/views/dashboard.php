@@ -166,11 +166,11 @@
                     <p>Record daily attendance for feeding sessions</p>
                 </a>
 
-                <div class="feature-card">
-                    <i class="fas fa-gift"></i>
-                    <h5>Donation Management</h5>
-                    <p>Track and manage donations</p>
-                </div>
+                <a href="../controllers/FoodStockController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
+                    <i class="fas fa-boxes"></i>
+                    <h5>Food Stock Management</h5>
+                    <p>Manage food inventory and stock levels</p>
+                </a>
 
                 <div class="feature-card">
                     <i class="fas fa-boxes"></i>

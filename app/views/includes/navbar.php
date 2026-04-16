@@ -41,6 +41,11 @@ $currentUser = getCurrentUser();
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="../controllers/FoodStockController.php?action=list">
+                        <i class="fas fa-boxes"></i> Food Stock
+                    </a>
+                </li>
+                <li class="nav-item">
                     <span class="navbar-text text-white me-3">
                         <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($currentUser['username'] ?? 'Guest'); ?>
                     </span>
