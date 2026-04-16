@@ -172,11 +172,11 @@
                     <p>Manage food inventory and stock levels</p>
                 </a>
 
-                <div class="feature-card">
-                    <i class="fas fa-boxes"></i>
-                    <h5>Food Stock</h5>
-                    <p>Monitor food inventory levels</p>
-                </div>
+                <a href="../controllers/DonationController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
+                    <i class="fas fa-gift"></i>
+                    <h5>Donation Tracking</h5>
+                    <p>Record and manage donor contributions</p>
+                </a>
 
                 <a href="../controllers/VolunteerController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
                     <i class="fas fa-users"></i>

@@ -46,6 +46,11 @@ $currentUser = getCurrentUser();
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="../controllers/DonationController.php?action=list">
+                        <i class="fas fa-gift"></i> Donations
+                    </a>
+                </li>
+                <li class="nav-item">
                     <span class="navbar-text text-white me-3">
                         <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($currentUser['username'] ?? 'Guest'); ?>
                     </span>
