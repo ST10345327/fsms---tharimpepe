@@ -178,11 +178,11 @@
                     <p>Monitor food inventory levels</p>
                 </div>
 
-                <div class="feature-card">
+                <a href="../controllers/VolunteerController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
                     <i class="fas fa-users"></i>
                     <h5>Volunteer Scheduling</h5>
                     <p>Manage volunteer assignments</p>
-                </div>
+                </a>
 
                 <div class="feature-card">
                     <i class="fas fa-chart-pie"></i>
