@@ -124,7 +124,7 @@
                         <a class="nav-link" href="#"><i class="fas fa-home"></i> Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-users"></i> Beneficiaries</a>
+                        <a class="nav-link" href="../controllers/BeneficiaryController.php?action=list"><i class="fas fa-users"></i> Beneficiaries</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#"><i class="fas fa-chart-bar"></i> Reports</a>
@@ -154,17 +154,17 @@
             <h3 class="mb-4">Available Functions</h3>
             <div class="feature-grid">
                 <!-- HZ-AUTH-DASHBOARD-003: Placeholder cards for system modules -->
-                <div class="feature-card">
+                <a href="../controllers/BeneficiaryController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
                     <i class="fas fa-id-card"></i>
                     <h5>Beneficiary Management</h5>
                     <p>Register and manage beneficiary records</p>
-                </div>
+                </a>
 
-                <div class="feature-card">
+                <a href="../controllers/AttendanceController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
                     <i class="fas fa-clipboard-list"></i>
                     <h5>Attendance Tracking</h5>
                     <p>Record daily attendance for feeding sessions</p>
-                </div>
+                </a>
 
                 <div class="feature-card">
                     <i class="fas fa-gift"></i>

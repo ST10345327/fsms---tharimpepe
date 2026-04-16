@@ -49,17 +49,22 @@ CREATE TABLE IF NOT EXISTS Volunteers (
 -- HZ-BEN-TABLE-003
 -- Purpose: Store beneficiary information for meal distribution tracking
 -- Entity: Beneficiaries (from ERD)
--- Fields: BeneficiaryID (PK), FirstName, LastName, Age, Status, etc.
+-- Fields: BeneficiaryID (PK), FirstName, LastName, Age, Gender, Phone, Email, Address, RegistrationDate, Status, Notes, CreatedAt, UpdatedAt
 -- ==============================================================
 CREATE TABLE IF NOT EXISTS Beneficiaries (
     BeneficiaryID INT AUTO_INCREMENT PRIMARY KEY,
     FirstName VARCHAR(100) NOT NULL,
     LastName VARCHAR(100) NOT NULL,
     Age INT,
+    Gender ENUM('Male', 'Female', 'Other'),
+    Phone VARCHAR(15),
+    Email VARCHAR(100),
+    Address TEXT,
     RegistrationDate DATE NOT NULL,
     Status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
     Notes TEXT,
-    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- ==============================================================
