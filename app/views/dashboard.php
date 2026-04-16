@@ -178,6 +178,12 @@
                     <p>Record and manage donor contributions</p>
                 </a>
 
+                <a href="../controllers/VolunteerScheduleController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
+                    <i class="fas fa-calendar"></i>
+                    <h5>Volunteer Scheduling</h5>
+                    <p>Manage volunteer shifts and availability</p>
+                </a>
+
                 <a href="../controllers/UserController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
                     <i class="fas fa-users-cog"></i>
                     <h5>User Management</h5>

@@ -51,6 +51,11 @@ $currentUser = getCurrentUser();
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="../controllers/VolunteerScheduleController.php?action=list">
+                        <i class="fas fa-calendar"></i> Scheduling
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="../controllers/UserController.php?action=list">
                         <i class="fas fa-users-cog"></i> Users
                     </a>
