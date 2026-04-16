@@ -56,6 +56,16 @@ $currentUser = getCurrentUser();
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="../controllers/DashboardController.php?action=overview">
+                        <i class="fas fa-chart-line"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../controllers/ReportsController.php?action=dashboard">
+                        <i class="fas fa-file-pdf"></i> Reports
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="../controllers/UserController.php?action=list">
                         <i class="fas fa-users-cog"></i> Users
                     </a>

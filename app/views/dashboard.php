@@ -127,7 +127,10 @@
                         <a class="nav-link" href="../controllers/BeneficiaryController.php?action=list"><i class="fas fa-users"></i> Beneficiaries</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-chart-bar"></i> Reports</a>
+                        <a class="nav-link" href="../controllers/DashboardController.php?action=overview"><i class="fas fa-chart-line"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../controllers/ReportsController.php?action=dashboard"><i class="fas fa-file-pdf"></i> Reports</a>
                     </li>
                     <li class="nav-item">
                         <span class="user-info">
@@ -190,11 +193,17 @@
                     <p>Manage system users and access control</p>
                 </a>
 
-                <div class="feature-card">
-                    <i class="fas fa-chart-pie"></i>
-                    <h5>Reports</h5>
-                    <p>View system reports and analytics</p>
-                </div>
+                <a href="../controllers/DashboardController.php?action=overview" class="feature-card" style="text-decoration: none; color: inherit;">
+                    <i class="fas fa-chart-line"></i>
+                    <h5>Analytics Dashboard</h5>
+                    <p>View system analytics and KPIs</p>
+                </a>
+
+                <a href="../controllers/ReportsController.php?action=dashboard" class="feature-card" style="text-decoration: none; color: inherit;">
+                    <i class="fas fa-file-pdf"></i>
+                    <h5>Reports & Analytics</h5>
+                    <p>Generate and view comprehensive reports</p>
+                </a>
             </div>
         </div>
     </div>
