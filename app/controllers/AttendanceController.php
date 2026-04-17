@@ -11,6 +11,7 @@ require_once __DIR__ . "/../helpers/SessionHandler.php";
 require_once __DIR__ . "/../config/database.php";
 require_once __DIR__ . "/../models/Attendance.php";
 require_once __DIR__ . "/../models/Beneficiary.php";
+require_once __DIR__ . "/../models/ActivityLog.php";
 
 // Initialize database connection
 $database = new Database();
@@ -81,6 +82,7 @@ if ($action === 'create') {
                 $attendanceId = $attendanceModel->recordAttendance($beneficiaryId, $sessionDate, $status, $notes);
 
                 if ($attendanceId) {
+                    ActivityLog::log(getCurrentUser()['user_id'], 'record_attendance', 'Attendance', $attendanceId, "Recorded attendance for beneficiary $beneficiaryId on $sessionDate (Status: $status)");
                     $success = "Attendance recorded successfully!";
                     header("Refresh: 2; URL=AttendanceController.php?action=view&id=" . $attendanceId);
                 } else {
@@ -159,6 +161,7 @@ if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "POST") {
     } else {
         try {
             if ($attendanceModel->updateAttendance($attendanceId, $beneficiaryId, $sessionDate, $status, $notes)) {
+                ActivityLog::log(getCurrentUser()['user_id'], 'update_attendance', 'Attendance', $attendanceId, "Updated attendance record for beneficiary $beneficiaryId (Status: $status)");
                 $success = "Attendance record updated successfully!";
                 header("Refresh: 2; URL=AttendanceController.php?action=view&id=" . $attendanceId);
             } else {
@@ -196,6 +199,7 @@ if ($action === 'delete') {
 
     try {
         if ($attendanceModel->deleteAttendance($attendanceId)) {
+            ActivityLog::log(getCurrentUser()['user_id'], 'delete_attendance', 'Attendance', $attendanceId, "Deleted attendance record");
             header("Location: AttendanceController.php?action=list&success=Attendance record deleted successfully");
         } else {
             header("Location: AttendanceController.php?action=list&error=Failed to delete attendance record");

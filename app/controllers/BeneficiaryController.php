@@ -10,6 +10,7 @@ session_start();
 
 require_once __DIR__ . "/../config/database.php";
 require_once __DIR__ . "/../models/Beneficiary.php";
+require_once __DIR__ . "/../models/ActivityLog.php";
 require_once __DIR__ . "/../helpers/SessionHandler.php";
 
 // Require login
@@ -88,6 +89,7 @@ try {
                 $beneficiaryId = $beneficiaryModel->createBeneficiary($firstName, $lastName, $age, $gender, $phone, $email, $address, $registrationDate, $notes);
 
                 if ($beneficiaryId) {
+                    ActivityLog::log(getCurrentUser()['user_id'], 'create_beneficiary', 'Beneficiary', $beneficiaryId, "Created beneficiary: $firstName $lastName");
                     $success = "Beneficiary registered successfully!";
                     header("Refresh: 2; URL=BeneficiaryController.php?action=view&id=" . $beneficiaryId);
                 } else {
@@ -147,6 +149,7 @@ try {
         } else {
             try {
                 if ($beneficiaryModel->updateBeneficiary($beneficiaryId, $firstName, $lastName, $age, $gender, $phone, $email, $address, $registrationDate, $status, $notes)) {
+                    ActivityLog::log(getCurrentUser()['user_id'], 'update_beneficiary', 'Beneficiary', $beneficiaryId, "Updated beneficiary: $firstName $lastName (Status: $status)");
                     $success = "Beneficiary profile updated successfully!";
                     header("Refresh: 2; URL=BeneficiaryController.php?action=view&id=" . $beneficiaryId);
                 } else {
@@ -202,6 +205,7 @@ try {
 
         try {
             if ($beneficiaryModel->updateStatus($beneficiaryId, $status)) {
+                ActivityLog::log(getCurrentUser()['user_id'], 'update_beneficiary_status', 'Beneficiary', $beneficiaryId, "Changed status to: $status");
                 echo json_encode(['success' => true, 'message' => 'Status updated successfully']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Failed to update status']);
@@ -291,6 +295,7 @@ try {
         } else {
             try {
                 if ($beneficiaryModel->deleteBeneficiary($beneficiaryId)) {
+                    ActivityLog::log(getCurrentUser()['user_id'], 'delete_beneficiary', 'Beneficiary', $beneficiaryId, "Deleted beneficiary record");
                     $success = "Beneficiary record has been permanently deleted";
                     header("Refresh: 2; URL=BeneficiaryController.php?action=list");
                 } else {

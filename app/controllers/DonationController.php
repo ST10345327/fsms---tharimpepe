@@ -14,6 +14,7 @@
 
 require_once __DIR__ . "/../helpers/SessionHandler.php";
 require_once __DIR__ . "/../models/Donation.php";
+require_once __DIR__ . "/../models/ActivityLog.php";
 require_once __DIR__ . "/../config/database.php";
 
 // HZ-DON-CTRL-001: Require user authentication and authorization
@@ -121,6 +122,10 @@ function handleCreateAction() {
                 // Create donation
                 $result = $donationModel->createDonation($_POST);
                 if ($result['success']) {
+                    $donationId = $result['data']['DonationID'] ?? null;
+                    if ($donationId) {
+                        ActivityLog::log($GLOBALS['currentUser']['user_id'], 'create_donation', 'Donation', $donationId, "Created donation: {$_POST['DonorName']} ({$_POST['DonationType']})" . (!empty($_POST['Amount']) ? " - Amount: {$_POST['Amount']}" : ''));
+                    }
                     $success = $result['message'];
                     // Redirect to list
                     header('Location: DonationController.php?action=list');
@@ -196,6 +201,7 @@ function handleEditAction() {
                 // Update donation
                 $result = $donationModel->updateDonation((int)$_GET['id'], $_POST);
                 if ($result['success']) {
+                    ActivityLog::log($GLOBALS['currentUser']['user_id'], 'update_donation', 'Donation', (int)$_GET['id'], "Updated donation: {$_POST['DonorName']} ({$_POST['DonationType']})" . (!empty($_POST['Amount']) ? " - Amount: {$_POST['Amount']}" : ''));
                     $success = $result['message'];
                     // Refresh donation data
                     $donation = $donationModel->getDonationById((int)$_GET['id']);
@@ -244,6 +250,7 @@ function handleDeleteAction() {
         } else {
             $result = $donationModel->deleteDonation((int)$_GET['id']);
             if ($result['success']) {
+                ActivityLog::log($GLOBALS['currentUser']['user_id'], 'delete_donation', 'Donation', (int)$_GET['id'], "Deleted donation record");
                 $success = $result['message'];
                 header('Location: DonationController.php?action=list');
                 exit;

@@ -14,6 +14,7 @@
 
 require_once __DIR__ . "/../helpers/SessionHandler.php";
 require_once __DIR__ . "/../models/FoodStock.php";
+require_once __DIR__ . "/../models/ActivityLog.php";
 require_once __DIR__ . "/../config/database.php";
 
 // HZ-FOOD-CTRL-001: Require user authentication and authorization
@@ -122,6 +123,10 @@ function handleCreateAction() {
                 // Create stock item
                 $result = $foodStockModel->createStock($_POST);
                 if ($result['success']) {
+                    $stockId = $result['data']['StockID'] ?? null;
+                    if ($stockId) {
+                        ActivityLog::log($GLOBALS['currentUser']['user_id'], 'create_food_stock', 'FoodStock', $stockId, "Added food stock: {$_POST['ItemName']} - Quantity: {$_POST['Quantity']} {$_POST['Unit']}");
+                    }
                     $success = $result['message'];
                     // Redirect to list
                     header('Location: FoodStockController.php?action=list');
@@ -197,6 +202,7 @@ function handleEditAction() {
                 // Update stock item
                 $result = $foodStockModel->updateStock((int)$_GET['id'], $_POST);
                 if ($result['success']) {
+                    ActivityLog::log($GLOBALS['currentUser']['user_id'], 'update_food_stock', 'FoodStock', (int)$_GET['id'], "Updated food stock: {$_POST['ItemName']} - Quantity: {$_POST['Quantity']} {$_POST['Unit']}");
                     $success = $result['message'];
                     // Refresh stock item data
                     $stockItem = $foodStockModel->getStockById((int)$_GET['id']);
@@ -246,6 +252,7 @@ function handleDeleteAction() {
         } else {
             $result = $foodStockModel->deleteStock((int)$_GET['id']);
             if ($result['success']) {
+                ActivityLog::log($GLOBALS['currentUser']['user_id'], 'delete_food_stock', 'FoodStock', (int)$_GET['id'], "Deleted food stock item");
                 $success = $result['message'];
                 header('Location: FoodStockController.php?action=list');
                 exit;
@@ -321,6 +328,7 @@ function handleDistributeAction() {
             // Update quantity
             $result = $foodStockModel->updateQuantity((int)$_GET['id'], (int)$_POST['quantity'], 'distribute');
             if ($result['success']) {
+                ActivityLog::log($GLOBALS['currentUser']['user_id'], 'distribute_food_stock', 'FoodStock', (int)$_GET['id'], "Distributed {$_POST['quantity']} {$stockItem['Unit']}. Remaining: {$result['new_quantity']}");
                 $success = 'Successfully distributed ' . (int)$_POST['quantity'] . ' ' . htmlspecialchars($stockItem['Unit']) . '. Remaining: ' . $result['new_quantity'];
                 // Refresh item
                 $stockItem = $foodStockModel->getStockById((int)$_GET['id']);
