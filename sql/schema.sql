@@ -7,8 +7,8 @@
 -- ==============================================================
 
 -- Create database
-CREATE DATABASE IF NOT EXISTS fsms_database;
-USE fsms_database;
+CREATE DATABASE IF NOT EXISTS fsms;
+USE fsms;
 
 -- ==============================================================
 -- HZ-USER-TABLE-001
@@ -171,14 +171,14 @@ CREATE TABLE IF NOT EXISTS Gallery (
 -- ==============================================================
 -- Create Index for Performance Optimization
 -- ==============================================================
-CREATE INDEX idx_username ON Users(Username);
-CREATE INDEX idx_email ON Users(Email);
+-- Note: UNIQUE constraints automatically create indexes, so we skip idx_username and idx_email
 CREATE INDEX idx_volunteer_user ON Volunteers(UserID);
 CREATE INDEX idx_attendance_beneficiary ON Attendance(BeneficiaryID);
 CREATE INDEX idx_attendance_date ON Attendance(SessionDate);
 CREATE INDEX idx_donation_date ON Donations(DonationDate);
-CREATE INDEX idx_message_sender ON Messages(SenderID);
-CREATE INDEX idx_message_recipient ON Messages(RecipientID);
+-- Note: Messages table indexes commented out as table may not exist in current schema
+-- CREATE INDEX idx_message_sender ON Messages(SenderID);
+-- CREATE INDEX idx_message_recipient ON Messages(RecipientID);
 
 -- ==============================================================
 -- Sample Admin Account (Password: admin123 - hashed with password_hash PHP function)

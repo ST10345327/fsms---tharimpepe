@@ -103,7 +103,7 @@
 <body>
     <?php 
     // HZ-AUTH-DASHBOARD-001: Require authentication to view this page
-    require_once "../helpers/SessionHandler.php";
+    require_once __DIR__ . "/../helpers/SessionHandler.php";
     requireLogin();
     
     $user = getCurrentUser();

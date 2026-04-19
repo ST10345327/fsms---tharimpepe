@@ -417,6 +417,51 @@ class FoodStock {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log('Database error: ' . $e->getMessage());
+    /**
+     * HZ-FOOD-013: Get low stock count for dashboard
+     * Returns count of items below minimum threshold
+     *
+     * @return int Number of low stock items
+     */
+    public function getLowStockCount() {
+        try {
+            $stmt = $this->pdo->query(
+                "SELECT COUNT(*) as low_stock_count
+                 FROM {$this->table}
+                 WHERE Quantity <= 5"
+            );
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)$result['low_stock_count'];
+        } catch (PDOException $e) {
+            error_log('Database error: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * HZ-FOOD-014: Get stock summary for dashboard display
+     * Returns array of stock items with current quantity and percentage
+     * Assumes minimum threshold of 10 units for percentage calculation
+     *
+     * @return array Stock summary with percentages
+     */
+    public function getStockSummary() {
+        try {
+            $stmt = $this->pdo->query(
+                "SELECT ItemName, Quantity, Unit,
+                        CASE
+                            WHEN Quantity >= 10 THEN 100
+                            WHEN Quantity <= 0 THEN 0
+                            ELSE (Quantity / 10.0) * 100
+                        END as percentage,
+                        Quantity as current_quantity
+                 FROM {$this->table}
+                 ORDER BY Quantity ASC
+                 LIMIT 5"
+            );
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log('Database error: ' . $e->getMessage());
             return [];
         }
     }

@@ -315,5 +315,107 @@ class Volunteer
 
         return $stmt->execute();
     }
+
+    /**
+     * HZ-VOL-011
+     * Purpose: Get count of active volunteers for dashboard
+     * Table: Volunteers, Users
+     * Returns: Integer count of active volunteers
+     */
+    public function getActiveCount()
+    {
+        $query = "SELECT COUNT(*) as active_count
+                  FROM " . $this->table . " v
+                  INNER JOIN Users u ON v.UserID = u.UserID
+                  WHERE v.AvailabilityStatus = 'available'
+                  AND u.IsActive = TRUE";
+
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt->execute()) {
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)$result['active_count'];
+        }
+
+        return 0;
+    }
+
+    /**
+     * HZ-VOL-012
+     * Purpose: Get today's volunteer schedule for dashboard
+     * Table: VolunteerSchedule
+     * Returns: Array of today's scheduled slots
+     */
+    public function getTodaySchedule()
+    {
+        $today = date('l'); // Get day name (Monday, Tuesday, etc.)
+
+        $query = "SELECT vs.TimeSlot, vs.Role, GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers, vs.Status
+                  FROM VolunteerSchedule vs
+                  LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+                  WHERE vs.DayOfWeek = :day
+                  GROUP BY vs.ScheduleID, vs.TimeSlot, vs.Role, vs.Status
+                  ORDER BY vs.TimeSlot ASC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":day", $today);
+
+        if ($stmt->execute()) {
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
+    }
+
+    /**
+     * HZ-VOL-013
+     * Purpose: Get weekly volunteer schedule for dashboard
+     * Table: VolunteerSchedule
+     * Returns: Array of weekly schedule with volunteer assignments
+     */
+    public function getWeeklySchedule()
+    {
+        $query = "SELECT vs.DayOfWeek, vs.TimeSlot, vs.Role,
+                         GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers
+                  FROM VolunteerSchedule vs
+                  LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+                  GROUP BY vs.DayOfWeek, vs.TimeSlot, vs.Role
+                  ORDER BY FIELD(vs.DayOfWeek, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
+                           vs.TimeSlot ASC";
+
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt->execute()) {
+            $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Group by volunteer for dashboard display
+            $schedule = [];
+            foreach ($results as $row) {
+                $volunteerName = $row['volunteers'] ?: 'Unassigned';
+                $day = strtolower($row['DayOfWeek']);
+
+                if (!isset($schedule[$volunteerName])) {
+                    $schedule[$volunteerName] = [
+                        'first_name' => explode(' ', $volunteerName)[0],
+                        'last_name' => explode(' ', $volunteerName)[1] ?? '',
+                        'role' => $row['Role'],
+                        'monday' => null,
+                        'tuesday' => null,
+                        'wednesday' => null,
+                        'thursday' => null,
+                        'friday' => null,
+                        'saturday' => null,
+                        'sunday' => null
+                    ];
+                }
+
+                $schedule[$volunteerName][$day] = $row['TimeSlot'];
+            }
+
+            return array_values($schedule);
+        }
+
+        return [];
+    }
 }
 ?>

@@ -42,6 +42,9 @@ switch ($action) {
     case 'create':
         handleCreateAction();
         break;
+    case 'add':
+        handleCreateAction(); // Alias for create action
+        break;
     case 'view':
         handleViewAction();
         break;

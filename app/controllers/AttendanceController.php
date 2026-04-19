@@ -287,6 +287,82 @@ if ($action === 'report') {
     $stats = $attendanceModel->getAttendanceStats($startDate, $endDate);
     $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0);
 
-    include __DIR__ . "/../views/attendance/report.php";
+/**
+ * HZ-ATT-CTRL-012
+ * Purpose: Handle bulk attendance save from dashboard
+ * Flow: Receive JSON data -> Process bulk recording -> Return JSON response
+ */
+if ($action === 'bulk_save') {
+    header('Content-Type: application/json');
+
+    if ($_SERVER["REQUEST_METHOD"] !== "POST") {
+        echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+        exit();
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!$input || !isset($input['attendance']) || !is_array($input['attendance'])) {
+        echo json_encode(['success' => false, 'message' => 'Invalid attendance data']);
+        exit();
+    }
+
+    $attendanceData = $input['attendance'];
+
+    if (empty($attendanceData)) {
+        echo json_encode(['success' => false, 'message' => 'No attendance data provided']);
+        exit();
+    }
+
+    try {
+        $results = [];
+        $successCount = 0;
+
+        foreach ($attendanceData as $record) {
+            if (!isset($record['beneficiary_id']) || !isset($record['status']) || !isset($record['session_date'])) {
+                continue;
+            }
+
+            $beneficiaryId = (int)$record['beneficiary_id'];
+            $status = $record['status'];
+            $sessionDate = $record['session_date'];
+
+            // Validate status
+            if (!in_array($status, ['Present', 'Absent'])) {
+                continue;
+            }
+
+            // Check if attendance already exists for this beneficiary on this date
+            $existing = $attendanceModel->getAttendanceByBeneficiaryAndDate($beneficiaryId, $sessionDate);
+
+            if ($existing) {
+                // Update existing record
+                $result = $attendanceModel->updateAttendance($existing['AttendanceID'], $beneficiaryId, $sessionDate, $status, '');
+            } else {
+                // Create new record
+                $result = $attendanceModel->recordAttendance($beneficiaryId, $sessionDate, $status, '');
+            }
+
+            if ($result) {
+                $successCount++;
+            }
+
+            $results[] = [
+                'beneficiary_id' => $beneficiaryId,
+                'success' => (bool)$result
+            ];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'message' => "Attendance saved successfully. $successCount records processed.",
+            'processed' => count($results),
+            'successful' => $successCount
+        ]);
+
+    } catch (Exception $e) {
+        echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+    }
+    exit();
 }
 ?>

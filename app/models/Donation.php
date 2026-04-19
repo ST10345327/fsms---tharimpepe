@@ -368,4 +368,28 @@ class Donation {
             return 0;
         }
     }
+
+    /**
+     * HZ-DON-011: Get recent donations for dashboard display
+     * Returns the most recent donations with item details
+     *
+     * @param int $limit Number of recent donations to return
+     * @return array Recent donations
+     */
+    public function getRecentDonations($limit = 5) {
+        try {
+            $stmt = $this->pdo->prepare(
+                "SELECT DonationID, ItemName, Quantity, Unit, DonorName, Source, DonationDate, date_received
+                 FROM {$this->table}
+                 ORDER BY DonationDate DESC
+                 LIMIT ?"
+            );
+            $stmt->bindParam(1, $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log('Database error: ' . $e->getMessage());
+            return [];
+        }
+    }
 }

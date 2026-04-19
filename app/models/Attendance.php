@@ -424,6 +424,105 @@ class Attendance
             return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
         }
 
-        return false;
+    /**
+     * HZ-ATT-013
+     * Purpose: Get attendance record for a specific beneficiary on a specific date
+     * Table: Attendance
+     * Returns: Attendance record or false if not found
+     */
+    public function getAttendanceByBeneficiaryAndDate($beneficiaryId, $sessionDate)
+    {
+        $query = "SELECT AttendanceID, BeneficiaryID, SessionDate, Status, Notes, CreatedAt
+                  FROM " . $this->table . "
+                  WHERE BeneficiaryID = :beneficiary_id AND SessionDate = :session_date
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":beneficiary_id", $beneficiaryId);
+        $stmt->bindParam(":session_date", $sessionDate);
+
+        if ($stmt->execute()) {
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+    /**
+     * HZ-ATT-014
+     * Purpose: Get number of meals served today (present count)
+     * Table: Attendance
+     * Returns: Integer count of meals served today
+     */
+    public function getMealsServedToday()
+    {
+        $today = date('Y-m-d');
+        $query = "SELECT COUNT(*) as meals_served
+                  FROM " . $this->table . "
+                  WHERE SessionDate = :today AND Status = 'Present'";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":today", $today);
+
+        if ($stmt->execute()) {
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)$result['meals_served'];
+        }
+
+        return 0;
     }
-}
+
+    /**
+     * HZ-ATT-015
+     * Purpose: Get recent attendance records with beneficiary details
+     * Table: Attendance, Beneficiaries
+     * Returns: Array of recent attendance records
+     */
+    public function getRecentAttendance($limit = 5)
+    {
+        $query = "SELECT a.AttendanceID, a.SessionDate, a.Status, a.CreatedAt,
+                         b.FirstName, b.LastName, b.Age
+                  FROM " . $this->table . " a
+                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  ORDER BY a.CreatedAt DESC
+                  LIMIT :limit";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
+    }
+
+    /**
+     * HZ-ATT-016
+     * Purpose: Get attendance history with statistics for the last N days
+     * Table: Attendance
+     * Returns: Array of daily attendance summaries
+     */
+    public function getAttendanceHistory($days = 7)
+    {
+        $endDate = date('Y-m-d');
+        $startDate = date('Y-m-d', strtotime("-" . ($days - 1) . " days"));
+
+        $query = "SELECT
+                     SessionDate,
+                     COUNT(*) as total_registered,
+                     SUM(CASE WHEN Status = 'Present' THEN 1 ELSE 0 END) as present_count,
+                     SUM(CASE WHEN Status = 'Absent' THEN 1 ELSE 0 END) as absent_count,
+                     ROUND((SUM(CASE WHEN Status = 'Present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as percentage
+                  FROM " . $this->table . "
+                  WHERE SessionDate BETWEEN :start_date AND :end_date
+                  GROUP BY SessionDate
+                  ORDER BY SessionDate DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":start_date", $startDate);
+        $stmt->bindParam(":end_date", $endDate);
+
+        if ($stmt->execute()) {
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
+    }

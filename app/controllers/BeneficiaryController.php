@@ -71,27 +71,36 @@ try {
      * Flow: Validate input -> Create beneficiary record
      */
     if ($action === 'create' && $_SERVER["REQUEST_METHOD"] === "POST") {
-        $firstName = trim($_POST['firstName'] ?? "");
-        $lastName = trim($_POST['lastName'] ?? "");
-        $age = !empty($_POST['age']) ? (int)$_POST['age'] : null;
+        $firstName = trim($_POST['first_name'] ?? "");
+        $lastName = trim($_POST['last_name'] ?? "");
+        $dateOfBirth = $_POST['date_of_birth'] ?? "";
         $gender = !empty($_POST['gender']) ? $_POST['gender'] : null;
-        $phone = trim($_POST['phone'] ?? "");
-        $email = trim($_POST['email'] ?? "");
+        $guardianName = trim($_POST['guardian_name'] ?? "");
+        $contactNumber = trim($_POST['contact_number'] ?? "");
         $address = trim($_POST['address'] ?? "");
-        $registrationDate = $_POST['registrationDate'] ?? "";
-        $notes = trim($_POST['notes'] ?? "");
+        $category = $_POST['category'] ?? "";
+        $registrationDate = $_POST['registration_date'] ?? "";
+
+        // Calculate age from date of birth
+        $age = null;
+        if (!empty($dateOfBirth)) {
+            $birthDate = new DateTime($dateOfBirth);
+            $today = new DateTime();
+            $age = $today->diff($birthDate)->y;
+        }
 
         // Validation
         if (empty($firstName) || empty($lastName) || empty($registrationDate)) {
             $error = "First name, last name, and registration date are required";
         } else {
             try {
-                $beneficiaryId = $beneficiaryModel->createBeneficiary($firstName, $lastName, $age, $gender, $phone, $email, $address, $registrationDate, $notes);
+                $beneficiaryId = $beneficiaryModel->createBeneficiary($firstName, $lastName, $age, $gender, $contactNumber, null, $address, $registrationDate, $guardianName . " | " . $category);
 
                 if ($beneficiaryId) {
                     ActivityLog::log(getCurrentUser()['user_id'], 'create_beneficiary', 'Beneficiary', $beneficiaryId, "Created beneficiary: $firstName $lastName");
                     $success = "Beneficiary registered successfully!";
-                    header("Refresh: 2; URL=BeneficiaryController.php?action=view&id=" . $beneficiaryId);
+                    header("Location: ../views/dashboard.php?success=Beneficiary registered successfully");
+                    exit();
                 } else {
                     $error = "Failed to register beneficiary";
                 }
