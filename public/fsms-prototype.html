@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FSMS UI Prototype</title>
+  <style>
+    :root {
+      --font-sans: "Segoe UI", "Aptos", "Helvetica Neue", Arial, sans-serif;
+      --color-text-primary: #1f2937;
+      --color-text-secondary: #667085;
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f8fafc;
+      --color-background-tertiary: #f3f6f8;
+      --color-border-secondary: #cfd8e3;
+      --color-border-tertiary: #dde5ec;
+      --border-radius-md: 10px;
+      --border-radius-lg: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(29, 158, 117, 0.08), transparent 24%),
+        linear-gradient(180deg, #f7faf8 0%, #eef3f6 100%);
+      padding: 20px;
+    }
+
+    .prototype-shell {
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+
+    .prototype-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+      padding: 18px 20px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+    }
+
+    .prototype-kicker {
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #0f6e56;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .prototype-header h1 {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .prototype-header p {
+      margin-top: 6px;
+      color: var(--color-text-secondary);
+      max-width: 760px;
+    }
+
+    .prototype-meta {
+      text-align: right;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      min-width: 190px;
+    }
+
+    .app {
+      display: flex;
+      height: calc(100vh - 120px);
+      min-height: 720px;
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(31, 41, 55, 0.08);
+    }
+
+    .sidebar { width: 220px; min-width: 220px; background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; }
+    .sidebar-logo { padding: 18px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); background: linear-gradient(180deg, #ffffff 0%, #f7faf9 100%); }
+    .sidebar-logo .org { font-size: 16px; font-weight: 700; color: #0f6e56; }
+    .sidebar-logo .sub { font-size: 12px; color: var(--color-text-secondary); margin-top: 3px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 11px 16px; font-size: 13px; cursor: pointer; border-left: 3px solid transparent; color: var(--color-text-secondary); transition: 0.2s ease; }
+    .nav-item:hover { background: var(--color-background-tertiary); color: var(--color-text-primary); }
+    .nav-item.active { border-left: 3px solid #1D9E75; color: #0F6E56; background: #E1F5EE; font-weight: 600; }
+    .nav-icon { width: 16px; height: 16px; }
+    .main { flex: 1; overflow-y: auto; background: var(--color-background-tertiary); }
+    .topbar { background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-title { font-size: 16px; font-weight: 600; }
+    .topbar-user { font-size: 12px; color: var(--color-text-secondary); }
+    .content { padding: 20px; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .metric-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 14px; }
+    .metric-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; }
+    .metric-value { font-size: 22px; font-weight: 700; }
+    .metric-value.green { color: #1D9E75; }
+    .metric-value.blue { color: #378ADD; }
+    .metric-value.amber { color: #BA7517; }
+    .metric-value.red { color: #E24B4A; }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px; margin-bottom: 12px; }
+    .card-title { font-size: 13px; font-weight: 600; margin-bottom: 14px; color: var(--color-text-primary); }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { text-align: left; font-weight: 600; font-size: 11px; color: var(--color-text-secondary); padding: 6px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+    td { padding: 8px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+    tr:last-child td { border-bottom: none; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+    .badge-green { background: #E1F5EE; color: #0F6E56; }
+    .badge-amber { background: #FAEEDA; color: #854F0B; }
+    .badge-red { background: #FCEBEB; color: #A32D2D; }
+    .badge-blue { background: #E6F1FB; color: #185FA5; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 12px; color: var(--color-text-secondary); font-weight: 600; }
+    input, select, textarea { padding: 8px 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 13px; background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); width: 100%; }
+    input:focus, select:focus { outline: none; border-color: #1D9E75; box-shadow: 0 0 0 2px #E1F5EE; }
+    .btn { padding: 8px 16px; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 600; cursor: pointer; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); }
+    .btn-primary { background: #1D9E75; color: #E1F5EE; border-color: #0F6E56; }
+    .btn-primary:hover { background: #0F6E56; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+    .section-header h3 { font-size: 13px; font-weight: 600; }
+    .attendance-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-top: 8px; }
+    .beneficiary-tile { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px; text-align: center; cursor: pointer; transition: 0.2s ease; }
+    .beneficiary-tile.present { background: #E1F5EE; border-color: #5DCAA5; }
+    .beneficiary-tile.absent { background: #FCEBEB; border-color: #F09595; }
+    .tile-name { font-size: 12px; font-weight: 600; margin-top: 4px; }
+    .tile-status { font-size: 10px; color: var(--color-text-secondary); margin-top: 2px; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+    .stock-bar { height: 8px; background: var(--color-background-secondary); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+    .stock-fill { height: 100%; border-radius: 4px; }
+    .sched-slot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+    .sched-slot:last-child { border-bottom: none; }
+    .report-btn { display: flex; align-items: center; gap: 10px; padding: 12px; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); cursor: pointer; background: var(--color-background-primary); margin-bottom: 8px; transition: 0.2s ease; }
+    .report-btn:hover { border-color: #b8d9cd; transform: translateY(-1px); }
+    .report-icon { width: 32px; height: 32px; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; }
+    .report-label { font-size: 13px; font-weight: 600; }
+    .report-desc { font-size: 11px; color: var(--color-text-secondary); }
+
+    @media (max-width: 1080px) {
+      .app { height: auto; min-height: auto; flex-direction: column; }
+      .sidebar { width: 100%; min-width: 100%; }
+      .metrics { grid-template-columns: repeat(2, 1fr); }
+      .row2, .form-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 700px) {
+      body { padding: 12px; }
+      .prototype-header { flex-direction: column; align-items: flex-start; }
+      .prototype-meta { text-align: left; min-width: auto; }
+      .metrics { grid-template-columns: 1fr; }
+      .attendance-grid { grid-template-columns: repeat(2, 1fr); }
+      .topbar { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .sched-slot { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-shell">
+    <div class="prototype-header">
+      <div>
+        <div class="prototype-kicker">Figma Source Prototype</div>
+        <h1>Tharimpepe Feeding Scheme Management System</h1>
+        <p>This standalone UI prototype is based on your HTML mockup and can be used as the visual source for screenshots, Figma recreation, or lecturer-facing mockup presentation.</p>
+      </div>
+      <div class="prototype-meta">
+        <div><strong>Prepared for:</strong> Task 2 mockups</div>
+        <div><strong>Student:</strong> Olebogeng Phawe</div>
+        <div><strong>Date:</strong> 20 April 2026</div>
+      </div>
+    </div>
+
+    <div class="app">
+      <div class="sidebar">
+        <div class="sidebar-logo">
+          <div class="org">Tharimpepe</div>
+          <div class="sub">Feeding Scheme</div>
+        </div>
+        <nav style="padding: 8px 0; flex:1;">
+          <div class="nav-item active" onclick="showScreen('dashboard',this)">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor" opacity="0.8"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor" opacity="0.8"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor" opacity="0.5"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" opacity="0.5"/></svg>
+            Dashboard
+          </div>
+          <div class="nav-item" onclick="showScreen('beneficiaries',this)">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" fill="currentColor" opacity="0.8"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="1.5" fill="none" opacity="0.6"/></svg>
+            Beneficiaries
+          </div>
+          <div class="nav-item" onclick="showScreen('attendance',this)">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="12" height="12" rx="1.5" stroke="currentColor" stroke-width="1.2" fill="none"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+            Attendance
+          </div>
+          <div class="nav-item" onclick="showScreen('stock',this)">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="2" y="8" width="4" height="6" rx="0.5" fill="currentColor" opacity="0.7"/><rect x="6" y="5" width="4" height="9" rx="0.5" fill="currentColor" opacity="0.8"/><rect x="10" y="2" width="4" height="12" rx="0.5" fill="currentColor"/></svg>
+            Stock & Donations
+          </div>
+          <div class="nav-item" onclick="showScreen('volunteers',this)">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><circle cx="5" cy="5" r="2.5" fill="currentColor" opacity="0.7"/><circle cx="11" cy="5" r="2.5" fill="currentColor" opacity="0.9"/><path d="M1 14c0-2.2 1.8-4 4-4M8 14c0-2.2 1.8-4 4-4" stroke="currentColor" stroke-width="1.2" fill="none" opacity="0.6"/></svg>
+            Volunteers
+          </div>
+          <div class="nav-item" onclick="showScreen('reports',this)">
+            <svg class="nav-icon" viewBox="0 0 16 16" fill="none"><rect x="3" y="1" width="10" height="14" rx="1" stroke="currentColor" stroke-width="1.2" fill="none"/><line x1="6" y1="5" x2="11" y2="5" stroke="currentColor" stroke-width="1" opacity="0.7"/><line x1="6" y1="8" x2="11" y2="8" stroke="currentColor" stroke-width="1" opacity="0.7"/><line x1="6" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1" opacity="0.7"/></svg>
+            Reports
+          </div>
+        </nav>
+        <div style="padding: 12px 16px; border-top: 0.5px solid var(--color-border-tertiary);">
+          <div style="font-size: 12px; font-weight: 600;">O. Phawe</div>
+          <div style="font-size: 11px; color: var(--color-text-secondary);">Admin</div>
+        </div>
+      </div>
+
+      <div class="main">
+        <div class="topbar">
+          <div class="topbar-title" id="screen-title">Dashboard</div>
+          <div class="topbar-user">Monday, 20 April 2026</div>
+        </div>
+        <div class="content">
+
+          <div class="screen active" id="screen-dashboard">
+            <div class="metrics">
+              <div class="metric-card"><div class="metric-label">Total beneficiaries</div><div class="metric-value green">148</div></div>
+              <div class="metric-card"><div class="metric-label">Meals served today</div><div class="metric-value blue">132</div></div>
+              <div class="metric-card"><div class="metric-label">Stock items low</div><div class="metric-value amber">3</div></div>
+              <div class="metric-card"><div class="metric-label">Active volunteers</div><div class="metric-value">12</div></div>
+            </div>
+            <div class="row2">
+              <div class="card">
+                <div class="card-title">Recent attendance</div>
+                <table><thead><tr><th>Name</th><th>Date</th><th>Status</th></tr></thead><tbody>
+                  <tr><td>Kabo Sithole</td><td>20 Apr</td><td><span class="badge badge-green">Present</span></td></tr>
+                  <tr><td>Lerato Mokoena</td><td>20 Apr</td><td><span class="badge badge-green">Present</span></td></tr>
+                  <tr><td>Tiro Nkosi</td><td>20 Apr</td><td><span class="badge badge-red">Absent</span></td></tr>
+                  <tr><td>Mpho Dlamini</td><td>20 Apr</td><td><span class="badge badge-green">Present</span></td></tr>
+                </tbody></table>
+              </div>
+              <div class="card">
+                <div class="card-title">Stock summary</div>
+                <div style="font-size:12px;">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Maize meal</span><span style="color:var(--color-text-secondary);">78%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:78%;background:#1D9E75;"></div></div>
+                  <div style="display:flex;justify-content:space-between;margin:10px 0 4px;"><span>Cooking oil</span><span style="color:#E24B4A;">18%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:18%;background:#E24B4A;"></div></div>
+                  <div style="display:flex;justify-content:space-between;margin:10px 0 4px;"><span>Beans</span><span style="color:#BA7517;">32%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:32%;background:#BA7517;"></div></div>
+                  <div style="display:flex;justify-content:space-between;margin:10px 0 4px;"><span>Sugar</span><span style="color:#1D9E75;">65%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:65%;background:#1D9E75;"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Today's volunteer schedule</div>
+              <div class="sched-slot"><span><b>07:00</b> - Meal preparation</span><span>Nomsa M., Thabo K.</span><span class="badge badge-green">Active</span></div>
+              <div class="sched-slot"><span><b>11:00</b> - Meal distribution</span><span>Lebo D., Kagiso N.</span><span class="badge badge-green">Active</span></div>
+              <div class="sched-slot"><span><b>14:00</b> - Cleanup & stock check</span><span>Sipho R.</span><span class="badge badge-amber">Upcoming</span></div>
+            </div>
+          </div>
+
+          <div class="screen" id="screen-beneficiaries">
+            <div class="card">
+              <div class="section-header">
+                <h3>Register new beneficiary</h3>
+              </div>
+              <div class="form-grid">
+                <div class="form-group"><label>First name</label><input type="text" placeholder="e.g. Kabo"></div>
+                <div class="form-group"><label>Last name</label><input type="text" placeholder="e.g. Sithole"></div>
+                <div class="form-group"><label>Date of birth</label><input type="date"></div>
+                <div class="form-group"><label>Gender</label><select><option>Select...</option><option>Male</option><option>Female</option><option>Other</option></select></div>
+                <div class="form-group"><label>Guardian name</label><input type="text" placeholder="Parent / caregiver"></div>
+                <div class="form-group"><label>Contact number</label><input type="tel" placeholder="0XX XXX XXXX"></div>
+                <div class="form-group full"><label>Address</label><input type="text" placeholder="Street, suburb, Mafikeng"></div>
+                <div class="form-group"><label>Category</label><select><option>Child</option><option>Elderly</option><option>Disabled adult</option></select></div>
+                <div class="form-group"><label>Registration date</label><input type="date"></div>
+              </div>
+              <div style="margin-top:14px;display:flex;gap:8px;">
+                <button class="btn btn-primary">Save beneficiary</button>
+                <button class="btn">Clear form</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-header"><h3>Beneficiary list</h3><input type="text" placeholder="Search by name..." style="width:180px;"></div>
+              <table><thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Guardian</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+                <tr><td>B001</td><td>Kabo Sithole</td><td>Child</td><td>Mary Sithole</td><td><span class="badge badge-green">Active</span></td><td><button class="btn" style="padding:2px 8px;font-size:11px;">Edit</button></td></tr>
+                <tr><td>B002</td><td>Lerato Mokoena</td><td>Child</td><td>John Mokoena</td><td><span class="badge badge-green">Active</span></td><td><button class="btn" style="padding:2px 8px;font-size:11px;">Edit</button></td></tr>
+                <tr><td>B003</td><td>Gladys Tiro</td><td>Elderly</td><td>-</td><td><span class="badge badge-amber">Inactive</span></td><td><button class="btn" style="padding:2px 8px;font-size:11px;">Edit</button></td></tr>
+                <tr><td>B004</td><td>Mpho Dlamini</td><td>Child</td><td>Susan Dlamini</td><td><span class="badge badge-green">Active</span></td><td><button class="btn" style="padding:2px 8px;font-size:11px;">Edit</button></td></tr>
+              </tbody></table>
+            </div>
+          </div>
+
+          <div class="screen" id="screen-attendance">
+            <div class="card">
+              <div class="section-header">
+                <h3>Mark attendance</h3>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <input type="date" style="width:160px;">
+                  <button class="btn btn-primary">Save attendance</button>
+                </div>
+              </div>
+              <p style="font-size:12px;color:var(--color-text-secondary);margin-bottom:10px;">Tap a tile to toggle present / absent</p>
+              <div class="attendance-grid">
+                <div class="beneficiary-tile present"><div class="avatar" style="background:#E1F5EE;color:#0F6E56;">KS</div><div class="tile-name">Kabo S.</div><div class="tile-status" style="color:#0F6E56;">Present</div></div>
+                <div class="beneficiary-tile present"><div class="avatar" style="background:#E1F5EE;color:#0F6E56;">LM</div><div class="tile-name">Lerato M.</div><div class="tile-status" style="color:#0F6E56;">Present</div></div>
+                <div class="beneficiary-tile absent"><div class="avatar" style="background:#FCEBEB;color:#A32D2D;">TN</div><div class="tile-name">Tiro N.</div><div class="tile-status" style="color:#A32D2D;">Absent</div></div>
+                <div class="beneficiary-tile present"><div class="avatar" style="background:#E1F5EE;color:#0F6E56;">MD</div><div class="tile-name">Mpho D.</div><div class="tile-status" style="color:#0F6E56;">Present</div></div>
+                <div class="beneficiary-tile"><div class="avatar" style="background:var(--color-background-secondary);">GT</div><div class="tile-name">Gladys T.</div><div class="tile-status">Tap to mark</div></div>
+                <div class="beneficiary-tile present"><div class="avatar" style="background:#E1F5EE;color:#0F6E56;">SR</div><div class="tile-name">Sipho R.</div><div class="tile-status" style="color:#0F6E56;">Present</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Attendance history</div>
+              <table><thead><tr><th>Date</th><th>Total registered</th><th>Present</th><th>Absent</th><th>Attendance %</th></tr></thead><tbody>
+                <tr><td>19 Apr 2026</td><td>148</td><td>138</td><td>10</td><td><span class="badge badge-green">93%</span></td></tr>
+                <tr><td>18 Apr 2026</td><td>148</td><td>141</td><td>7</td><td><span class="badge badge-green">95%</span></td></tr>
+                <tr><td>17 Apr 2026</td><td>148</td><td>125</td><td>23</td><td><span class="badge badge-amber">84%</span></td></tr>
+              </tbody></table>
+            </div>
+          </div>
+
+          <div class="screen" id="screen-stock">
+            <div class="row2">
+              <div class="card">
+                <div class="card-title">Add stock / donation</div>
+                <div class="form-grid">
+                  <div class="form-group"><label>Item name</label><input type="text" placeholder="e.g. Maize meal"></div>
+                  <div class="form-group"><label>Quantity</label><input type="number" placeholder="e.g. 50"></div>
+                  <div class="form-group"><label>Unit</label><select><option>kg</option><option>litres</option><option>units</option><option>bags</option></select></div>
+                  <div class="form-group"><label>Source</label><select><option>Donation</option><option>Purchase</option><option>NGO grant</option></select></div>
+                  <div class="form-group"><label>Donor name (if any)</label><input type="text" placeholder="Optional"></div>
+                  <div class="form-group"><label>Date received</label><input type="date"></div>
+                </div>
+                <div style="margin-top:12px;"><button class="btn btn-primary">Record stock</button></div>
+              </div>
+              <div class="card">
+                <div class="card-title">Current stock levels</div>
+                <div style="font-size:12px;">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Maize meal (78 kg)</span><span style="color:#1D9E75;">78%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:78%;background:#1D9E75;"></div></div>
+                  <div style="display:flex;justify-content:space-between;margin:10px 0 4px;"><span>Cooking oil (9 L)</span><span style="color:#E24B4A;">18%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:18%;background:#E24B4A;"></div></div>
+                  <div style="display:flex;justify-content:space-between;margin:10px 0 4px;"><span>Beans (16 kg)</span><span style="color:#BA7517;">32%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:32%;background:#BA7517;"></div></div>
+                  <div style="display:flex;justify-content:space-between;margin:10px 0 4px;"><span>Sugar (32 kg)</span><span style="color:#1D9E75;">65%</span></div>
+                  <div class="stock-bar"><div class="stock-fill" style="width:65%;background:#1D9E75;"></div></div>
+                  <div style="margin-top:10px;padding:8px;background:#FAEEDA;border-radius:var(--border-radius-md);font-size:11px;color:#854F0B;">3 items below minimum threshold - reorder required</div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Donation log</div>
+              <table><thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Donor</th><th>Source</th></tr></thead><tbody>
+                <tr><td>15 Apr 2026</td><td>Maize meal</td><td>25 kg</td><td>Grace Church</td><td><span class="badge badge-blue">Donation</span></td></tr>
+                <tr><td>12 Apr 2026</td><td>Cooking oil</td><td>10 L</td><td>Pick n Pay Mahikeng</td><td><span class="badge badge-blue">Donation</span></td></tr>
+                <tr><td>10 Apr 2026</td><td>Sugar</td><td>20 kg</td><td>DSD NW Province</td><td><span class="badge badge-green">NGO grant</span></td></tr>
+              </tbody></table>
+            </div>
+          </div>
+
+          <div class="screen" id="screen-volunteers">
+            <div class="card">
+              <div class="section-header"><h3>Register volunteer</h3></div>
+              <div class="form-grid">
+                <div class="form-group"><label>First name</label><input type="text" placeholder="e.g. Nomsa"></div>
+                <div class="form-group"><label>Last name</label><input type="text" placeholder="e.g. Mahlangu"></div>
+                <div class="form-group"><label>Contact number</label><input type="tel" placeholder="0XX XXX XXXX"></div>
+                <div class="form-group"><label>Role</label><select><option>Meal preparation</option><option>Distribution</option><option>Administration</option><option>Transport</option></select></div>
+                <div class="form-group"><label>Availability</label><select><option>Monday-Friday</option><option>Weekends only</option><option>As needed</option></select></div>
+                <div class="form-group"><label>Start date</label><input type="date"></div>
+              </div>
+              <div style="margin-top:12px;"><button class="btn btn-primary">Save volunteer</button></div>
+            </div>
+            <div class="card">
+              <div class="card-title">Weekly schedule - Week of 20 Apr 2026</div>
+              <table><thead><tr><th>Volunteer</th><th>Role</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr></thead><tbody>
+                <tr><td>Nomsa M.</td><td>Preparation</td><td><span class="badge badge-green">07:00</span></td><td><span class="badge badge-green">07:00</span></td><td>-</td><td><span class="badge badge-green">07:00</span></td><td>-</td></tr>
+                <tr><td>Thabo K.</td><td>Preparation</td><td>-</td><td><span class="badge badge-green">07:00</span></td><td><span class="badge badge-green">07:00</span></td><td>-</td><td><span class="badge badge-green">07:00</span></td></tr>
+                <tr><td>Lebo D.</td><td>Distribution</td><td><span class="badge badge-blue">11:00</span></td><td><span class="badge badge-blue">11:00</span></td><td><span class="badge badge-blue">11:00</span></td><td><span class="badge badge-blue">11:00</span></td><td><span class="badge badge-blue">11:00</span></td></tr>
+                <tr><td>Sipho R.</td><td>Cleanup</td><td><span class="badge badge-amber">14:00</span></td><td>-</td><td><span class="badge badge-amber">14:00</span></td><td>-</td><td><span class="badge badge-amber">14:00</span></td></tr>
+              </tbody></table>
+            </div>
+          </div>
+
+          <div class="screen" id="screen-reports">
+            <div class="row2">
+              <div>
+                <div class="card-title" style="margin-bottom:10px;font-size:13px;font-weight:600;">Generate report</div>
+                <div class="report-btn"><div class="report-icon" style="background:#E1F5EE;color:#0F6E56;">A</div><div><div class="report-label">Attendance report</div><div class="report-desc">Daily / weekly / monthly attendance summary</div></div></div>
+                <div class="report-btn"><div class="report-icon" style="background:#E6F1FB;color:#185FA5;">S</div><div><div class="report-label">Stock usage report</div><div class="report-desc">Inventory consumed vs received per period</div></div></div>
+                <div class="report-btn"><div class="report-icon" style="background:#FAEEDA;color:#854F0B;">D</div><div><div class="report-label">Donor impact report</div><div class="report-desc">Donations received and meals funded</div></div></div>
+                <div class="report-btn"><div class="report-icon" style="background:#EEEDFE;color:#534AB7;">V</div><div><div class="report-label">Volunteer hours report</div><div class="report-desc">Hours logged per volunteer per period</div></div></div>
+                <div class="report-btn"><div class="report-icon" style="background:#EAF3DE;color:#3B6D11;">B</div><div><div class="report-label">Beneficiary summary</div><div class="report-desc">Registered, active, inactive counts</div></div></div>
+              </div>
+              <div class="card">
+                <div class="card-title">Report parameters</div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Report type</label><select><option>Attendance report</option><option>Stock usage report</option><option>Donor impact</option><option>Volunteer hours</option></select></div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Date from</label><input type="date"></div>
+                <div class="form-group" style="margin-bottom:10px;"><label>Date to</label><input type="date"></div>
+                <div class="form-group" style="margin-bottom:14px;"><label>Output format</label><select><option>Screen display</option><option>PDF download</option><option>Print</option></select></div>
+                <button class="btn btn-primary" style="width:100%;">Generate report</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const titles = {
+      dashboard: 'Dashboard',
+      beneficiaries: 'Beneficiary management',
+      attendance: 'Attendance tracking',
+      stock: 'Stock & donations',
+      volunteers: 'Volunteer scheduling',
+      reports: 'Reports'
+    };
+
+    function showScreen(id, el) {
+      document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach((n) => n.classList.remove('active'));
+      document.getElementById('screen-' + id).classList.add('active');
+      el.classList.add('active');
+      document.getElementById('screen-title').textContent = titles[id];
+    }
+
+    document.querySelectorAll('.beneficiary-tile').forEach((tile) => {
+      tile.addEventListener('click', function () {
+        const isPresent = this.classList.contains('present');
+        this.classList.toggle('present', !isPresent);
+        this.classList.toggle('absent', isPresent);
+        const st = this.querySelector('.tile-status');
+        const av = this.querySelector('.avatar');
+        if (!isPresent) {
+          st.textContent = 'Present';
+          st.style.color = '#0F6E56';
+          av.style.background = '#E1F5EE';
+          av.style.color = '#0F6E56';
+        } else {
+          st.textContent = 'Absent';
+          st.style.color = '#A32D2D';
+          av.style.background = '#FCEBEB';
+          av.style.color = '#A32D2D';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

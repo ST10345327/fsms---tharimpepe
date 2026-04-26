@@ -61,6 +61,11 @@ $currentUser = getCurrentUser();
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link" href="../controllers/MessageController.php?action=inbox">
+                        <i class="fas fa-envelope"></i> Messages
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link" href="../controllers/ReportsController.php?action=dashboard">
                         <i class="fas fa-file-pdf"></i> Reports
                     </a>
