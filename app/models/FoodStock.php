@@ -417,6 +417,10 @@ class FoodStock {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
             error_log('Database error: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     /**
      * HZ-FOOD-013: Get low stock count for dashboard
      * Returns count of items below minimum threshold
@@ -445,7 +449,7 @@ class FoodStock {
      *
      * @return array Stock summary with percentages
      */
-    public function getStockSummary() {
+    public function getTopStockSummary() {
         try {
             $stmt = $this->pdo->query(
                 "SELECT ItemName, Quantity, Unit,

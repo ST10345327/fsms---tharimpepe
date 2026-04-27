@@ -286,6 +286,8 @@ if ($action === 'report') {
     $report = $attendanceModel->getAttendanceReport($startDate, $endDate, $beneficiaryId);
     $stats = $attendanceModel->getAttendanceStats($startDate, $endDate);
     $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0);
+    include __DIR__ . "/../views/attendance/report.php";
+}
 
 /**
  * HZ-ATT-CTRL-012

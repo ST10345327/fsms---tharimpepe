@@ -424,6 +424,9 @@ class Attendance
             return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
         }
 
+        return false;
+    }
+
     /**
      * HZ-ATT-013
      * Purpose: Get attendance record for a specific beneficiary on a specific date
@@ -444,6 +447,9 @@ class Attendance
         if ($stmt->execute()) {
             return $stmt->fetch(PDO::FETCH_ASSOC);
         }
+
+        return false;
+    }
 
     /**
      * HZ-ATT-014
@@ -526,3 +532,4 @@ class Attendance
 
         return [];
     }
+}
