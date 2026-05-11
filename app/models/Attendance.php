@@ -26,27 +26,26 @@ class Attendance
      */
     public function getAllAttendance($limit = 50, $offset = 0, $dateFilter = null, $statusFilter = null, $beneficiaryId = null)
     {
-        $query = "SELECT a.AttendanceID, a.BeneficiaryID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
+        $query = "SELECT a.AttendanceID, a.BeneficiaryID, a.MealSessionID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
+                         ms.SessionType, ms.Location,
                          b.FirstName, b.LastName, b.Age, b.Status as BeneficiaryStatus
                   FROM " . $this->table . " a
-                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID";
+                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID";
 
         $conditions = [];
         $params = [];
 
-        // Date filter
         if ($dateFilter) {
             $conditions[] = "a.SessionDate = :session_date";
             $params[':session_date'] = $dateFilter;
         }
 
-        // Status filter
         if ($statusFilter && in_array($statusFilter, ['present', 'absent', 'marked'])) {
             $conditions[] = "a.Status = :status";
             $params[':status'] = $statusFilter;
         }
 
-        // Beneficiary filter
         if ($beneficiaryId) {
             $conditions[] = "a.BeneficiaryID = :beneficiary_id";
             $params[':beneficiary_id'] = $beneficiaryId;
@@ -78,14 +77,16 @@ class Attendance
      * HZ-ATT-002
      * Purpose: Get single attendance record by AttendanceID
      * Table: Attendance
-     * Returns: Attendance record with beneficiary details or false
+     * Returns: Attendance record with beneficiary and meal-session details or false
      */
     public function getAttendanceById($attendanceId)
     {
-        $query = "SELECT a.AttendanceID, a.BeneficiaryID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
+        $query = "SELECT a.AttendanceID, a.BeneficiaryID, a.MealSessionID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
+                         ms.SessionType, ms.Location, ms.Notes as MealSessionNotes,
                          b.FirstName, b.LastName, b.Age, b.Gender, b.Phone, b.Email, b.Address, b.RegistrationDate, b.Status as BeneficiaryStatus
                   FROM " . $this->table . " a
                   LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
                   WHERE a.AttendanceID = :attendance_id
                   LIMIT 1";
 
@@ -106,35 +107,42 @@ class Attendance
      * Returns: AttendanceID on success, false on failure
      * Validation: Beneficiary exists, date format, status valid
      */
-    public function recordAttendance($beneficiaryId, $sessionDate, $status = 'present', $notes = null)
+    public function recordAttendance($beneficiaryId, $sessionDate, $status = 'present', $notes = null, $mealSessionId = null)
     {
-        // Validation: Beneficiary exists
         if (!$this->beneficiaryExists($beneficiaryId)) {
             throw new Exception("Beneficiary does not exist");
         }
 
-        // Validation: Status must be valid
         if (!in_array($status, ['present', 'absent', 'marked'])) {
             throw new Exception("Invalid attendance status");
         }
 
-        // Validation: Session date format
         if (!strtotime($sessionDate)) {
             throw new Exception("Invalid session date format");
         }
 
-        // Check if attendance already exists for this beneficiary on this date
+        if ($mealSessionId !== null) {
+            $mealSession = $this->getMealSession($mealSessionId);
+            if (!$mealSession) {
+                throw new Exception("Meal session does not exist");
+            }
+
+            if ($mealSession['SessionDate'] !== $sessionDate) {
+                throw new Exception("Meal session date does not match attendance date");
+            }
+        }
+
         if ($this->attendanceExists($beneficiaryId, $sessionDate)) {
             throw new Exception("Attendance already recorded for this beneficiary on this date");
         }
 
         $query = "INSERT INTO " . $this->table . "
-                  (BeneficiaryID, SessionDate, Status, Notes)
-                  VALUES (:beneficiary_id, :session_date, :status, :notes)";
+                  (BeneficiaryID, MealSessionID, SessionDate, Status, Notes)
+                  VALUES (:beneficiary_id, :meal_session_id, :session_date, :status, :notes)";
 
         $stmt = $this->conn->prepare($query);
-
         $stmt->bindParam(":beneficiary_id", $beneficiaryId);
+        $stmt->bindParam(":meal_session_id", $mealSessionId);
         $stmt->bindParam(":session_date", $sessionDate);
         $stmt->bindParam(":status", $status);
         $stmt->bindParam(":notes", $notes);
@@ -153,33 +161,42 @@ class Attendance
      * Returns: true on success, false on failure
      * Security: Parameterized query
      */
-    public function updateAttendance($attendanceId, $beneficiaryId, $sessionDate, $status, $notes)
+    public function updateAttendance($attendanceId, $beneficiaryId, $sessionDate, $status, $notes, $mealSessionId = null)
     {
-        // Validation: Beneficiary exists
         if (!$this->beneficiaryExists($beneficiaryId)) {
             throw new Exception("Beneficiary does not exist");
         }
 
-        // Validation: Status must be valid
         if (!in_array($status, ['present', 'absent', 'marked'])) {
             throw new Exception("Invalid attendance status");
         }
 
-        // Validation: Session date format
         if (!strtotime($sessionDate)) {
             throw new Exception("Invalid session date format");
         }
 
+        if ($mealSessionId !== null) {
+            $mealSession = $this->getMealSession($mealSessionId);
+            if (!$mealSession) {
+                throw new Exception("Meal session does not exist");
+            }
+
+            if ($mealSession['SessionDate'] !== $sessionDate) {
+                throw new Exception("Meal session date does not match attendance date");
+            }
+        }
+
         $query = "UPDATE " . $this->table . "
                   SET BeneficiaryID = :beneficiary_id,
+                      MealSessionID = :meal_session_id,
                       SessionDate = :session_date,
                       Status = :status,
                       Notes = :notes
                   WHERE AttendanceID = :attendance_id";
 
         $stmt = $this->conn->prepare($query);
-
         $stmt->bindParam(":beneficiary_id", $beneficiaryId);
+        $stmt->bindParam(":meal_session_id", $mealSessionId);
         $stmt->bindParam(":session_date", $sessionDate);
         $stmt->bindParam(":status", $status);
         $stmt->bindParam(":notes", $notes);
@@ -213,7 +230,7 @@ class Attendance
     public function getAttendanceStats($startDate, $endDate)
     {
         $query = "SELECT
-                     COUNT(*) as total_sessions,
+                     COUNT(DISTINCT COALESCE(MealSessionID, SessionDate)) as total_sessions,
                      SUM(CASE WHEN Status = 'present' THEN 1 ELSE 0 END) as present_count,
                      SUM(CASE WHEN Status = 'absent' THEN 1 ELSE 0 END) as absent_count,
                      SUM(CASE WHEN Status = 'marked' THEN 1 ELSE 0 END) as marked_count,
@@ -246,10 +263,12 @@ class Attendance
      */
     public function getBeneficiaryAttendance($beneficiaryId, $limit = 20)
     {
-        $query = "SELECT AttendanceID, SessionDate, Status, Notes, CreatedAt
-                  FROM " . $this->table . "
-                  WHERE BeneficiaryID = :beneficiary_id
-                  ORDER BY SessionDate DESC
+        $query = "SELECT a.AttendanceID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
+                         ms.SessionType, ms.Location
+                  FROM " . $this->table . " a
+                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
+                  WHERE a.BeneficiaryID = :beneficiary_id
+                  ORDER BY a.SessionDate DESC
                   LIMIT :limit";
 
         $stmt = $this->conn->prepare($query);
@@ -271,7 +290,6 @@ class Attendance
      */
     public function bulkRecordAttendance($sessionDate, $attendanceData)
     {
-        // Validation: Session date format
         if (!strtotime($sessionDate)) {
             throw new Exception("Invalid session date format");
         }
@@ -284,8 +302,8 @@ class Attendance
                 $beneficiaryId = $data['beneficiary_id'];
                 $status = $data['status'] ?? 'present';
                 $notes = $data['notes'] ?? null;
+                $mealSessionId = $data['meal_session_id'] ?? null;
 
-                // Check if attendance already exists
                 if ($this->attendanceExists($beneficiaryId, $sessionDate)) {
                     $results[] = [
                         'beneficiary_id' => $beneficiaryId,
@@ -295,7 +313,7 @@ class Attendance
                     continue;
                 }
 
-                $attendanceId = $this->recordAttendance($beneficiaryId, $sessionDate, $status, $notes);
+                $attendanceId = $this->recordAttendance($beneficiaryId, $sessionDate, $status, $notes, $mealSessionId);
 
                 if ($attendanceId) {
                     $results[] = [
@@ -315,7 +333,6 @@ class Attendance
 
             $this->conn->commit();
             return $results;
-
         } catch (Exception $e) {
             $this->conn->rollBack();
             throw $e;
@@ -332,9 +349,11 @@ class Attendance
     {
         $query = "SELECT b.BeneficiaryID, b.FirstName, b.LastName, b.Age,
                          COALESCE(a.Status, 'not_recorded') as attendance_status,
-                         a.AttendanceID, a.Notes, a.CreatedAt
+                         a.AttendanceID, a.MealSessionID, a.Notes, a.CreatedAt,
+                         ms.SessionType, ms.Location
                   FROM Beneficiaries b
                   LEFT JOIN " . $this->table . " a ON b.BeneficiaryID = a.BeneficiaryID AND a.SessionDate = :session_date
+                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
                   WHERE b.Status = 'active'
                   ORDER BY b.LastName, b.FirstName";
 
@@ -354,12 +373,14 @@ class Attendance
      * Table: Attendance
      * Returns: Detailed attendance report
      */
-    public function getAttendanceReport($startDate, $endDate, $beneficiaryId = null)
+    public function getAttendanceReport($startDate, $endDate, $beneficiaryId = null, $mealSessionId = null, $statusFilter = null)
     {
-        $query = "SELECT a.AttendanceID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
+        $query = "SELECT a.AttendanceID, a.MealSessionID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
+                         ms.SessionType, ms.Location,
                          b.BeneficiaryID, b.FirstName, b.LastName, b.Age, b.Gender
                   FROM " . $this->table . " a
                   LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
                   WHERE a.SessionDate BETWEEN :start_date AND :end_date";
 
         $params = [
@@ -372,10 +393,19 @@ class Attendance
             $params[':beneficiary_id'] = $beneficiaryId;
         }
 
+        if ($mealSessionId) {
+            $query .= " AND a.MealSessionID = :meal_session_id";
+            $params[':meal_session_id'] = $mealSessionId;
+        }
+
+        if ($statusFilter && in_array($statusFilter, ['present', 'absent', 'marked'])) {
+            $query .= " AND a.Status = :status";
+            $params[':status'] = $statusFilter;
+        }
+
         $query .= " ORDER BY a.SessionDate DESC, b.LastName, b.FirstName";
 
         $stmt = $this->conn->prepare($query);
-
         foreach ($params as $key => $value) {
             $stmt->bindValue($key, $value);
         }
@@ -389,6 +419,174 @@ class Attendance
 
     /**
      * HZ-ATT-011
+     * Purpose: Get beneficiary-level summary for the attendance report
+     */
+    public function getBeneficiaryAttendanceSummary($startDate, $endDate, $beneficiaryId = null, $mealSessionId = null, $statusFilter = null)
+    {
+        $query = "SELECT b.BeneficiaryID, b.FirstName, b.LastName,
+                         COUNT(a.AttendanceID) as total_sessions,
+                         SUM(CASE WHEN a.Status = 'present' THEN 1 ELSE 0 END) as present_count,
+                         SUM(CASE WHEN a.Status = 'absent' THEN 1 ELSE 0 END) as absent_count,
+                         SUM(CASE WHEN a.Status = 'marked' THEN 1 ELSE 0 END) as marked_count
+                  FROM Beneficiaries b
+                  LEFT JOIN " . $this->table . " a
+                    ON b.BeneficiaryID = a.BeneficiaryID
+                   AND a.SessionDate BETWEEN :start_date AND :end_date";
+
+        $params = [
+            ':start_date' => $startDate,
+            ':end_date' => $endDate
+        ];
+
+        if ($beneficiaryId) {
+            $query .= " WHERE b.BeneficiaryID = :beneficiary_id";
+            $params[':beneficiary_id'] = $beneficiaryId;
+        } else {
+            $query .= " WHERE 1=1";
+        }
+
+        if ($mealSessionId) {
+            $query .= " AND a.MealSessionID = :meal_session_id";
+            $params[':meal_session_id'] = $mealSessionId;
+        }
+
+        if ($statusFilter && in_array($statusFilter, ['present', 'absent', 'marked'])) {
+            $query .= " AND a.Status = :status";
+            $params[':status'] = $statusFilter;
+        }
+
+        $query .= " GROUP BY b.BeneficiaryID, b.FirstName, b.LastName
+                    ORDER BY b.LastName, b.FirstName";
+
+        $stmt = $this->conn->prepare($query);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+
+        if ($stmt->execute()) {
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($rows as &$row) {
+                $total = (int)$row['total_sessions'];
+                $present = (int)$row['present_count'];
+                $row['attendance_rate'] = $total > 0 ? round(($present / $total) * 100, 1) : 0;
+            }
+
+            return $rows;
+        }
+
+        return [];
+    }
+
+    /**
+     * HZ-ATT-012
+     * Purpose: Get attendance record for a specific beneficiary on a specific date
+     * Table: Attendance
+     * Returns: Attendance record or false if not found
+     */
+    public function getAttendanceByBeneficiaryAndDate($beneficiaryId, $sessionDate)
+    {
+        $query = "SELECT AttendanceID, BeneficiaryID, MealSessionID, SessionDate, Status, Notes, CreatedAt
+                  FROM " . $this->table . "
+                  WHERE BeneficiaryID = :beneficiary_id AND SessionDate = :session_date
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":beneficiary_id", $beneficiaryId);
+        $stmt->bindParam(":session_date", $sessionDate);
+
+        if ($stmt->execute()) {
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        return false;
+    }
+
+    /**
+     * HZ-ATT-013
+     * Purpose: Get number of meals served today (present count)
+     * Table: Attendance
+     * Returns: Integer count of meals served today
+     */
+    public function getMealsServedToday()
+    {
+        $today = date('Y-m-d');
+        $query = "SELECT COUNT(*) as meals_served
+                  FROM " . $this->table . "
+                  WHERE SessionDate = :today AND Status = 'present'";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":today", $today);
+
+        if ($stmt->execute()) {
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)$result['meals_served'];
+        }
+
+        return 0;
+    }
+
+    /**
+     * HZ-ATT-014
+     * Purpose: Get recent attendance records with beneficiary details
+     * Table: Attendance, Beneficiaries
+     * Returns: Array of recent attendance records
+     */
+    public function getRecentAttendance($limit = 5)
+    {
+        $query = "SELECT a.AttendanceID, a.MealSessionID, a.SessionDate, a.Status, a.CreatedAt,
+                         ms.SessionType, ms.Location,
+                         b.FirstName, b.LastName, b.Age
+                  FROM " . $this->table . " a
+                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
+                  ORDER BY a.CreatedAt DESC
+                  LIMIT :limit";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
+    }
+
+    /**
+     * HZ-ATT-015
+     * Purpose: Get attendance history with statistics for the last N days
+     * Table: Attendance
+     * Returns: Array of daily attendance summaries
+     */
+    public function getAttendanceHistory($days = 7)
+    {
+        $endDate = date('Y-m-d');
+        $startDate = date('Y-m-d', strtotime("-" . ($days - 1) . " days"));
+
+        $query = "SELECT
+                     SessionDate,
+                     COUNT(*) as total_registered,
+                     SUM(CASE WHEN Status = 'present' THEN 1 ELSE 0 END) as present_count,
+                     SUM(CASE WHEN Status = 'absent' THEN 1 ELSE 0 END) as absent_count,
+                     ROUND((SUM(CASE WHEN Status = 'present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as percentage
+                  FROM " . $this->table . "
+                  WHERE SessionDate BETWEEN :start_date AND :end_date
+                  GROUP BY SessionDate
+                  ORDER BY SessionDate DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":start_date", $startDate);
+        $stmt->bindParam(":end_date", $endDate);
+
+        if ($stmt->execute()) {
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
+    }
+
+    /**
+     * HZ-ATT-016
      * Purpose: Check if beneficiary exists
      * Table: Beneficiaries
      * Returns: true if beneficiary exists, false otherwise
@@ -407,7 +605,7 @@ class Attendance
     }
 
     /**
-     * HZ-ATT-012
+     * HZ-ATT-017
      * Purpose: Check if attendance already exists for beneficiary on date
      * Table: Attendance
      * Returns: true if attendance exists, false otherwise
@@ -428,21 +626,14 @@ class Attendance
     }
 
     /**
-     * HZ-ATT-013
-     * Purpose: Get attendance record for a specific beneficiary on a specific date
-     * Table: Attendance
-     * Returns: Attendance record or false if not found
+     * HZ-ATT-018
+     * Purpose: Get meal session row by identifier
      */
-    public function getAttendanceByBeneficiaryAndDate($beneficiaryId, $sessionDate)
+    private function getMealSession($mealSessionId)
     {
-        $query = "SELECT AttendanceID, BeneficiaryID, SessionDate, Status, Notes, CreatedAt
-                  FROM " . $this->table . "
-                  WHERE BeneficiaryID = :beneficiary_id AND SessionDate = :session_date
-                  LIMIT 1";
-
+        $query = "SELECT * FROM MealSession WHERE MealSessionID = :meal_session_id LIMIT 1";
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":beneficiary_id", $beneficiaryId);
-        $stmt->bindParam(":session_date", $sessionDate);
+        $stmt->bindParam(':meal_session_id', $mealSessionId, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -450,86 +641,5 @@ class Attendance
 
         return false;
     }
-
-    /**
-     * HZ-ATT-014
-     * Purpose: Get number of meals served today (present count)
-     * Table: Attendance
-     * Returns: Integer count of meals served today
-     */
-    public function getMealsServedToday()
-    {
-        $today = date('Y-m-d');
-        $query = "SELECT COUNT(*) as meals_served
-                  FROM " . $this->table . "
-                  WHERE SessionDate = :today AND Status = 'Present'";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":today", $today);
-
-        if ($stmt->execute()) {
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return (int)$result['meals_served'];
-        }
-
-        return 0;
-    }
-
-    /**
-     * HZ-ATT-015
-     * Purpose: Get recent attendance records with beneficiary details
-     * Table: Attendance, Beneficiaries
-     * Returns: Array of recent attendance records
-     */
-    public function getRecentAttendance($limit = 5)
-    {
-        $query = "SELECT a.AttendanceID, a.SessionDate, a.Status, a.CreatedAt,
-                         b.FirstName, b.LastName, b.Age
-                  FROM " . $this->table . " a
-                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
-                  ORDER BY a.CreatedAt DESC
-                  LIMIT :limit";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
-
-        if ($stmt->execute()) {
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-        return [];
-    }
-
-    /**
-     * HZ-ATT-016
-     * Purpose: Get attendance history with statistics for the last N days
-     * Table: Attendance
-     * Returns: Array of daily attendance summaries
-     */
-    public function getAttendanceHistory($days = 7)
-    {
-        $endDate = date('Y-m-d');
-        $startDate = date('Y-m-d', strtotime("-" . ($days - 1) . " days"));
-
-        $query = "SELECT
-                     SessionDate,
-                     COUNT(*) as total_registered,
-                     SUM(CASE WHEN Status = 'Present' THEN 1 ELSE 0 END) as present_count,
-                     SUM(CASE WHEN Status = 'Absent' THEN 1 ELSE 0 END) as absent_count,
-                     ROUND((SUM(CASE WHEN Status = 'Present' THEN 1 ELSE 0 END) / COUNT(*)) * 100, 1) as percentage
-                  FROM " . $this->table . "
-                  WHERE SessionDate BETWEEN :start_date AND :end_date
-                  GROUP BY SessionDate
-                  ORDER BY SessionDate DESC";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":start_date", $startDate);
-        $stmt->bindParam(":end_date", $endDate);
-
-        if ($stmt->execute()) {
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-        return [];
-    }
 }
+?>

@@ -68,6 +68,22 @@ CREATE TABLE IF NOT EXISTS Beneficiaries (
 );
 
 -- ==============================================================
+-- HZ-MEAL-TABLE-004
+-- Purpose: Store meal session metadata for attendance and reporting
+-- Entity: MealSession (from ERD)
+-- Fields: MealSessionID (PK), SessionDate, SessionType, Location, Notes, CreatedAt
+-- ==============================================================
+CREATE TABLE IF NOT EXISTS MealSession (
+    MealSessionID INT AUTO_INCREMENT PRIMARY KEY,
+    SessionDate DATE NOT NULL,
+    SessionType VARCHAR(30) NOT NULL,
+    Location VARCHAR(100),
+    Notes TEXT,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_meal_session (SessionDate, SessionType, Location)
+);
+
+-- ==============================================================
 -- HZ-ATT-TABLE-004
 -- Purpose: Track daily attendance of beneficiaries at feeding sessions
 -- Entity: Attendance (from ERD)
@@ -76,11 +92,13 @@ CREATE TABLE IF NOT EXISTS Beneficiaries (
 CREATE TABLE IF NOT EXISTS Attendance (
     AttendanceID INT AUTO_INCREMENT PRIMARY KEY,
     BeneficiaryID INT NOT NULL,
+    MealSessionID INT DEFAULT NULL,
     SessionDate DATE NOT NULL,
     Status ENUM('present', 'absent', 'marked') DEFAULT 'present',
     Notes TEXT,
     CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (BeneficiaryID) REFERENCES Beneficiaries(BeneficiaryID) ON DELETE CASCADE
+    FOREIGN KEY (BeneficiaryID) REFERENCES Beneficiaries(BeneficiaryID) ON DELETE CASCADE,
+    FOREIGN KEY (MealSessionID) REFERENCES MealSession(MealSessionID) ON DELETE SET NULL
 );
 
 -- ==============================================================
@@ -174,6 +192,7 @@ CREATE TABLE IF NOT EXISTS Gallery (
 -- Note: UNIQUE constraints automatically create indexes, so we skip idx_username and idx_email
 CREATE INDEX idx_volunteer_user ON Volunteers(UserID);
 CREATE INDEX idx_attendance_beneficiary ON Attendance(BeneficiaryID);
+CREATE INDEX idx_attendance_meal_session ON Attendance(MealSessionID);
 CREATE INDEX idx_attendance_date ON Attendance(SessionDate);
 CREATE INDEX idx_donation_date ON Donations(DonationDate);
 -- Note: Messages table indexes commented out as table may not exist in current schema
