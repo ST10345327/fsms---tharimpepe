@@ -122,9 +122,10 @@ fsms/
 │   └── index.php                  (HZ-ENTRY-001 - Router)
 ├── sql/
 │   └── schema.sql                 (All table definitions)
-└── Documentation/
-    ├── Task2a_Requirements_Analysis.docx
-    └── Task2b_System_Design.docx
+└── docs/
+    └── academic/
+        ├── ST10345327_OLEBOGENG_Task_2_Requirements_Analysis.pdf
+        └── ST10345327_OLEBOGENG_Task_2_System_Design.pdf
 ```
 
 ---
@@ -203,4 +204,4 @@ All modules will follow the same MVC pattern and use Hazard IDs for traceability
 
 ---
 
-**Questions?** Refer to `Task2a_Requirements_Analysis.docx` and `Task2b_System_Design.docx` for system requirements and design details.
+**Questions?** Refer to the files in `docs/academic/` for system requirements and design details.

@@ -7,7 +7,7 @@
  */
 
 // Initialize application with error handling and validation
-require_once __DIR__ . "/../../helpers/bootstrap.php";
+require_once __DIR__ . "/../helpers/bootstrap.php";
 require_once __DIR__ . "/../models/User.php";
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'login';

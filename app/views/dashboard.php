@@ -1,3 +1,10 @@
+<?php
+require_once __DIR__ . "/../helpers/SessionHandler.php";
+requireLogin();
+
+$user = getCurrentUser();
+$pageTitle = 'Dashboard';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,214 +13,394 @@
     <title>Dashboard - FSMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/public/assets/css/fsms-ui.css">
     <style>
-        body {
-            background-color: #f5f7fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        .dashboard-wrap {
+            padding-top: 24px;
         }
-        .navbar {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 20px;
-            color: white !important;
-        }
-        .nav-link {
-            color: rgba(255, 255, 255, 0.8) !important;
-            transition: color 0.3s ease;
-        }
-        .nav-link:hover {
-            color: white !important;
-        }
-        .dashboard-container {
-            padding: 40px 20px;
-        }
-        .welcome-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            margin-bottom: 30px;
-            border-left: 5px solid #667eea;
-        }
-        .welcome-card h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .welcome-card p {
-            color: #666;
-            margin: 0;
-        }
-        .feature-grid {
+
+        .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+            gap: 24px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            margin-bottom: 24px;
         }
-        .feature-card {
-            background: white;
+
+        .kpi-card {
+            align-items: flex-start;
+            background: #fff;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+            display: flex;
+            justify-content: space-between;
+            min-height: 130px;
+            padding: 24px;
+        }
+
+        .kpi-label {
+            color: #1f2a44;
+            font-size: 14px;
+            margin-bottom: 6px;
+        }
+
+        .kpi-value {
+            color: #071326;
+            font-size: 30px;
+            font-weight: 400;
+            line-height: 1.15;
+            margin-bottom: 4px;
+        }
+
+        .kpi-meta {
+            color: #334155;
+            font-size: 12px;
+        }
+
+        .kpi-icon {
+            align-items: center;
             border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            color: #fff;
+            display: inline-flex;
+            font-size: 22px;
+            height: 48px;
+            justify-content: center;
+            width: 48px;
+        }
+
+        .kpi-icon.blue { background: #2563ff; }
+        .kpi-icon.green { background: #00c950; }
+        .kpi-icon.purple { background: #ad3df5; }
+        .kpi-icon.orange { background: #ff5b00; }
+
+        .dashboard-grid {
+            display: grid;
+            gap: 24px;
+            grid-template-columns: 2fr 1.1fr;
+            margin-bottom: 24px;
+        }
+
+        .dashboard-bottom-grid {
+            display: grid;
+            gap: 24px;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .proto-card {
+            background: #fff;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+            padding: 24px;
+        }
+
+        .proto-card h2 {
+            color: #071326;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .chart-frame {
+            height: 248px;
+            position: relative;
+        }
+
+        .chart-grid {
+            bottom: 36px;
+            left: 64px;
+            position: absolute;
+            right: 8px;
+            top: 8px;
+        }
+
+        .chart-grid::before {
+            background:
+                repeating-linear-gradient(to right, transparent 0, transparent calc(16.666% - 1px), #d6d9de calc(16.666% - 1px), #d6d9de 16.666%),
+                repeating-linear-gradient(to bottom, transparent 0, transparent calc(25% - 1px), #d6d9de calc(25% - 1px), #d6d9de 25%);
+            border-bottom: 1px solid #9aa3af;
+            border-left: 1px solid #9aa3af;
+            content: "";
+            inset: 0;
+            position: absolute;
+        }
+
+        .chart-y {
+            color: #4b5563;
+            font-size: 16px;
+            left: 32px;
+            position: absolute;
+        }
+
+        .chart-y.y160 { top: 4px; }
+        .chart-y.y120 { top: 55px; }
+        .chart-y.y80 { top: 107px; }
+        .chart-y.y40 { top: 160px; }
+        .chart-y.y0 { bottom: 28px; }
+
+        .chart-labels {
+            bottom: 10px;
+            color: #4b5563;
+            display: grid;
+            font-size: 16px;
+            grid-template-columns: repeat(7, 1fr);
+            left: 92px;
+            position: absolute;
+            right: 18px;
             text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+
+        .quick-actions {
+            display: grid;
+            gap: 13px;
         }
-        .feature-card i {
-            font-size: 40px;
-            color: #667eea;
-            margin-bottom: 15px;
-        }
-        .feature-card h5 {
-            color: #333;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        .feature-card p {
-            color: #666;
-            font-size: 14px;
-            margin: 0;
-        }
-        .user-info {
-            color: white !important;
-            font-size: 14px;
-        }
-        .logout-btn {
-            background-color: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 6px 15px;
-            border-radius: 5px;
+
+        .quick-action {
+            align-items: center;
+            border-radius: 9px;
+            color: #fff;
+            display: flex;
+            font-weight: 700;
+            gap: 14px;
+            min-height: 48px;
+            padding: 12px 18px;
             text-decoration: none;
-            transition: all 0.3s ease;
-            margin-left: 10px;
         }
-        .logout-btn:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-            color: white;
-            text-decoration: none;
+
+        .quick-action:hover {
+            color: #fff;
+            filter: brightness(0.96);
+        }
+
+        .quick-action.navy { background: #1b3a5c; }
+        .quick-action.green { background: #2e7d32; }
+        .quick-action.orange { background: #ff5b00; }
+        .quick-action.purple { background: #ad3df5; }
+
+        .stock-row {
+            margin-bottom: 16px;
+        }
+
+        .stock-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .stock-line {
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 7px;
+        }
+
+        .stock-line span {
+            color: #071326;
+            font-size: 14px;
+        }
+
+        .stock-line .danger {
+            color: #ff2e2e;
+        }
+
+        .progress {
+            background: #e5e7eb;
+            border-radius: 999px;
+            height: 8px;
+        }
+
+        .progress-bar {
+            border-radius: 999px;
+        }
+
+        .activity-item {
+            align-items: flex-start;
+            border-bottom: 1px solid #edf0f3;
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 10px 1fr auto;
+            padding: 12px 0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: 0;
+        }
+
+        .activity-dot {
+            background: #2e7d32;
+            border-radius: 999px;
+            height: 8px;
+            margin-top: 7px;
+            width: 8px;
+        }
+
+        .activity-title {
+            color: #071326;
+            font-size: 14px;
+        }
+
+        .activity-by,
+        .activity-time {
+            color: #475569;
+            font-size: 12px;
+        }
+
+        @media (max-width: 1200px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .dashboard-grid,
+            .dashboard-bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-labels {
+                font-size: 12px;
+                left: 76px;
+            }
         }
     </style>
 </head>
 <body>
-    <?php 
-    // HZ-AUTH-DASHBOARD-001: Require authentication to view this page
-    require_once __DIR__ . "/../helpers/SessionHandler.php";
-    requireLogin();
-    
-    $user = getCurrentUser();
-    ?>
+    <?php include __DIR__ . "/includes/navbar.php"; ?>
 
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="../views/dashboard.php">
-                <i class="fas fa-hand-holding-heart"></i> FSMS
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="fas fa-home"></i> Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../controllers/BeneficiaryController.php?action=list"><i class="fas fa-users"></i> Beneficiaries</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../controllers/DashboardController.php?action=overview"><i class="fas fa-chart-line"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="../controllers/ReportsController.php?action=dashboard"><i class="fas fa-file-pdf"></i> Reports</a>
-                    </li>
-                    <li class="nav-item">
-                        <span class="user-info">
-                            <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($user['username']); ?>
-                            <a href="../controllers/AuthController.php?action=logout" class="logout-btn">Logout</a>
-                        </span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="dashboard-container">
-        <div class="container-fluid">
-            <!-- Welcome Card -->
-            <!-- HZ-AUTH-DASHBOARD-002: Personalized welcome message -->
-            <div class="welcome-card">
-                <h2>Welcome back, <?php echo htmlspecialchars($user['username']); ?>!</h2>
-                <p>You are logged in as a <strong><?php echo ucfirst(htmlspecialchars($user['role'])); ?></strong></p>
+    <main class="container-fluid dashboard-wrap pb-5">
+        <section class="kpi-grid" aria-label="Key performance indicators">
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Total Beneficiaries</div>
+                    <div class="kpi-value">342</div>
+                    <div class="kpi-meta">+12 this month</div>
+                </div>
+                <span class="kpi-icon blue"><i class="fas fa-users" aria-hidden="true"></i></span>
             </div>
 
-            <!-- Feature Cards -->
-            <h3 class="mb-4">Available Functions</h3>
-            <div class="feature-grid">
-                <!-- HZ-AUTH-DASHBOARD-003: Placeholder cards for system modules -->
-                <a href="../controllers/BeneficiaryController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-id-card"></i>
-                    <h5>Beneficiary Management</h5>
-                    <p>Register and manage beneficiary records</p>
-                </a>
-
-                <a href="../controllers/AttendanceController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-clipboard-list"></i>
-                    <h5>Attendance Tracking</h5>
-                    <p>Record daily attendance for feeding sessions</p>
-                </a>
-
-                <a href="../controllers/FoodStockController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-boxes"></i>
-                    <h5>Food Stock Management</h5>
-                    <p>Manage food inventory and stock levels</p>
-                </a>
-
-                <a href="../controllers/DonationController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-gift"></i>
-                    <h5>Donation Tracking</h5>
-                    <p>Record and manage donor contributions</p>
-                </a>
-
-                <a href="../controllers/VolunteerScheduleController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-calendar"></i>
-                    <h5>Volunteer Scheduling</h5>
-                    <p>Manage volunteer shifts and availability</p>
-                </a>
-
-                <a href="../controllers/UserController.php?action=list" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-users-cog"></i>
-                    <h5>User Management</h5>
-                    <p>Manage system users and access control</p>
-                </a>
-
-                <a href="../controllers/DashboardController.php?action=overview" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-chart-line"></i>
-                    <h5>Analytics Dashboard</h5>
-                    <p>View system analytics and KPIs</p>
-                </a>
-
-                <a href="../controllers/ReportsController.php?action=dashboard" class="feature-card" style="text-decoration: none; color: inherit;">
-                    <i class="fas fa-file-pdf"></i>
-                    <h5>Reports & Analytics</h5>
-                    <p>Generate and view comprehensive reports</p>
-                </a>
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Meals Served Today</div>
+                    <div class="kpi-value">138</div>
+                    <div class="kpi-meta">As of 2:30 PM</div>
+                </div>
+                <span class="kpi-icon green"><i class="fas fa-utensils" aria-hidden="true"></i></span>
             </div>
-        </div>
-    </div>
 
-    <!-- Footer -->
-    <footer class="bg-light text-center py-4 mt-5">
-        <p class="text-muted mb-0">&copy; 2026 Tharimpepe Feeding Scheme Management System. All rights reserved.</p>
-    </footer>
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Active Volunteers</div>
+                    <div class="kpi-value">24</div>
+                    <div class="kpi-meta">8 scheduled today</div>
+                </div>
+                <span class="kpi-icon purple"><i class="fas fa-user-check" aria-hidden="true"></i></span>
+            </div>
 
-    <!-- Bootstrap JS -->
+            <div class="kpi-card">
+                <div>
+                    <div class="kpi-label">Low Stock Alerts</div>
+                    <div class="kpi-value">2</div>
+                    <div class="kpi-meta">Requires attention</div>
+                </div>
+                <span class="kpi-icon orange"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
+            </div>
+        </section>
+
+        <section class="dashboard-grid">
+            <div class="proto-card">
+                <h2>Weekly Attendance</h2>
+                <div class="chart-frame" aria-label="Weekly attendance chart">
+                    <span class="chart-y y160">160</span>
+                    <span class="chart-y y120">120</span>
+                    <span class="chart-y y80">80</span>
+                    <span class="chart-y y40">40</span>
+                    <span class="chart-y y0">0</span>
+                    <div class="chart-grid" aria-hidden="true"></div>
+                    <div class="chart-labels">
+                        <span>Mon</span>
+                        <span>Tue</span>
+                        <span>Wed</span>
+                        <span>Thu</span>
+                        <span>Fri</span>
+                        <span>Sat</span>
+                        <span>Sun</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="proto-card">
+                <h2>Quick Actions</h2>
+                <div class="quick-actions">
+                    <a href="../controllers/BeneficiaryController.php?action=create" class="quick-action navy">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <span>Add Beneficiary</span>
+                    </a>
+                    <a href="../controllers/AttendanceController.php?action=bulk-record" class="quick-action green">
+                        <i class="far fa-clipboard" aria-hidden="true"></i>
+                        <span>Record Attendance</span>
+                    </a>
+                    <a href="../controllers/FoodStockController.php?action=create" class="quick-action orange">
+                        <i class="fas fa-plus" aria-hidden="true"></i>
+                        <span>Add Stock</span>
+                    </a>
+                    <a href="../controllers/ReportsController.php?action=dashboard" class="quick-action purple">
+                        <i class="far fa-file-lines" aria-hidden="true"></i>
+                        <span>Generate Report</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-bottom-grid">
+            <div class="proto-card">
+                <h2>Food Stock Status</h2>
+                <?php
+                $stockRows = [
+                    ['label' => 'Rice', 'value' => 45, 'bar' => 'bg-success', 'danger' => false],
+                    ['label' => 'Beans', 'value' => 78, 'bar' => 'bg-success', 'danger' => false],
+                    ['label' => 'Oil', 'value' => 25, 'bar' => 'bg-danger', 'danger' => true],
+                    ['label' => 'Maize Meal', 'value' => 82, 'bar' => 'bg-success', 'danger' => false],
+                ];
+                ?>
+                <?php foreach ($stockRows as $row): ?>
+                    <div class="stock-row">
+                        <div class="stock-line">
+                            <span><?php echo htmlspecialchars($row['label']); ?></span>
+                            <span class="<?php echo $row['danger'] ? 'danger' : ''; ?>"><?php echo (int)$row['value']; ?>%</span>
+                        </div>
+                        <div class="progress" role="progressbar" aria-label="<?php echo htmlspecialchars($row['label']); ?> stock level" aria-valuenow="<?php echo (int)$row['value']; ?>" aria-valuemin="0" aria-valuemax="100">
+                            <div class="progress-bar <?php echo htmlspecialchars($row['bar']); ?>" style="width: <?php echo (int)$row['value']; ?>%"></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+
+            <div class="proto-card">
+                <h2>Recent Activity</h2>
+                <?php
+                $activities = [
+                    ['title' => 'New beneficiary registered', 'by' => 'by John Doe', 'time' => '10 min ago'],
+                    ['title' => 'Attendance recorded (Morning)', 'by' => 'by Sarah Admin', 'time' => '2 hours ago'],
+                    ['title' => 'Stock updated: Rice +50kg', 'by' => 'by Mike Manager', 'time' => '3 hours ago'],
+                    ['title' => 'Donation received: R5,000', 'by' => 'by Admin', 'time' => '5 hours ago'],
+                ];
+                ?>
+                <?php foreach ($activities as $activity): ?>
+                    <div class="activity-item">
+                        <span class="activity-dot" aria-hidden="true"></span>
+                        <div>
+                            <div class="activity-title"><?php echo htmlspecialchars($activity['title']); ?></div>
+                            <div class="activity-by"><?php echo htmlspecialchars($activity['by']); ?></div>
+                        </div>
+                        <div class="activity-time"><?php echo htmlspecialchars($activity['time']); ?></div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </section>
+    </main>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

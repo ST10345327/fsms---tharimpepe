@@ -15,7 +15,7 @@ from docx.shared import Inches, Pt, RGBColor
 
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCS_DIR = ROOT / "Documentation"
+DOCS_DIR = ROOT / "docs" / "academic"
 GITHUB_URL = "https://github.com/ST10345327/fsms---tharimpepe"
 DATE_TEXT = "20 April 2026"
 

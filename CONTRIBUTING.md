@@ -3,9 +3,10 @@
 This repository should be reviewed against the academic project documents first, then against the code.
 
 Primary references:
-- [Task2a_Requirements_Analysis.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2a_Requirements_Analysis.docx)
-- [Task2b_System_Design.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2b_System_Design.docx)
-- [Figma_Prototype_Handoff.md](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Figma_Prototype_Handoff.md)
+- `docs/academic/ST10345327_OLEBOGENG_Task_2_Requirements_Analysis.pdf`
+- `docs/academic/ST10345327_OLEBOGENG_Task_2_System_Design.pdf`
+- `docs/proposals/Figma_Prototype_Handoff.md`
+- `docs/screenshots/`
 
 ## Phase-Based Development
 

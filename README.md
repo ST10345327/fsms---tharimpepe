@@ -1,6 +1,6 @@
 # Tharimpepe Feeding Scheme Management System
 
-This repository contains the Feeding Scheme Management System (FSMS) for the Tharimpepe Feeding Scheme. The project is based on the academic requirements and design documents in [Documentation/Task2a_Requirements_Analysis.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2a_Requirements_Analysis.docx) and [Documentation/Task2b_System_Design.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2b_System_Design.docx).
+This repository contains the Feeding Scheme Management System (FSMS) for the Tharimpepe Feeding Scheme. The project is based on the academic requirements and design documents in `docs/academic/`.
 
 The documented core scope is:
 - Beneficiary management
@@ -15,6 +15,10 @@ The documented core scope is:
 **Interactive UI Prototype:** [https://trunk-canon-07981658.figma.site](https://trunk-canon-07981658.figma.site)
 
 This Figma prototype showcases the complete user interface design for all modules: Dashboard, Beneficiaries, Attendance, Stock & Donations, Volunteers, and Reports. Use this as the visual reference for frontend implementation.
+
+**Prototype screenshots:** See `docs/screenshots/`.
+
+**Demo video:** YouTube link to be added.
 
 ## Stack
 
@@ -31,17 +35,26 @@ app/
   helpers/       bootstrap, validation, session, error handling
   models/        database access and business rules
   views/         UI templates
+api/
+  README.md      placeholder for future REST/API endpoints
+backend/
+  README.md      placeholder for separated backend code
 config/
   database.php   database connection layer
+database/
+  README.md      placeholder for migrations and seed data
+docs/
+  academic/      submitted academic documentation
+  diagrams/      diagrams and modelling artifacts
+  screenshots/   uploaded Figma prototype screenshots
+  proposals/     prototype handoff and planning notes
+frontend/
+  README.md      placeholder for separated frontend code
 public/
   index.php      application entry point
   fsms-prototype.html
 sql/
   schema.sql     database schema
-Documentation/
-  Task2a_Requirements_Analysis.docx
-  Task2b_System_Design.docx
-  Figma_Prototype_Handoff.md
 tests/
   run_all_tests.php
 tools/
@@ -102,7 +115,8 @@ Backend work should stay aligned with the academic model in the documentation an
 
 Frontend work should use:
 - the system design document for input/request interaction structure
-- [Documentation/Figma_Prototype_Handoff.md](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Figma_Prototype_Handoff.md) for prototype fidelity
+- `docs/proposals/Figma_Prototype_Handoff.md` for prototype fidelity
+- `docs/screenshots/` for screen-by-screen visual references
 - existing `app/views/` patterns where they already support the documented workflows
 
 Review frontend changes as screen-level work:
@@ -117,7 +131,7 @@ Review frontend changes as screen-level work:
 
 - Keep business logic in controllers and models, not in views.
 - Use prepared statements for all database access.
-- Keep features traceable to the documented scope in `Documentation/`.
+- Keep features traceable to the documented scope in `docs/academic/`.
 - Prefer improving existing modules over adding new unrelated features.
 - Run the test suite after backend changes.
 
@@ -133,6 +147,7 @@ See [CONTRIBUTING.md](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/CONTRIBUTING.
 
 ## Documentation References
 
-- Requirements: [Task2a_Requirements_Analysis.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2a_Requirements_Analysis.docx)
-- System design: [Task2b_System_Design.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2b_System_Design.docx)
-- Figma/prototype handoff: [Figma_Prototype_Handoff.md](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Figma_Prototype_Handoff.md)
+- Requirements: `docs/academic/ST10345327_OLEBOGENG_Task_2_Requirements_Analysis.pdf`
+- System design: `docs/academic/ST10345327_OLEBOGENG_Task_2_System_Design.pdf`
+- Figma/prototype handoff: `docs/proposals/Figma_Prototype_Handoff.md`
+- Prototype screenshots: `docs/screenshots/`

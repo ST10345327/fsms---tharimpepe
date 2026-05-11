@@ -1,3 +1,4 @@
+<?php $pageTitle = 'Dashboard Overview'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -221,7 +222,7 @@
                             <div class="mb-3">
                                 <span class="kpi-badge kpi-orange">Stock Value</span>
                                 <div style="font-size: 2rem; font-weight: 700; margin-top: 10px; color: #fd7e14;">
-                                    ZWL<?php echo number_format($foodStockStatus['total_stock_value'], 0); ?>
+                                    R<?php echo number_format($foodStockStatus['total_stock_value'], 0); ?>
                                 </div>
                                 <small class="text-muted">total inventory</small>
                             </div>
@@ -230,7 +231,7 @@
                             <div class="mb-3">
                                 <span class="kpi-badge kpi-green">Monthly Donations</span>
                                 <div style="font-size: 2rem; font-weight: 700; margin-top: 10px; color: #28a745;">
-                                    ZWL<?php echo number_format($donationStats['monthly_donations_amount'], 0); ?>
+                                    R<?php echo number_format($donationStats['monthly_donations_amount'], 0); ?>
                                 </div>
                                 <small class="text-muted"><?php echo $donationStats['monthly_donations_count']; ?> donations</small>
                             </div>
@@ -305,7 +306,7 @@
                                     <tr>
                                         <td><?php echo htmlspecialchars($donor['DonorName']); ?></td>
                                         <td><?php echo (int)$donor['donation_count']; ?></td>
-                                        <td><strong>ZWL<?php echo number_format((float)$donor['total_donated'], 0); ?></strong></td>
+                                        <td><strong>R<?php echo number_format((float)$donor['total_donated'], 0); ?></strong></td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
@@ -337,11 +338,11 @@
                 datasets: [{
                     label: 'Beneficiaries Served',
                     data: beneficiaryData,
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderColor: '#2E7D32',
+                    backgroundColor: 'rgba(46, 125, 50, 0.12)',
                     tension: 0.4,
                     fill: true,
-                    pointBackgroundColor: '#667eea',
+                    pointBackgroundColor: '#2E7D32',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointRadius: 5
@@ -369,7 +370,7 @@
                 labels: roleLabels,
                 datasets: [{
                     data: roleCounts,
-                    backgroundColor: ['#667eea', '#764ba2', '#28a745', '#17a2b8', '#fd7e14'],
+                    backgroundColor: ['#1B3A5C', '#19A7A8', '#2E7D32', '#6D5DFC', '#F97316'],
                     borderColor: '#fff',
                     borderWidth: 2
                 }]

@@ -1,11 +1,11 @@
 # Development Guide
 
-This guide translates the documents in `Documentation/` into a practical development workflow for this repository.
+This guide translates the documents in `docs/academic/` and `docs/proposals/` into a practical development workflow for this repository.
 
 Primary references:
-- [Task2a_Requirements_Analysis.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2a_Requirements_Analysis.docx)
-- [Task2b_System_Design.docx](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Task2b_System_Design.docx)
-- [Figma_Prototype_Handoff.md](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/Documentation/Figma_Prototype_Handoff.md)
+- `docs/academic/ST10345327_OLEBOGENG_Task_2_Requirements_Analysis.pdf`
+- `docs/academic/ST10345327_OLEBOGENG_Task_2_System_Design.pdf`
+- `docs/proposals/Figma_Prototype_Handoff.md`
 
 ## Scope Guardrail
 
@@ -172,7 +172,7 @@ Use issue or branch names tied to modules, for example:
 Each PR should describe:
 - which documented module it touches
 - whether it is backend, frontend, or shared
-- what workflow from `Documentation/` it improves
+- what workflow from `docs/academic/` or `docs/proposals/` it improves
 - how it was tested
 
 Recommended commit prefixes:

@@ -132,5 +132,5 @@ Create an interactive desktop-first Figma prototype for the Tharimpepe Feeding S
 
 ## Implementation Reference
 - HTML prototype path: [public/fsms-prototype.html](../public/fsms-prototype.html)
-- Task 2 requirement analysis: [Task2a_Requirements_Analysis.docx](./Task2a_Requirements_Analysis.docx)
-- Task 2 system design: [Task2b_System_Design.docx](./Task2b_System_Design.docx)
+- Task 2 requirement analysis: `../academic/ST10345327_OLEBOGENG_Task_2_Requirements_Analysis.pdf`
+- Task 2 system design: `../academic/ST10345327_OLEBOGENG_Task_2_System_Design.pdf`
