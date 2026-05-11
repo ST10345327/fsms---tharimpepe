@@ -10,6 +10,12 @@ The documented core scope is:
 - Reports and dashboard summaries
 - Secure user authentication
 
+## 🎨 Figma Prototype
+
+**Interactive UI Prototype:** [https://trunk-canon-07981658.figma.site](https://trunk-canon-07981658.figma.site)
+
+This Figma prototype showcases the complete user interface design for all modules: Dashboard, Beneficiaries, Attendance, Stock & Donations, Volunteers, and Reports. Use this as the visual reference for frontend implementation.
+
 ## Stack
 
 - Backend: PHP, PDO, MySQL/MariaDB
