@@ -218,7 +218,7 @@
     <main class="login-shell">
         <section class="login-mission" aria-label="Tharimpepe mission">
             <div class="login-mission-inner">
-                 <img class="login-logo" src="/assets/images/tharimpepe-logo.svg"
+                 <img class="login-logo" src="/assets/images/generate_raster.php?name=tharimpepe-logo&w=200&h=96&dpr=1"
                      srcset="/assets/images/generate_raster.php?name=tharimpepe-logo&w=200&h=96&dpr=1 1x, /assets/images/generate_raster.php?name=tharimpepe-logo&w=400&h=192&dpr=2 2x"
                      sizes="(max-width:640px) 120px, 200px"
                      alt="Tharimpepe" loading="lazy" width="200" height="96">
