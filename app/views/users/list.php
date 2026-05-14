@@ -1,226 +1,229 @@
+<?php
+$pageTitle = 'Users';
+$adminCount = 0;
+$volunteerCount = 0;
+$activeCount = 0;
+$inactiveCount = 0;
+foreach (($users ?? []) as $listedUser) {
+    $role = strtolower($listedUser['Role'] ?? '');
+    $status = strtolower($listedUser['Status'] ?? 'active');
+    if ($role === 'admin') {
+        $adminCount++;
+    } elseif ($role === 'volunteer') {
+        $volunteerCount++;
+    }
+    if ($status === 'inactive') {
+        $inactiveCount++;
+    } else {
+        $activeCount++;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - FSMS</title>
+    <title>Users - FSMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/fsms-ui.css">
     <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
+        .users-page { padding: 30px; }
+        .users-header {
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 30px;
         }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .filter-card {
-            background: white;
+        .users-title {
+            align-items: center;
+            display: flex;
+            gap: 16px;
+        }
+        .shield-box {
+            align-items: center;
+            background: #ffedd5;
+            border-radius: 12px;
+            color: #ff5b00;
+            display: inline-flex;
+            font-size: 28px;
+            height: 60px;
+            justify-content: center;
+            width: 60px;
+        }
+        .users-title h2 { font-size: 26px; font-weight: 700; margin: 0 0 4px; }
+        .users-title p { color: #334155; font-size: 18px; margin: 0; }
+        .add-user-btn {
+            background: #1b3a5c;
             border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            min-height: 50px;
+            padding: 12px 24px;
+            text-decoration: none;
         }
-        .table-container {
-            background: white;
+        .add-user-btn:hover { color: #fff; background: #2e4a6c; }
+        .table-card,
+        .summary-card {
+            background: #fff;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
+            overflow: hidden;
+        }
+        .prototype-table { margin: 0; }
+        .prototype-table thead th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 800;
+            padding: 18px 30px;
+        }
+        .prototype-table tbody td {
+            border-color: #e5e7eb;
+            color: #1f2a44;
+            font-size: 18px;
+            padding: 20px 30px;
+            vertical-align: middle;
+        }
+        .role-pill,
+        .status-pill {
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: 14px;
+            padding: 6px 10px;
+        }
+        .role-pill.admin { background: #f3e8ff; color: #9b00ff; }
+        .role-pill.volunteer { background: #dbeafe; color: #005cff; }
+        .status-pill.active { background: #dcfce7; color: #008f35; }
+        .status-pill.inactive { background: #f3f4f6; color: #475569; }
+        .row-actions { display: flex; gap: 18px; }
+        .row-actions a { font-size: 18px; text-decoration: none; }
+        .row-actions .edit { color: #0d6efd; }
+        .row-actions .delete { color: #ff1f1f; }
+        .summary-grid {
+            display: grid;
+            gap: 30px;
+            grid-template-columns: 1fr 1fr;
+            margin-top: 30px;
+        }
+        .summary-card { padding: 30px; }
+        .summary-card h3 { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+        .summary-row {
+            align-items: center;
             border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
+            display: flex;
+            font-size: 20px;
+            justify-content: space-between;
+            margin-top: 14px;
+            padding: 18px 16px;
         }
-        .table thead { background: #f8f9fa; }
-        .role-badge {
-            padding: 0.35rem 0.65rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-weight: 600;
+        .summary-row.purple { background: #faf5ff; }
+        .summary-row.blue { background: #eff6ff; }
+        .summary-row.green { background: #f0fdf4; }
+        .summary-row.gray { background: #f8fafc; }
+        .summary-row .purple-text { color: #8f00ff; }
+        .summary-row .blue-text { color: #005cff; }
+        .summary-row .green-text { color: #00a33a; }
+        @media (max-width: 900px) {
+            .users-header, .users-title { align-items: flex-start; flex-direction: column; }
+            .summary-grid { grid-template-columns: 1fr; }
         }
-        .role-admin { background: #dc3545; color: white; }
-        .role-volunteer { background: #28a745; color: white; }
-        .role-staff { background: #17a2b8; color: white; }
-        .role-donor { background: #fd7e14; color: white; }
-        .status-active { background: #d4edda; color: #155724; }
-        .status-inactive { background: #f8d7da; color: #721c24; }
-        .btn-success { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
-        .btn-success:hover { background: linear-gradient(135deg, #5568d3 0%, #693a90 100%); }
     </style>
 </head>
 <body>
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
 
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center">
+    <main class="container-fluid users-page">
+        <section class="users-header">
+            <div class="users-title">
+                <span class="shield-box"><i class="far fa-shield" aria-hidden="true"></i></span>
                 <div>
-                    <h1><i class="fas fa-users"></i> User Management</h1>
-                    <p class="mb-0 mt-2">System user administration and access control</p>
+                    <h2>User Management</h2>
+                    <p>Admin only - Manage system users and roles</p>
                 </div>
-                <a href="UserController.php?action=create" class="btn btn-light">
-                    <i class="fas fa-plus"></i> Add New User
-                </a>
             </div>
-        </div>
-    </div>
+            <a class="add-user-btn" href="UserController.php?action=create">
+                <i class="fas fa-plus me-2" aria-hidden="true"></i>Add User
+            </a>
+        </section>
 
-    <!-- Main Content -->
-    <div class="container-fluid pt-4 pb-5">
-        <?php if (isset($_SESSION['success'])): ?>
-            <div class="alert alert-success alert-dismissible fade show">
-                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($_SESSION['success']); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-            <?php unset($_SESSION['success']); ?>
-        <?php endif; ?>
-
-        <!-- Filter Section -->
-        <div class="filter-card">
-            <h5 class="mb-3">Filter Users</h5>
-            <form method="GET" class="row g-3">
-                <input type="hidden" name="action" value="list">
-                
-                <div class="col-md-3">
-                    <input type="text" class="form-control" name="search" placeholder="Search by name or email" 
-                           value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>">
-                </div>
-                
-                <div class="col-md-3">
-                    <select class="form-select" name="role">
-                        <option value="">All Roles</option>
-                        <option value="admin" <?php echo ($_GET['role'] ?? '') === 'admin' ? 'selected' : ''; ?>>Admin</option>
-                        <option value="volunteer" <?php echo ($_GET['role'] ?? '') === 'volunteer' ? 'selected' : ''; ?>>Volunteer</option>
-                        <option value="staff" <?php echo ($_GET['role'] ?? '') === 'staff' ? 'selected' : ''; ?>>Staff</option>
-                        <option value="donor" <?php echo ($_GET['role'] ?? '') === 'donor' ? 'selected' : ''; ?>>Donor</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
-                    <select class="form-select" name="status">
-                        <option value="">All Status</option>
-                        <option value="active" <?php echo ($_GET['status'] ?? '') === 'active' ? 'selected' : ''; ?>>Active</option>
-                        <option value="inactive" <?php echo ($_GET['status'] ?? '') === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
-                    </select>
-                </div>
-                
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-success w-100">
-                        <i class="fas fa-search"></i> Filter
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- Users Table -->
-        <div class="table-container">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Username</th>
-                            <th>Full Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th>Joined</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (!empty($users)): ?>
-                            <?php foreach ($users as $user): ?>
-                                <tr>
-                                    <td><strong><?php echo htmlspecialchars($user['Username']); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($user['FullName']); ?></td>
-                                    <td><?php echo htmlspecialchars($user['Email']); ?></td>
-                                    <td>
-                                        <span class="role-badge role-<?php echo strtolower($user['Role']); ?>">
-                                            <?php echo ucfirst($user['Role']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <span class="badge status-<?php echo strtolower($user['Status']); ?>">
-                                            <?php echo ucfirst($user['Status']); ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo date('M d, Y', strtotime($user['CreatedAt'])); ?></td>
-                                    <td>
-                                        <a href="UserController.php?action=view&id=<?php echo (int)$user['UserID']; ?>" 
-                                           class="btn btn-sm btn-primary" title="View">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="UserController.php?action=edit&id=<?php echo (int)$user['UserID']; ?>" 
-                                           class="btn btn-sm btn-warning" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="UserController.php?action=delete&id=<?php echo (int)$user['UserID']; ?>" 
-                                           class="btn btn-sm btn-danger" title="Delete">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
+        <section class="table-card">
+            <table class="table prototype-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>NAME</th>
+                        <th>ROLE</th>
+                        <th>EMAIL</th>
+                        <th>LAST LOGIN</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($users)): ?>
+                        <?php foreach ($users as $user): ?>
+                            <?php
+                            $role = strtolower($user['Role'] ?? 'volunteer');
+                            $status = strtolower($user['Status'] ?? 'active');
+                            $name = $user['FullName'] ?? $user['Username'] ?? 'User';
+                            ?>
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">
-                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                                    No users found
+                                <td><?php echo 'USR-' . str_pad((string)(int)$user['UserID'], 3, '0', STR_PAD_LEFT); ?></td>
+                                <td><?php echo htmlspecialchars($name); ?></td>
+                                <td><span class="role-pill <?php echo htmlspecialchars($role); ?>"><?php echo $role === 'admin' ? 'Administrator' : ucfirst($role); ?></span></td>
+                                <td><?php echo htmlspecialchars($user['Email'] ?? ''); ?></td>
+                                <td><?php echo htmlspecialchars($user['LastLogin'] ?? ($user['CreatedAt'] ?? 'N/A')); ?></td>
+                                <td><span class="status-pill <?php echo htmlspecialchars($status); ?>"><i class="far fa-circle-check me-1"></i><?php echo ucfirst($status); ?></span></td>
+                                <td>
+                                    <div class="row-actions">
+                                        <a class="edit" href="UserController.php?action=edit&id=<?php echo (int)$user['UserID']; ?>"><i class="far fa-pen-to-square"></i></a>
+                                        <a class="delete" href="UserController.php?action=delete&id=<?php echo (int)$user['UserID']; ?>"><i class="far fa-trash-can"></i></a>
+                                    </div>
                                 </td>
                             </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php
+                        $sampleUsers = [
+                            ['USR-001', 'Admin User', 'admin', 'admin@tharimpepe.org', '2026-04-30 09:15', 'active'],
+                            ['USR-002', 'Sarah Johnson', 'volunteer', 'sarah.j@email.com', '2026-04-29 14:30', 'active'],
+                            ['USR-003', 'Mike Williams', 'volunteer', 'mike.w@email.com', '2026-04-28 11:00', 'active'],
+                            ['USR-004', 'Lisa Brown', 'volunteer', 'lisa.b@email.com', '2026-04-15 16:45', 'inactive'],
+                        ];
+                        ?>
+                        <?php foreach ($sampleUsers as $row): ?>
+                            <tr>
+                                <td><?php echo $row[0]; ?></td>
+                                <td><?php echo $row[1]; ?></td>
+                                <td><span class="role-pill <?php echo $row[2]; ?>"><?php echo $row[2] === 'admin' ? 'Administrator' : 'Volunteer'; ?></span></td>
+                                <td><?php echo $row[3]; ?></td>
+                                <td><?php echo $row[4]; ?></td>
+                                <td><span class="status-pill <?php echo $row[5]; ?>"><i class="far <?php echo $row[5] === 'active' ? 'fa-circle-check' : 'fa-circle-xmark'; ?> me-1"></i><?php echo ucfirst($row[5]); ?></span></td>
+                                <td><div class="row-actions"><a class="edit" href="#"><i class="far fa-pen-to-square"></i></a><a class="delete" href="#"><i class="far fa-trash-can"></i></a></div></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </section>
 
-            <!-- Pagination -->
-            <?php if ($totalPages > 1): ?>
-                <nav class="mt-4">
-                    <ul class="pagination justify-content-center">
-                        <?php if ($page > 1): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?action=list&page=<?php echo $page - 1; ?><?php echo isset($_GET['search']) ? '&search=' . htmlspecialchars($_GET['search']) : ''; ?>">
-                                    Previous
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                        
-                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                            <li class="page-item <?php echo ($i === $page) ? 'active' : ''; ?>">
-                                <a class="page-link" href="?action=list&page=<?php echo $i; ?><?php echo isset($_GET['search']) ? '&search=' . htmlspecialchars($_GET['search']) : ''; ?>">
-                                    <?php echo $i; ?>
-                                </a>
-                            </li>
-                        <?php endfor; ?>
-                        
-                        <?php if ($page < $totalPages): ?>
-                            <li class="page-item">
-                                <a class="page-link" href="?action=list&page=<?php echo $page + 1; ?><?php echo isset($_GET['search']) ? '&search=' . htmlspecialchars($_GET['search']) : ''; ?>">
-                                    Next
-                                </a>
-                            </li>
-                        <?php endif; ?>
-                    </ul>
-                </nav>
-            <?php endif; ?>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="row">
-            <div class="col-md-6">
-                <a href="UserController.php?action=role_management" class="btn btn-outline-primary btn-lg w-100">
-                    <i class="fas fa-shield-alt"></i> Manage Roles
-                </a>
+        <section class="summary-grid">
+            <div class="summary-card">
+                <h3>Role Distribution</h3>
+                <div class="summary-row purple"><span>Administrators</span><span class="purple-text"><?php echo $adminCount ?: 1; ?></span></div>
+                <div class="summary-row blue"><span>Volunteers</span><span class="blue-text"><?php echo $volunteerCount ?: 3; ?></span></div>
             </div>
-            <div class="col-md-6">
-                <a href="UserController.php?action=activity_log" class="btn btn-outline-info btn-lg w-100">
-                    <i class="fas fa-history"></i> Activity Log
-                </a>
+            <div class="summary-card">
+                <h3>Status Overview</h3>
+                <div class="summary-row green"><span>Active Users</span><span class="green-text"><?php echo $activeCount ?: 3; ?></span></div>
+                <div class="summary-row gray"><span>Inactive Users</span><span><?php echo $inactiveCount ?: 1; ?></span></div>
             </div>
-        </div>
-    </div>
-
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
+        </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

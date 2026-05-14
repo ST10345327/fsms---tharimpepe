@@ -18,12 +18,12 @@ require_once __DIR__ . '/../app/helpers/bootstrap.php';
 try {
     // Check if user is already logged in
     if (isUserLoggedIn()) {
-        // Redirect to dashboard
-        header("Location: ../app/views/dashboard.php");
+        // Serve dashboard view directly (avoid external redirect outside DocumentRoot)
+        require_once __DIR__ . '/../app/views/dashboard.php';
         exit();
     } else {
-        // Redirect to login page
-        header("Location: ../app/views/login.php");
+        // Serve login view directly
+        require_once __DIR__ . '/../app/views/login.php';
         exit();
     }
 } catch (Exception $e) {

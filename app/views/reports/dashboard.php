@@ -1,3 +1,4 @@
+<?php $pageTitle = 'Reports'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,230 +7,169 @@
     <title>Reports - FSMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/fsms-ui.css">
     <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin-bottom: 30px;
+        .reports-page { padding: 30px; }
+        .reports-layout {
+            display: grid;
+            gap: 30px;
+            grid-template-columns: 0.9fr 1.85fr;
         }
-        .report-category {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
+        .report-card {
+            background: #fff;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
+            overflow: hidden;
         }
-        .report-item {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
+        .report-card-body { padding: 30px; }
+        .report-card h2 {
+            color: #071326;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 26px;
         }
-        .report-item:last-child {
-            border-bottom: none;
-        }
-        .report-item:hover {
-            background: #f8f9fa;
-        }
-        .report-icon {
-            font-size: 1.5rem;
-            color: #667eea;
-            min-width: 30px;
-        }
-        .report-info {
-            flex: 1;
-        }
-        .report-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        .report-description {
-            color: #666;
-            font-size: 0.9rem;
-            margin: 0;
-        }
-        .report-link {
-            text-decoration: none;
-            color: inherit;
+        .report-control label {
+            color: #1f2a44;
             display: block;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
-        .report-link:hover {
-            color: inherit;
+        .report-control { margin-bottom: 24px; }
+        .report-control .form-control,
+        .report-control .form-select {
+            border-radius: 10px;
+            color: #1b3a5c;
+            font-size: 20px;
+            min-height: 52px;
         }
-        .btn-report {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
+        .report-btn {
+            border: 0;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 20px;
+            font-weight: 700;
+            min-height: 50px;
+            width: 100%;
         }
-        .btn-report:hover {
-            background: linear-gradient(135deg, #5568d3 0%, #693a90 100%);
-            color: white;
+        .report-btn.navy { background: #1b3a5c; }
+        .report-btn.red { background: #f00013; }
+        .report-btn.green { background: #00b341; }
+        .report-btn.gray { background: #4b5563; }
+        .export-card { margin-top: 30px; }
+        .export-card .report-btn { margin-top: 14px; }
+        .preview-head {
+            align-items: center;
+            border-bottom: 1px solid #dfe3e8;
+            display: flex;
+            justify-content: space-between;
+            padding: 24px 20px;
         }
+        .preview-head h2 { margin: 0; }
+        .preview-body { padding: 48px 40px; }
+        .preview-title { text-align: center; }
+        .preview-title h1 { font-size: 30px; font-weight: 700; margin-bottom: 12px; }
+        .preview-title p { color: #475569; font-size: 20px; margin-bottom: 12px; }
+        .preview-rule { border-top: 1px solid #dfe3e8; margin: 30px 0 40px; }
+        .report-metrics {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            margin-bottom: 34px;
+        }
+        .report-metric {
+            border-radius: 10px;
+            padding: 22px;
+            text-align: center;
+        }
+        .report-metric.blue { background: #eff6ff; color: #005cff; }
+        .report-metric.green { background: #f0fdf4; color: #00a33a; }
+        .report-metric.purple { background: #faf5ff; color: #8f00ff; }
+        .report-metric span { color: #334155; display: block; font-size: 16px; margin-bottom: 8px; }
+        .report-metric strong { font-size: 30px; font-weight: 400; }
+        .preview-table th { background: #f8fafc; }
+        .preview-table th, .preview-table td { border-color: #e5e7eb; font-size: 18px; padding: 12px 20px; }
+        @media (max-width: 1100px) { .reports-layout, .report-metrics { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
 
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="container-fluid">
-            <h1><i class="fas fa-file-alt"></i> Reports & Analytics</h1>
-            <p class="mb-0 mt-2">Access comprehensive system reports and data analysis</p>
+    <main class="container-fluid reports-page">
+        <div class="reports-layout">
+            <aside>
+                <section class="report-card">
+                    <div class="report-card-body">
+                        <h2>Report Generator</h2>
+                        <div class="report-control">
+                            <label for="reportType">Report Type</label>
+                            <select id="reportType" class="form-select">
+                                <option>Attendance Report</option>
+                                <option>Donation Report</option>
+                                <option>Stock Report</option>
+                                <option>Impact Report</option>
+                            </select>
+                        </div>
+                        <div class="report-control">
+                            <label for="startDate">Start Date</label>
+                            <input id="startDate" class="form-control" type="date">
+                        </div>
+                        <div class="report-control">
+                            <label for="endDate">End Date</label>
+                            <input id="endDate" class="form-control" type="date">
+                        </div>
+                        <button class="report-btn navy" type="button">Generate Report</button>
+                    </div>
+                </section>
+
+                <section class="report-card export-card">
+                    <div class="report-card-body">
+                        <h2>Export Options</h2>
+                        <button class="report-btn red" type="button"><i class="far fa-file-pdf me-2"></i>Export PDF</button>
+                        <button class="report-btn green" type="button"><i class="far fa-file-excel me-2"></i>Export Excel</button>
+                        <button class="report-btn gray" type="button"><i class="fas fa-print me-2"></i>Print</button>
+                    </div>
+                </section>
+            </aside>
+
+            <section class="report-card">
+                <div class="preview-head">
+                    <h2>Report Preview</h2>
+                    <i class="fas fa-download" aria-hidden="true"></i>
+                </div>
+                <div class="preview-body">
+                    <div class="preview-title">
+                        <h1>Tharimpepe Feeding Scheme</h1>
+                        <p>Attendance Report</p>
+                        <p class="fs-6">Generated on: <?php echo date('Y/m/d'); ?></p>
+                    </div>
+                    <div class="preview-rule"></div>
+                    <div class="report-metrics">
+                        <div class="report-metric blue"><span>Total Days</span><strong>30</strong></div>
+                        <div class="report-metric green"><span>Total Meals</span><strong>3,845</strong></div>
+                        <div class="report-metric purple"><span>Avg Daily</span><strong>128</strong></div>
+                    </div>
+                    <h3 class="h4 fw-bold mb-3">Daily Breakdown</h3>
+                    <table class="table preview-table">
+                        <thead>
+                            <tr><th>Date</th><th>Present</th><th>Absent</th><th>Total</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php for ($day = 1; $day <= 5; $day++): ?>
+                                <tr>
+                                    <td>2026-04-0<?php echo $day; ?></td>
+                                    <td>125</td>
+                                    <td>17</td>
+                                    <td>142</td>
+                                </tr>
+                            <?php endfor; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container-fluid pt-4 pb-5">
-        <!-- Feeding Program Reports -->
-        <div class="report-category">
-            <h4 class="mb-3"><i class="fas fa-utensils"></i> Feeding Program Reports</h4>
-            
-            <a href="ReportsController.php?action=attendance" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-clipboard-check"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Attendance Report</div>
-                        <p class="report-description">View detailed attendance records by date and beneficiary</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-
-            <a href="ReportsController.php?action=beneficiaries" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-users"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Beneficiary Report</div>
-                        <p class="report-description">List all beneficiaries with filter options by role and status</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Volunteer Reports -->
-        <div class="report-category">
-            <h4 class="mb-3"><i class="fas fa-calendar"></i> Volunteer Reports</h4>
-            
-            <a href="ReportsController.php?action=volunteer_performance" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-star"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Volunteer Performance Report</div>
-                        <p class="report-description">Analyze volunteer hours, completion rates, and performance metrics</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-
-            <a href="ReportsController.php?action=volunteer_schedule" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-calendar-check"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Volunteer Schedule Report</div>
-                        <p class="report-description">View volunteer schedules with filtering by date and status</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Donation Reports -->
-        <div class="report-category">
-            <h4 class="mb-3"><i class="fas fa-gift"></i> Donation & Funding Reports</h4>
-            
-            <a href="ReportsController.php?action=donations" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-money-bill"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Donation Report</div>
-                        <p class="report-description">Track donations by date, type, and donor with summary statistics</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-
-            <a href="ReportsController.php?action=financial_summary" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-chart-line"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Financial Summary Report</div>
-                        <p class="report-description">Monthly financial overview with donations and expenditures</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Inventory Reports -->
-        <div class="report-category">
-            <h4 class="mb-3"><i class="fas fa-boxes"></i> Inventory Reports</h4>
-            
-            <a href="ReportsController.php?action=food_stock" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-box"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Food Stock Report</div>
-                        <p class="report-description">Current inventory status with stock levels and expiry dates</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-
-            <a href="ReportsController.php?action=food_distribution" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-truck"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Food Distribution Report</div>
-                        <p class="report-description">Track food distribution history with location and purpose</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-        </div>
-
-        <!-- System Reports -->
-        <div class="report-category">
-            <h4 class="mb-3"><i class="fas fa-cog"></i> System & Audit Reports</h4>
-            
-            <a href="ReportsController.php?action=program_summary" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-chart-bar"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Program Summary Report</div>
-                        <p class="report-description">Comprehensive overview of all program activities and statistics</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-
-            <a href="ReportsController.php?action=audit" class="report-link">
-                <div class="report-item">
-                    <div class="report-icon"><i class="fas fa-history"></i></div>
-                    <div class="report-info">
-                        <div class="report-name">Activity Audit Report</div>
-                        <p class="report-description">System activity log with user actions and timestamps for compliance</p>
-                    </div>
-                    <div><i class="fas fa-arrow-right" style="color: #667eea;"></i></div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="text-center mt-4">
-            <a href="../../views/dashboard.php" class="btn btn-outline-primary btn-lg">
-                <i class="fas fa-arrow-left"></i> Back to Dashboard
-            </a>
-        </div>
-    </div>
-
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -305,8 +305,18 @@ class TestRunner
 
                 try {
                     // Run setup/teardown around each individual test method.
+                    // Instrumentation: print which test is starting to help locate hangs.
+                    $testName = get_class($test) . '::' . $method->getName();
+                    echo "--> RUNNING: {$testName}\n";
+                    // Flush output immediately
+                    if (function_exists('flush')) { @flush(); }
+
                     $test->setUp();
+
                     $method->invoke($test);
+
+                    echo "    COMPLETED: {$testName}\n";
+                    if (function_exists('flush')) { @flush(); }
                     $passedTests++;
 
                     $this->results[] = [
@@ -315,6 +325,8 @@ class TestRunner
                         'assertions' => $test->getAssertionCount()
                     ];
                 } catch (AssertionException $e) {
+                    $testName = get_class($test) . '::' . $method->getName();
+                    echo "    FAILURE: {$testName} - " . $e->getMessage() . "\n";
                     $failedTests++;
 
                     $this->results[] = [
@@ -418,7 +430,27 @@ class DatabaseTestCase extends TestCase
     public function setUp()
     {
         try {
-            $this->db = getDBConnection();
+            // Allow tests to run against an in-memory SQLite DB when requested.
+            if (getenv('FSMS_TEST_SQLITE') === '1') {
+                $this->db = new PDO('sqlite::memory:');
+                $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+                // Create a minimal Users table compatible with the User model
+                $create = "CREATE TABLE IF NOT EXISTS Users (
+                    UserID INTEGER PRIMARY KEY AUTOINCREMENT,
+                    Username TEXT UNIQUE,
+                    Email TEXT UNIQUE,
+                    PasswordHash TEXT,
+                    Role TEXT,
+                    CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                    IsActive INTEGER DEFAULT 1
+                );";
+
+                $this->db->exec($create);
+            } else {
+                $this->db = getDBConnection();
+            }
+
             $this->db->beginTransaction();
             $this->inTransaction = true;
         } catch (Exception $e) {
