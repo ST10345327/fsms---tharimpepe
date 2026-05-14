@@ -1,350 +1,311 @@
+<?php
+$pageTitle = 'Attendance';
+$totalBeneficiaries = count($beneficiaries);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulk Attendance Recording - FSMS</title>
+    <title>Attendance - FSMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/fsms-ui.css">
     <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+        .attendance-page {
             padding: 30px;
-            border-radius: 0;
-            margin-bottom: 30px;
         }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .form-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
+
+        .control-card,
+        .summary-card,
+        .attendance-table-card {
+            background: #fff;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
         }
-        .beneficiary-item {
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-            background: white;
-            transition: all 0.3s ease;
-        }
-        .beneficiary-item:hover { border-color: #667eea; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .beneficiary-header {
-            display: flex;
+
+        .control-card {
             align-items: center;
+            display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 30px;
+            padding: 30px 32px;
         }
-        .beneficiary-info {
-            display: flex;
+
+        .date-control {
             align-items: center;
-            gap: 15px;
-        }
-        .beneficiary-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
+            gap: 18px;
         }
-        .beneficiary-details h6 { margin: 0; color: #333; }
-        .beneficiary-details small { color: #666; }
-        .status-selector {
+
+        .date-control label {
+            align-items: center;
+            color: #1f2a44;
             display: flex;
-            gap: 10px;
-            align-items: center;
+            font-size: 18px;
+            font-weight: 700;
+            gap: 12px;
+            margin: 0;
         }
-        .status-btn {
-            padding: 8px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 20px;
-            background: white;
-            color: #666;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .status-btn:hover { border-color: #667eea; }
-        .status-btn.active {
-            border-color: #667eea;
-            background: #667eea;
-            color: white;
-        }
-        .status-present.active { border-color: #28a745; background: #28a745; }
-        .status-absent.active { border-color: #dc3545; background: #dc3545; }
-        .status-marked.active { border-color: #ffc107; background: #ffc107; color: #000; }
-        .notes-input { margin-top: 10px; }
-        .notes-input input { width: 100%; border-radius: 4px; border: 1px solid #ddd; padding: 5px 10px; }
-        .bulk-actions {
-            background: white;
+
+        .date-control .form-control {
             border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            color: #1b3a5c;
+            font-size: 20px;
+            min-height: 52px;
+            width: 214px;
+        }
+
+        .bulk-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .bulk-buttons .btn {
+            font-size: 16px;
+            min-height: 46px;
+            padding-left: 22px;
+            padding-right: 22px;
+        }
+
+        .summary-grid {
+            display: grid;
+            gap: 30px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             margin-bottom: 30px;
         }
-        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
-        .btn-primary:hover { background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%); }
-        .progress-summary {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 20px;
+
+        .summary-card {
+            padding: 30px 32px;
+        }
+
+        .summary-label {
+            color: #1f2a44;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .summary-value {
+            color: #071326;
+            font-size: 36px;
+            font-weight: 400;
+            line-height: 1;
+        }
+
+        .summary-value.present { color: #00b341; }
+        .summary-value.absent { color: #e60012; }
+
+        .attendance-table-card {
+            overflow: hidden;
+        }
+
+        .prototype-table {
+            margin: 0;
+        }
+
+        .prototype-table thead th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 800;
+            padding: 18px 30px;
+        }
+
+        .prototype-table tbody td {
+            border-color: #e5e7eb;
+            color: #071326;
+            font-size: 18px;
+            padding: 26px 30px;
+            vertical-align: middle;
+        }
+
+        .present-toggle {
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: 700;
+            min-width: 98px;
+            padding: 12px 20px;
+        }
+
+        .present-toggle.yes {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #009a35;
+        }
+
+        .present-toggle.no {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #e60012;
+        }
+
+        .notes-input {
+            border-radius: 6px;
+            min-height: 38px;
+        }
+
+        .save-card {
+            align-items: center;
+            background: #fff;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 24px;
+            padding: 22px;
+        }
+
+        @media (max-width: 900px) {
+            .control-card,
+            .date-control {
+                align-items: stretch;
+                flex-direction: column;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
 
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1><i class="fas fa-users"></i> Bulk Attendance Recording</h1>
-                    <p class="mb-0 mt-2">Record attendance for multiple beneficiaries at once</p>
-                </div>
-                <a href="AttendanceController.php?action=daily-summary&date=<?php echo $sessionDate; ?>" class="btn btn-light">
-                    <i class="fas fa-arrow-left"></i> Back to Summary
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container-fluid pt-4 pb-5">
-        <!-- Messages -->
+    <main class="container-fluid attendance-page">
         <?php if (!empty($error)): ?>
-            <div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-            </div>
+            <div class="alert alert-danger" role="alert"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
         <?php if (!empty($success)): ?>
-            <div class="alert alert-success" role="alert">
-                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($success); ?>
-            </div>
+            <div class="alert alert-success" role="alert"><?php echo htmlspecialchars($success); ?></div>
         <?php endif; ?>
 
-        <!-- Session Date -->
-        <div class="bulk-actions">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h5><i class="fas fa-calendar-alt"></i> Session Date: <?php echo date('l, F d, Y', strtotime($sessionDate)); ?></h5>
-                    <form method="GET" action="AttendanceController.php" class="d-flex mt-2">
-                        <input type="hidden" name="action" value="bulk-record">
-                        <input type="date" name="date" class="form-control me-2"
-                               value="<?php echo htmlspecialchars($sessionDate); ?>" max="<?php echo date('Y-m-d'); ?>">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="fas fa-sync"></i> Change Date
-                        </button>
-                    </form>
-                </div>
-                <div class="col-md-6 text-end">
-                    <div class="d-flex gap-2 justify-content-end">
-                        <button type="button" class="btn btn-outline-success" onclick="markAllPresent()">
-                            <i class="fas fa-check-circle"></i> Mark All Present
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary" onclick="clearAll()">
-                            <i class="fas fa-undo"></i> Clear All
-                        </button>
-                    </div>
-                </div>
+        <section class="control-card">
+            <form method="GET" action="AttendanceController.php" class="date-control">
+                <input type="hidden" name="action" value="bulk-record">
+                <label for="attendanceDate">
+                    <i class="far fa-calendar" aria-hidden="true"></i>
+                    Attendance Date:
+                </label>
+                <input type="date" id="attendanceDate" name="date" class="form-control"
+                       value="<?php echo htmlspecialchars($sessionDate); ?>" max="<?php echo date('Y-m-d'); ?>">
+            </form>
+            <div class="bulk-buttons">
+                <button type="button" class="btn btn-success" onclick="markAll('present')">Mark All Present</button>
+                <button type="button" class="btn btn-secondary" onclick="markAll('absent')">Mark All Absent</button>
             </div>
-        </div>
+        </section>
 
-        <!-- Bulk Recording Form -->
+        <section class="summary-grid" aria-label="Attendance counters">
+            <div class="summary-card">
+                <div class="summary-label">Present</div>
+                <div class="summary-value present" id="present-count">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Absent</div>
+                <div class="summary-value absent" id="absent-count">0</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Total</div>
+                <div class="summary-value" id="total-count"><?php echo $totalBeneficiaries; ?></div>
+            </div>
+        </section>
+
         <form method="POST" action="AttendanceController.php?action=bulk-record" id="bulkAttendanceForm">
             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
             <input type="hidden" name="session_date" value="<?php echo htmlspecialchars($sessionDate); ?>">
 
-            <!-- HZ-ATT-UI-006: Bulk attendance recording interface -->
-            <div class="form-card">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="mb-0"><i class="fas fa-clipboard-list"></i> Beneficiary Attendance</h4>
-                    <span class="badge bg-primary"><?php echo count($beneficiaries); ?> Beneficiaries</span>
-                </div>
-
-                <div class="row">
-                    <?php if (!empty($beneficiaries)): ?>
-                        <?php foreach ($beneficiaries as $index => $beneficiary): ?>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="beneficiary-item">
-                                    <div class="beneficiary-header">
-                                        <div class="beneficiary-info">
-                                            <div class="beneficiary-avatar">
-                                                <?php echo strtoupper(substr($beneficiary['FirstName'], 0, 1) . substr($beneficiary['LastName'], 0, 1)); ?>
-                                            </div>
-                                            <div class="beneficiary-details">
-                                                <h6><?php echo htmlspecialchars($beneficiary['FirstName'] . ' ' . $beneficiary['LastName']); ?></h6>
-                                                <small>Age: <?php echo htmlspecialchars($beneficiary['Age'] ?? 'N/A'); ?></small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <input type="hidden" name="attendance[<?php echo $index; ?>][beneficiary_id]" value="<?php echo $beneficiary['BeneficiaryID']; ?>">
-
-                                    <div class="status-selector">
-                                        <button type="button" class="status-btn status-present"
-                                                onclick="setStatus(<?php echo $index; ?>, 'present', this)">
-                                            <i class="fas fa-check"></i> Present
+            <section class="attendance-table-card">
+                <table class="table prototype-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>NAME</th>
+                            <th>PRESENT</th>
+                            <th>NOTES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($beneficiaries)): ?>
+                            <?php foreach ($beneficiaries as $index => $beneficiary): ?>
+                                <?php
+                                $beneficiaryCode = sprintf('BEN-%03d', (int)$beneficiary['BeneficiaryID']);
+                                $defaultPresent = $index % 2 === 1;
+                                ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($beneficiaryCode); ?></td>
+                                    <td><?php echo htmlspecialchars($beneficiary['FirstName'] . ' ' . $beneficiary['LastName']); ?></td>
+                                    <td>
+                                        <input type="hidden" name="attendance[<?php echo $index; ?>][beneficiary_id]" value="<?php echo (int)$beneficiary['BeneficiaryID']; ?>">
+                                        <input type="hidden" name="attendance[<?php echo $index; ?>][status]" value="<?php echo $defaultPresent ? 'present' : 'absent'; ?>" data-status-input>
+                                        <button type="button"
+                                                class="present-toggle <?php echo $defaultPresent ? 'yes' : 'no'; ?>"
+                                                onclick="toggleAttendance(this)">
+                                            <i class="far <?php echo $defaultPresent ? 'fa-circle-check' : 'fa-circle-xmark'; ?> me-2" aria-hidden="true"></i>
+                                            <span><?php echo $defaultPresent ? 'Yes' : 'No'; ?></span>
                                         </button>
-                                        <button type="button" class="status-btn status-absent"
-                                                onclick="setStatus(<?php echo $index; ?>, 'absent', this)">
-                                            <i class="fas fa-times"></i> Absent
-                                        </button>
-                                        <button type="button" class="status-btn status-marked"
-                                                onclick="setStatus(<?php echo $index; ?>, 'marked', this)">
-                                            <i class="fas fa-exclamation-triangle"></i> Marked
-                                        </button>
-                                    </div>
-
-                                    <div class="notes-input">
-                                        <input type="text" name="attendance[<?php echo $index; ?>][notes]"
+                                    </td>
+                                    <td>
+                                        <input class="form-control notes-input" type="text"
+                                               name="attendance[<?php echo $index; ?>][notes]"
                                                placeholder="Optional notes..." maxlength="255">
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="col-12">
-                            <div class="alert alert-info" role="alert">
-                                <i class="fas fa-info-circle"></i> No active beneficiaries found.
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-5">No active beneficiaries found.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </section>
 
-                <!-- Progress Summary -->
-                <div class="progress-summary">
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <div class="h5 mb-0" id="total-count"><?php echo count($beneficiaries); ?></div>
-                            <small class="text-muted">Total</small>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="h5 mb-0 text-success" id="present-count">0</div>
-                            <small class="text-muted">Present</small>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="h5 mb-0 text-danger" id="absent-count">0</div>
-                            <small class="text-muted">Absent</small>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="h5 mb-0 text-warning" id="marked-count">0</div>
-                            <small class="text-muted">Marked</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Submit Actions -->
-            <div class="form-card">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <p class="mb-0 text-muted">
-                            <i class="fas fa-info-circle"></i>
-                            Only beneficiaries with selected status will be recorded. Unselected beneficiaries will be skipped.
-                        </p>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <a href="AttendanceController.php?action=daily-summary&date=<?php echo $sessionDate; ?>" class="btn btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Record Attendance
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <section class="save-card">
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-save me-2" aria-hidden="true"></i>Save Attendance
+                </button>
+            </section>
         </form>
-    </div>
-
-    <!-- Footer -->
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let attendanceData = {};
-
-        function setStatus(index, status, button) {
-            // Remove active class from all buttons in this group
-            const buttons = button.parentElement.querySelectorAll('.status-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-
-            // Add active class to clicked button
-            button.classList.add('active');
-
-            // Store the selection
-            attendanceData[index] = { status: status };
-
-            updateSummary();
+        function updateCounters() {
+            const statuses = Array.from(document.querySelectorAll('[data-status-input]')).map(input => input.value);
+            document.getElementById('present-count').textContent = statuses.filter(status => status === 'present').length;
+            document.getElementById('absent-count').textContent = statuses.filter(status => status === 'absent').length;
         }
 
-        function markAllPresent() {
-            const buttons = document.querySelectorAll('.status-present');
-            buttons.forEach(button => {
-                const index = Array.from(button.parentElement.parentElement.parentElement.children).indexOf(button.parentElement.parentElement);
-                setStatus(Array.from(button.closest('.row').children).indexOf(button.closest('.col-md-6, .col-lg-4')), 'present', button);
-            });
+        function setButton(button, status) {
+            const input = button.closest('td').querySelector('[data-status-input]');
+            input.value = status;
+            button.classList.toggle('yes', status === 'present');
+            button.classList.toggle('no', status === 'absent');
+            button.querySelector('i').className = status === 'present'
+                ? 'far fa-circle-check me-2'
+                : 'far fa-circle-xmark me-2';
+            button.querySelector('span').textContent = status === 'present' ? 'Yes' : 'No';
         }
 
-        function clearAll() {
-            // Remove active class from all buttons
-            document.querySelectorAll('.status-btn').forEach(btn => btn.classList.remove('active'));
-
-            // Clear attendance data
-            attendanceData = {};
-
-            updateSummary();
+        function toggleAttendance(button) {
+            const input = button.closest('td').querySelector('[data-status-input]');
+            setButton(button, input.value === 'present' ? 'absent' : 'present');
+            updateCounters();
         }
 
-        function updateSummary() {
-            const present = Object.values(attendanceData).filter(item => item.status === 'present').length;
-            const absent = Object.values(attendanceData).filter(item => item.status === 'absent').length;
-            const marked = Object.values(attendanceData).filter(item => item.status === 'marked').length;
-
-            document.getElementById('present-count').textContent = present;
-            document.getElementById('absent-count').textContent = absent;
-            document.getElementById('marked-count').textContent = marked;
+        function markAll(status) {
+            document.querySelectorAll('.present-toggle').forEach(button => setButton(button, status));
+            updateCounters();
         }
 
-        // Form validation
-        document.getElementById('bulkAttendanceForm').addEventListener('submit', function(e) {
-            const selectedCount = Object.keys(attendanceData).length;
-
-            if (selectedCount === 0) {
-                alert('Please select attendance status for at least one beneficiary.');
-                e.preventDefault();
-                return;
-            }
-
-            // Add hidden inputs for selected attendance
-            for (const [index, data] of Object.entries(attendanceData)) {
-                // Find the corresponding form inputs and ensure they're included
-                const beneficiaryInput = document.querySelector(`input[name="attendance[${index}][beneficiary_id]"]`);
-                if (beneficiaryInput) {
-                    // Add status to the form data
-                    let statusInput = document.querySelector(`input[name="attendance[${index}][status]"]`);
-                    if (!statusInput) {
-                        statusInput = document.createElement('input');
-                        statusInput.type = 'hidden';
-                        statusInput.name = `attendance[${index}][status]`;
-                        beneficiaryInput.parentElement.appendChild(statusInput);
-                    }
-                    statusInput.value = data.status;
-                }
-            }
+        document.getElementById('attendanceDate').addEventListener('change', function () {
+            this.form.submit();
         });
+
+        updateCounters();
     </script>
 </body>
 </html>

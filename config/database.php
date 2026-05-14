@@ -19,12 +19,14 @@ class Database
 
     public function __construct()
     {
+        // Default to XAMPP MySQL defaults for local development
         $this->host = getenv('DB_HOST') ?: "127.0.0.1";
         $this->port = (int)(getenv('DB_PORT') ?: 3306);
         $this->db_name = getenv('DB_NAME') ?: "fsms";
         $fallback = getenv('DB_FALLBACKS') ?: "fsms,fsms_database,fsms_db";
         $this->fallback_databases = array_values(array_filter(array_map('trim', explode(',', $fallback))));
         $this->username = getenv('DB_USERNAME') ?: "root";
+        // XAMPP default: empty password for root user on local dev
         $this->password = getenv('DB_PASSWORD');
         if ($this->password === false) {
             $this->password = "";

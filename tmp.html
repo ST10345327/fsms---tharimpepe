@@ -218,10 +218,7 @@
     <main class="login-shell">
         <section class="login-mission" aria-label="Tharimpepe mission">
             <div class="login-mission-inner">
-                 <img class="login-logo" src="/assets/images/tharimpepe-logo.svg"
-                     srcset="/assets/images/generate_raster.php?name=tharimpepe-logo&w=200&h=96&dpr=1 1x, /assets/images/generate_raster.php?name=tharimpepe-logo&w=400&h=192&dpr=2 2x"
-                     sizes="(max-width:640px) 120px, 200px"
-                     alt="Tharimpepe" loading="lazy" width="200" height="96">
+                <img class="login-logo" src="/assets/images/tharimpepe-logo.png" alt="Tharimpepe">
                 <h1>Tharimpepe Feeding Scheme</h1>
                 <p class="system-name">Feeding Scheme Management System</p>
                 <p class="mission-copy">
@@ -237,19 +234,8 @@
                     <p>Sign in to access the admin portal</p>
                 </div>
 
-                <?php if (isset($_GET['logout']) && $_GET['logout'] === 'success'): ?>
-                    <div class="logout-success" role="status">
-                        <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
-                        You have been logged out successfully.
-                    </div>
-                <?php endif; ?>
-
-                <?php if (!empty($error)): ?>
-                    <div class="alert-error" role="alert">
-                        <?php echo htmlspecialchars($error); ?>
-                    </div>
-                <?php endif; ?>
-
+                
+                
                 <form method="POST" action="../controllers/AuthController.php?action=login">
                     <div class="form-group">
                         <label for="username">Username</label>

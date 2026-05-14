@@ -1,0 +1,6 @@
+# Hosts entry for FSMS local dev
+# Add the following line to C:\Windows\System32\drivers\etc\hosts (requires admin):
+
+127.0.0.1    fsms.local
+
+# After adding, restart Apache and visit http://fsms.local

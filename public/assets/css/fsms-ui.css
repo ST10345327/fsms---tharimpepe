@@ -380,3 +380,28 @@ body:has(.fsms-sidebar) .page-header p {
         width: 100%;
     }
 }
+
+/* Hamburger visibility and offcanvas tweaks */
+.fsms-hamburger {
+    display: none;
+    align-items: center;
+    background: transparent;
+    border: 0;
+    color: var(--fsms-muted);
+    font-size: 20px;
+    padding: 6px 8px;
+}
+
+@media (max-width: 640px) {
+    .fsms-hamburger {
+        display: inline-flex;
+    }
+    .offcanvas-nav .fsms-nav-link {
+        color: var(--fsms-text);
+        padding: 12px 8px;
+        border-radius: 6px;
+    }
+    .offcanvas-nav .fsms-nav-link i {
+        width: 20px;
+    }
+}

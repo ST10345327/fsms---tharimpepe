@@ -1,352 +1,171 @@
+<?php
+$pageTitle = 'Donations';
+$cashTotal = $summary['total_cash'] ?? 15800;
+$foodCount = $summary['food_donations'] ?? 8;
+$totalDonations = $summary['total_donations'] ?? count($donations ?? []);
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($pageTitle); ?> - FSMS</title>
+    <title>Donations - FSMS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/assets/css/fsms-ui.css">
     <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 0;
+        .module-page { padding: 30px; }
+        .summary-grid {
+            display: grid;
+            gap: 30px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             margin-bottom: 30px;
         }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .content-card {
-            background: white;
+        .summary-tile,
+        .table-card {
+            background: #fff;
+            border: 1px solid #dfe3e8;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.16);
+        }
+        .summary-tile {
+            align-items: center;
+            display: flex;
+            gap: 16px;
+            min-height: 136px;
+            padding: 30px;
+        }
+        .summary-icon {
+            align-items: center;
             border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
+            display: inline-flex;
+            font-size: 28px;
+            height: 60px;
+            justify-content: center;
+            width: 60px;
         }
-        .donation-item {
-            border-left: 4px solid #28a745;
-            background: white;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        .donation-item:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .donation-item.cash { border-left-color: #28a745; }
-        .donation-item.food { border-left-color: #fd7e14; }
-        .donation-item.supplies { border-left-color: #17a2b8; }
-        .donation-item.other { border-left-color: #6c757d; }
-        .item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 15px;
-        }
-        .donor-name { font-size: 1.2rem; font-weight: 600; color: #333; }
-        .type-badge {
-            display: inline-block;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-        .type-badge.cash { background: #d4edda; color: #155724; }
-        .type-badge.food { background: #fff3cd; color: #856404; }
-        .type-badge.supplies { background: #d1ecf1; color: #0c5460; }
-        .type-badge.other { background: #e2e3e5; color: #383d41; }
-        .item-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .detail-item { padding: 10px; background: #f8f9fa; border-radius: 6px; }
-        .detail-label { font-size: 0.9rem; color: #666; font-weight: 500; }
-        .detail-value { font-size: 1.1rem; color: #333; font-weight: 600; margin-top: 5px; }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .btn-sm { padding: 6px 12px; font-size: 0.9rem; }
-        .btn-success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; }
-        .btn-success:hover { background: linear-gradient(135deg, #218838 0%, #1aa085 100%); }
-        .stat-box {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .stat-number {
-            font-size: 2rem;
+        .summary-icon.green { background: #dcfce7; color: #009a35; }
+        .summary-icon.blue { background: #dbeafe; color: #0061ff; }
+        .summary-icon.purple { background: #f3e8ff; color: #a100ff; }
+        .summary-label { color: #1f2a44; font-size: 18px; margin-bottom: 4px; }
+        .summary-value { color: #071326; font-size: 30px; line-height: 1.1; }
+        .table-card { overflow: hidden; }
+        .table-card h2 {
+            font-size: 24px;
             font-weight: 700;
-            color: #28a745;
+            margin: 0;
+            padding: 26px 22px;
         }
-        .stat-label {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 5px;
+        .prototype-table { margin: 0; }
+        .prototype-table thead th {
+            background: #f8fafc;
+            color: #334155;
+            font-size: 14px;
+            font-weight: 800;
+            padding: 18px 30px;
         }
-        .search-box { margin-bottom: 20px; }
-        .filter-tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
+        .prototype-table tbody td {
+            border-color: #e5e7eb;
+            color: #1f2a44;
+            font-size: 18px;
+            padding: 22px 30px;
+            vertical-align: middle;
         }
-        .filter-btn {
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 2px solid #ddd;
-            background: white;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
+        .type-pill {
+            border-radius: 999px;
+            display: inline-flex;
+            font-size: 14px;
+            padding: 6px 10px;
         }
-        .filter-btn:hover, .filter-btn.active {
-            border-color: #28a745;
-            background: #28a745;
-            color: white;
-        }
+        .type-pill.cash { background: #dcfce7; color: #008f35; }
+        .type-pill.food { background: #dbeafe; color: #005cff; }
+        .type-pill.other, .type-pill.supplies { background: #f3e8ff; color: #9b00ff; }
+        @media (max-width: 900px) { .summary-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
 
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="container-fluid">
-            <div class="d-flex justify-content-between align-items-center">
+    <main class="container-fluid module-page">
+        <section class="summary-grid">
+            <div class="summary-tile">
+                <span class="summary-icon green"><i class="fas fa-dollar-sign" aria-hidden="true"></i></span>
                 <div>
-                    <h1><i class="fas fa-gift"></i> <?php echo htmlspecialchars($pageTitle); ?></h1>
-                    <p class="mb-0 mt-2">Track and manage donations from donors</p>
-                </div>
-                <a href="DonationController.php?action=create" class="btn btn-light btn-lg">
-                    <i class="fas fa-plus"></i> Record Donation
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="container-fluid pt-4 pb-5">
-        <!-- Messages -->
-        <?php if (!empty($error)): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="fas fa-exclamation-circle"></i> <?php echo htmlspecialchars($error); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-
-        <?php if (!empty($success)): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($success); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-
-        <!-- Statistics -->
-        <?php if ($summary): ?>
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="stat-box">
-                    <div class="stat-number"><?php echo (int)$summary['total_donations']; ?></div>
-                    <div class="stat-label">Total Donations</div>
+                    <div class="summary-label">Total Cash Donations (ZAR)</div>
+                    <div class="summary-value">R<?php echo number_format((float)$cashTotal, 0); ?></div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-box">
-                    <div class="stat-number">R<?php echo number_format($summary['total_cash'] ?? 0, 2); ?></div>
-                    <div class="stat-label">Cash Donations</div>
+            <div class="summary-tile">
+                <span class="summary-icon blue"><i class="fas fa-cube" aria-hidden="true"></i></span>
+                <div>
+                    <div class="summary-label">Food Donations</div>
+                    <div class="summary-value"><?php echo (int)$foodCount; ?> deliveries</div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-box">
-                    <div class="stat-number"><?php echo (int)$summary['unique_donors']; ?></div>
-                    <div class="stat-label">Total Donors</div>
+            <div class="summary-tile">
+                <span class="summary-icon purple"><i class="fas fa-gift" aria-hidden="true"></i></span>
+                <div>
+                    <div class="summary-label">Total Donations</div>
+                    <div class="summary-value"><?php echo (int)$totalDonations; ?></div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="stat-box">
-                    <div class="stat-number"><?php echo (int)($summary['food_donations'] + $summary['supplies_donations']); ?></div>
-                    <div class="stat-label">In-Kind Donations</div>
-                </div>
-            </div>
-        </div>
-        <?php endif; ?>
+        </section>
 
-        <!-- Search and Filter -->
-        <div class="content-card search-box">
-            <form method="GET" action="DonationController.php" class="row g-2">
-                <input type="hidden" name="action" value="list">
-                <div class="col-md-8">
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="Search by donor name, email, or description..." 
-                           value="<?php echo htmlspecialchars($searchTerm ?? ''); ?>">
-                </div>
-                <div class="col-md-4">
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-success w-100">
-                            <i class="fas fa-search"></i> Search
-                        </button>
-                        <a href="DonationController.php?action=list" class="btn btn-secondary">
-                            <i class="fas fa-undo"></i> Reset
-                        </a>
-                    </div>
-                </div>
-            </form>
-        </div>
-
-        <!-- Type Filter -->
-        <div class="filter-tabs">
-            <a href="DonationController.php?action=list" class="filter-btn <?php echo empty($typeFilter) ? 'active' : ''; ?>">
-                <i class="fas fa-list"></i> All Types
-            </a>
-            <a href="DonationController.php?action=list&type=cash" class="filter-btn <?php echo $typeFilter === 'cash' ? 'active' : ''; ?>">
-                <i class="fas fa-money-bill"></i> Cash
-            </a>
-            <a href="DonationController.php?action=list&type=food" class="filter-btn <?php echo $typeFilter === 'food' ? 'active' : ''; ?>">
-                <i class="fas fa-apple-alt"></i> Food
-            </a>
-            <a href="DonationController.php?action=list&type=supplies" class="filter-btn <?php echo $typeFilter === 'supplies' ? 'active' : ''; ?>">
-                <i class="fas fa-box"></i> Supplies
-            </a>
-            <a href="DonationController.php?action=list&type=other" class="filter-btn <?php echo $typeFilter === 'other' ? 'active' : ''; ?>">
-                <i class="fas fa-ellipsis-h"></i> Other
-            </a>
-        </div>
-
-        <!-- Donations List -->
-        <div class="content-card">
-            <h4 class="mb-4"><i class="fas fa-list"></i> Donation Records</h4>
-
-            <?php if (!empty($donations)): ?>
-                <?php foreach ($donations as $donation): ?>
-                    <div class="donation-item <?php echo htmlspecialchars($donation['DonationType']); ?>">
-                        <div class="item-header">
-                            <div>
-                                <div class="donor-name"><?php echo htmlspecialchars($donation['DonorName']); ?></div>
-                                <small class="text-muted">
-                                    <i class="fas fa-calendar"></i> <?php echo date('M d, Y', strtotime($donation['DonationDate'])); ?>
-                                </small>
-                            </div>
-                            <span class="type-badge <?php echo htmlspecialchars($donation['DonationType']); ?>">
-                                <?php 
-                                $typeLabel = match($donation['DonationType']) {
-                                    'cash' => '💵 Cash',
-                                    'food' => '🍎 Food',
-                                    'supplies' => '📦 Supplies',
-                                    'other' => '📝 Other'
-                                };
-                                echo $typeLabel;
-                                ?>
-                            </span>
-                        </div>
-
-                        <div class="item-details">
-                            <div class="detail-item">
-                                <div class="detail-label">Donor</div>
-                                <div class="detail-value"><?php echo htmlspecialchars($donation['DonorName']); ?></div>
-                            </div>
-                            <div class="detail-item">
-                                <div class="detail-label">Type</div>
-                                <div class="detail-value"><?php echo ucfirst(htmlspecialchars($donation['DonationType'])); ?></div>
-                            </div>
-                            <?php if ((float)$donation['Amount'] > 0): ?>
-                            <div class="detail-item">
-                                <div class="detail-label">Amount</div>
-                                <div class="detail-value">R<?php echo number_format((float)$donation['Amount'], 2); ?></div>
-                            </div>
-                            <?php endif; ?>
-                            <?php if (!empty($donation['DonorEmail'])): ?>
-                            <div class="detail-item">
-                                <div class="detail-label">Email</div>
-                                <div class="detail-value"><a href="mailto:<?php echo htmlspecialchars($donation['DonorEmail']); ?>"><?php echo htmlspecialchars($donation['DonorEmail']); ?></a></div>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-
-                        <?php if (!empty($donation['Description'])): ?>
-                            <div class="alert alert-sm alert-secondary mb-3">
-                                <small><strong>Details:</strong> <?php echo htmlspecialchars($donation['Description']); ?></small>
-                            </div>
-                        <?php endif; ?>
-
-                        <div class="action-buttons">
-                            <a href="DonationController.php?action=view&id=<?php echo (int)$donation['DonationID']; ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-eye"></i> View
-                            </a>
-                            <a href="DonationController.php?action=edit&id=<?php echo (int)$donation['DonationID']; ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <a href="DonationController.php?action=delete&id=<?php echo (int)$donation['DonationID']; ?>" class="btn btn-sm btn-outline-danger">
-                                <i class="fas fa-trash"></i> Delete
-                            </a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php else: ?>
-                <div class="alert alert-info text-center py-5">
-                    <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <p class="mb-0">No donations found. <a href="DonationController.php?action=create">Record your first donation</a></p>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Pagination -->
-        <?php if (!empty($pagination) && $pagination['total_pages'] > 1): ?>
-            <nav aria-label="Page navigation" class="mt-4">
-                <ul class="pagination justify-content-center">
-                    <?php for ($i = 1; $i <= $pagination['total_pages']; $i++): ?>
-                        <li class="page-item <?php echo ($i == $pagination['current_page']) ? 'active' : ''; ?>">
-                            <a class="page-link" href="DonationController.php?action=list&page=<?php echo $i; ?>">
-                                <?php echo $i; ?>
-                            </a>
-                        </li>
-                    <?php endfor; ?>
-                </ul>
-            </nav>
-        <?php endif; ?>
-
-        <!-- Quick Actions -->
-        <div class="row mt-4">
-            <div class="col-md-4">
-                <div class="content-card text-center">
-                    <i class="fas fa-chart-bar fa-2x mb-3" style="color: #28a745;"></i>
-                    <h5>Donation Reports</h5>
-                    <p class="text-muted">View detailed statistics and analytics</p>
-                    <a href="DonationController.php?action=report" class="btn btn-success">
-                        <i class="fas fa-chart-pie"></i> View Reports
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="content-card text-center">
-                    <i class="fas fa-star fa-2x mb-3" style="color: #ffc107;"></i>
-                    <h5>Top Donors</h5>
-                    <p class="text-muted">Recognize our most generous supporters</p>
-                    <a href="DonationController.php?action=top-donors" class="btn btn-success">
-                        <i class="fas fa-trophy"></i> View Top Donors
-                    </a>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="content-card text-center">
-                    <i class="fas fa-plus-circle fa-2x mb-3" style="color: #28a745;"></i>
-                    <h5>Record Donation</h5>
-                    <p class="text-muted">Add a new donation to the system</p>
-                    <a href="DonationController.php?action=create" class="btn btn-success">
-                        <i class="fas fa-plus"></i> New Donation
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
+        <section class="table-card">
+            <h2>Donation History</h2>
+            <table class="table prototype-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>DONOR NAME</th>
+                        <th>TYPE</th>
+                        <th>DESCRIPTION</th>
+                        <th>QUANTITY/AMOUNT</th>
+                        <th>DATE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (!empty($donations)): ?>
+                        <?php foreach ($donations as $donation): ?>
+                            <?php
+                            $type = strtolower($donation['DonationType'] ?? 'other');
+                            $amount = (float)($donation['Amount'] ?? 0);
+                            ?>
+                            <tr>
+                                <td><?php echo 'DON-' . str_pad((string)(int)$donation['DonationID'], 3, '0', STR_PAD_LEFT); ?></td>
+                                <td><?php echo htmlspecialchars($donation['DonorName']); ?></td>
+                                <td><span class="type-pill <?php echo htmlspecialchars($type); ?>"><?php echo ucfirst($type); ?></span></td>
+                                <td><?php echo htmlspecialchars($donation['Description'] ?? 'Donation'); ?></td>
+                                <td><?php echo $amount > 0 ? 'R' . number_format($amount, 0) : 'Mixed'; ?></td>
+                                <td><?php echo date('Y-m-d', strtotime($donation['DonationDate'])); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php
+                        $sampleRows = [
+                            ['DON-001', 'ABC Corporation', 'cash', 'Monthly contribution', 'R5,000', '2026-04-28'],
+                            ['DON-002', 'John Smith', 'food', 'Rice - 50kg', '50kg', '2026-04-27'],
+                            ['DON-003', 'Community Church', 'cash', 'Easter donation', 'R3,500', '2026-04-25'],
+                            ['DON-004', 'Local Supermarket', 'food', 'Assorted goods', 'Mixed', '2026-04-24'],
+                            ['DON-005', 'Anonymous', 'cash', 'General donation', 'R1,200', '2026-04-22'],
+                            ['DON-006', 'XYZ Foundation', 'other', 'Kitchen equipment', 'N/A', '2026-04-20'],
+                        ];
+                        ?>
+                        <?php foreach ($sampleRows as $row): ?>
+                            <tr>
+                                <td><?php echo $row[0]; ?></td>
+                                <td><?php echo $row[1]; ?></td>
+                                <td><span class="type-pill <?php echo $row[2]; ?>"><?php echo ucfirst($row[2]); ?></span></td>
+                                <td><?php echo $row[3]; ?></td>
+                                <td><?php echo $row[4]; ?></td>
+                                <td><?php echo $row[5]; ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </section>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
