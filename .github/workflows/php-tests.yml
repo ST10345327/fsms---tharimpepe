@@ -1,0 +1,39 @@
+name: PHP Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  php-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: sqlite, pdo_sqlite, mbstring
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: PHP lint
+        run: |
+          # run syntax check for all php files (skip vendor and .git)
+          find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
+
+      - name: Pre-generate rasters
+        run: php tools/generate_all_rasters.php
+
+      - name: Run tests (SQLite)
+        env:
+          FSMS_TEST_SQLITE: '1'
+        run: php tools/run_all_tests_sqlite.php
