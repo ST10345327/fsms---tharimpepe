@@ -26,18 +26,31 @@ class User
      */
     public function authenticate($username, $password)
     {
-        $user = $this->findByUsername($username);
-
-        if (!$user) {
+        if ($this->conn === null) {
+            error_log("User::authenticate - Database connection is null");
             return false;
         }
 
-        // Verify password using PHP password_verify
-        if (password_verify($password, $user["PasswordHash"])) {
-            return $user;
-        }
+        try {
+            $user = $this->findByUsername($username);
 
-        return false;
+            if (!$user) {
+                error_log("User::authenticate - User not found: " . $username);
+                return false;
+            }
+
+            error_log("User::authenticate - Retrieved hash: " . $user["PasswordHash"]);
+            if (password_verify($password, $user["PasswordHash"])) {
+                error_log("User::authenticate - Authentication successful: " . $username);
+                return $user;
+            }
+
+            error_log("User::authenticate - Invalid password for user: " . $username);
+            return false;
+        } catch (Exception $e) {
+            error_log("User::authenticate - " . $e->getMessage());
+            return false;
+        }
     }
 
     /**
@@ -49,10 +62,10 @@ class User
      */
     public function findByUsername($username)
     {
-        $query = "SELECT UserID, Username, Email, PasswordHash, Role, CreatedAt, IsActive 
+        $query = "SELECT UserID, Username, Email, PasswordHash, Role, CreatedAt, Status 
                   FROM " . $this->table . " 
                   WHERE Username = :username 
-                  AND IsActive = TRUE 
+                  AND Status = 'active' 
                   LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
@@ -77,7 +90,7 @@ class User
         $query = "SELECT UserID, Username, Email, Role, CreatedAt 
                   FROM " . $this->table . " 
                   WHERE Email = :email 
-                  AND IsActive = TRUE 
+                  AND Status = 'active' 
                   LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
@@ -152,7 +165,7 @@ class User
      */
     public function getUserById($userId)
     {
-        $query = "SELECT UserID, Username, Email, Role, CreatedAt, IsActive 
+        $query = "SELECT UserID, Username, Email, Role, CreatedAt, Status 
                   FROM " . $this->table . " 
                   WHERE UserID = :user_id 
                   LIMIT 1";
@@ -177,7 +190,7 @@ class User
     public function deactivateUser($userId)
     {
         $query = "UPDATE " . $this->table . " 
-                  SET IsActive = FALSE 
+                  SET Status = 'inactive' 
                   WHERE UserID = :user_id";
 
         $stmt = $this->conn->prepare($query);

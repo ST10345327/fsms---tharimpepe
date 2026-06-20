@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1D9E75">
+    <title>Dashboard - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content">
+            <section class="kpi-grid" aria-label="Key performance indicators">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Total Beneficiaries</div>
+                        <div class="kpi-value" data-kpi="total_beneficiaries">—</div>
+                        <div class="kpi-meta" data-kpi="beneficiary_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon green"><i class="fas fa-users" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Meals Today</div>
+                        <div class="kpi-value" data-kpi="meals_today">—</div>
+                        <div class="kpi-meta" data-kpi="meals_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon blue"><i class="fas fa-utensils" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Low Stock Items</div>
+                        <div class="kpi-value" data-kpi="low_stock">—</div>
+                        <div class="kpi-meta" data-kpi="stock_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon orange"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Active Volunteers</div>
+                        <div class="kpi-value" data-kpi="active_volunteers">—</div>
+                        <div class="kpi-meta" data-kpi="volunteer_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon purple"><i class="fas fa-user-check" aria-hidden="true"></i></span>
+                </div>
+            </section>
+
+            <section>
+                <div class="proto-card">
+                    <h2><i class="fas fa-bolt" style="color:var(--mobile-primary);margin-right:8px;"></i>Quick Actions</h2>
+                    <div class="quick-actions">
+                        <a href="beneficiaries.html" class="quick-action navy"><i class="fas fa-plus" aria-hidden="true"></i><span>Add Beneficiary</span></a>
+                        <a href="beneficiaries.html" class="quick-action green"><i class="fas fa-list" aria-hidden="true"></i><span>View Beneficiaries</span></a>
+                        <a href="stock.html" class="quick-action orange"><i class="fas fa-plus" aria-hidden="true"></i><span>Add Stock</span></a>
+                        <a href="reports.html" class="quick-action purple"><i class="fas fa-file-lines" aria-hidden="true"></i><span>Generate Report</span></a>
+                    </div>
+                </div>
+
+                <div class="proto-card">
+                    <h2><i class="fas fa-clipboard-check" style="color:var(--mobile-primary);margin-right:8px;"></i>Recent Attendance</h2>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>Name</th><th>Date</th><th>Status</th></tr>
+                            </thead>
+                            <tbody id="recent-attendance-body">
+                                <tr><td colspan="3" style="text-align:center;color:var(--mobile-muted);">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="proto-card">
+                    <h2><i class="fas fa-boxes-stacked" style="color:var(--mobile-primary);margin-right:8px;"></i>Stock Summary</h2>
+                    <div id="stock-summary-list">
+                        <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading stock data...</p></div>
+                    </div>
+                </div>
+
+                <div class="proto-card">
+                    <h2><i class="fas fa-handshake-angle" style="color:var(--mobile-primary);margin-right:8px;"></i>Today's Volunteer Schedule</h2>
+                    <div id="volunteer-schedule">
+                        <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading schedule...</p></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="mobile-bottom-nav" role="navigation" aria-label="Primary">
+            <a class="mobile-nav-item active" href="dashboard.html"><i class="fas fa-house" aria-hidden="true"></i><span>Home</span></a>
+            <a class="mobile-nav-item" href="beneficiaries.html"><i class="fas fa-users" aria-hidden="true"></i><span>Beneficiaries</span></a>
+            <a class="mobile-nav-item" href="attendance.html"><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Attendance</span></a>
+            <a class="mobile-nav-item" href="stock.html"><i class="fas fa-boxes-stacked" aria-hidden="true"></i><span>Stock</span></a>
+        </nav>
+    </div>
+
+    <script src="assets/api.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        // Override initPage to add API data loading
+        initPage('Dashboard', 'dashboard', { loadData: true, dataType: 'kpi' });
+
+        // Additional dashboard data loading
+        (async function loadDashboardData() {
+            try {
+                // Load recent attendance
+                const attData = await API.get('/api/attendance/recent.php');
+                const attBody = document.getElementById('recent-attendance-body');
+                if (attData.success && attData.data && attData.data.length > 0) {
+                    attBody.innerHTML = attData.data.map(a => `
+                        <tr>
+                            <td>${a.FullName || a.name}</td>
+                            <td>${a.Date || a.date || 'Today'}</td>
+                            <td><span class="badge ${(a.Status === 'Present' || a.status === 'present') ? 'badge-green' : 'badge-red'}">${a.Status || a.status || 'Present'}</span></td>
+                        </tr>
+                    `).join('');
+                }
+            } catch (e) {
+                // Fallback data already shown as loading
+            }
+
+            try {
+                // Load stock summary
+                const stockData = await API.get('/api/stock/list.php');
+                const stockContainer = document.getElementById('stock-summary-list');
+                if (stockData.success && stockData.data && stockData.data.length > 0) {
+                    stockContainer.innerHTML = stockData.data.slice(0, 4).map(item => {
+                        const pct = item.StockLevel || item.stock_level || item.quantity_pct || 0;
+                        const barColor = pct > 50 ? '#1D9E75' : pct > 25 ? '#F5B041' : '#dc2626';
+                        const textColor = pct > 50 ? '#5DCAA5' : pct > 25 ? '#F5B041' : '#fca5a5';
+                        return `
+                            <div class="stock-item">
+                                <div>
+                                    <div class="stock-item-name">${item.ItemName || item.name || item.item_name}</div>
+                                    <div class="stock-item-qty">${item.Quantity || item.quantity || '0'} ${item.Unit || item.unit || ''} remaining</div>
+                                </div>
+                                <div class="stock-item-pct" style="color:${textColor};">${pct}%</div>
+                            </div>
+                            <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${barColor};"></div></div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                // Keep placeholder
+            }
+
+            try {
+                // Load volunteer schedule
+                const volData = await API.get('/api/volunteers/schedule.php');
+                const volContainer = document.getElementById('volunteer-schedule');
+                if (volData.success && volData.data && volData.data.length > 0) {
+                    volContainer.innerHTML = volData.data.map(s => `
+                        <div class="sched-slot">
+                            <span class="sched-time">${s.Time || s.time}</span>
+                            <span class="sched-task">${s.Task || s.task}</span>
+                            <span class="sched-volunteers">${s.Volunteers || s.volunteers || ''}</span>
+                            <span class="badge ${(s.Status === 'Active' || s.status === 'active') ? 'badge-green' : 'badge-amber'}">${s.Status || s.status || 'Upcoming'}</span>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                // Keep placeholder
+            }
+        })();
+    </script>
+</body>
+</html>

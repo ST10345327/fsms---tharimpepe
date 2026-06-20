@@ -343,7 +343,7 @@ class Volunteer
     /**
      * HZ-VOL-012
      * Purpose: Get today's volunteer schedule for dashboard
-     * Table: VolunteerSchedule
+     * Table: VolunteerSchedules
      * Returns: Array of today's scheduled slots
      */
     public function getTodaySchedule()
@@ -351,11 +351,11 @@ class Volunteer
         $today = date('l'); // Get day name (Monday, Tuesday, etc.)
 
         $query = "SELECT vs.TimeSlot, vs.Role, GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers, vs.Status
-                  FROM VolunteerSchedule vs
-                  LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
-                  WHERE vs.DayOfWeek = :day
-                  GROUP BY vs.ScheduleID, vs.TimeSlot, vs.Role, vs.Status
-                  ORDER BY vs.TimeSlot ASC";
+                   FROM VolunteerSchedules vs
+                   LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+                   WHERE vs.DayOfWeek = :day
+                   GROUP BY vs.ScheduleID, vs.TimeSlot, vs.Role, vs.Status
+                   ORDER BY vs.TimeSlot ASC";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":day", $today);
@@ -370,25 +370,24 @@ class Volunteer
     /**
      * HZ-VOL-013
      * Purpose: Get weekly volunteer schedule for dashboard
-     * Table: VolunteerSchedule
+     * Table: VolunteerSchedules
      * Returns: Array of weekly schedule with volunteer assignments
      */
     public function getWeeklySchedule()
     {
         $query = "SELECT vs.DayOfWeek, vs.TimeSlot, vs.Role,
-                         GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers
-                  FROM VolunteerSchedule vs
-                  LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
-                  GROUP BY vs.DayOfWeek, vs.TimeSlot, vs.Role
-                  ORDER BY FIELD(vs.DayOfWeek, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
-                           vs.TimeSlot ASC";
+                          GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers
+                   FROM VolunteerSchedules vs
+                   LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+                   GROUP BY vs.DayOfWeek, vs.TimeSlot, vs.Role
+                   ORDER BY FIELD(vs.DayOfWeek, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
+                            vs.TimeSlot ASC";
 
         $stmt = $this->conn->prepare($query);
 
         if ($stmt->execute()) {
             $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Group by volunteer for dashboard display
             $schedule = [];
             foreach ($results as $row) {
                 $volunteerName = $row['volunteers'] ?: 'Unassigned';

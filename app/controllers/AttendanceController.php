@@ -8,7 +8,7 @@
  */
 
 require_once __DIR__ . "/../helpers/SessionHandler.php";
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../config/database.php";
 require_once __DIR__ . "/../models/Attendance.php";
 require_once __DIR__ . "/../models/Beneficiary.php";
 require_once __DIR__ . "/../models/ActivityLog.php";

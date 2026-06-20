@@ -1,0 +1,7 @@
+[data-mobile-drawer]{ }
+
+.mobile-drawer-panel,
+.mobile-drawer-scrim{
+  will-change: transform, opacity;
+}
+

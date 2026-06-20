@@ -1,9 +1,94 @@
 <?php
-require_once __DIR__ . "/../helpers/SessionHandler.php";
-requireLogin();
-
-$user = getCurrentUser();
 $pageTitle = 'Dashboard';
+try {
+    require_once __DIR__ . "/../helpers/SessionHandler.php";
+    require_once __DIR__ . "/../../config/database.php";
+    require_once __DIR__ . "/../models/Dashboard.php";
+    require_once __DIR__ . "/../models/FoodStock.php";
+    require_once __DIR__ . "/../models/Attendance.php";
+    requireLogin();
+
+    $user = getCurrentUser();
+    $isDemoMode = isset($_SESSION['demo_mode']) && $_SESSION['demo_mode'];
+
+    if ($isDemoMode) {
+        $stats = array(
+            'active_beneficiaries' => 0,
+            'total_beneficiaries' => 0,
+            'active_volunteers' => 0,
+            'total_volunteers' => 0,
+            'system_users' => 0
+        );
+        $feedingStats = array(
+            'today_attendance' => 0,
+            'weekly_attendance' => 0,
+            'monthly_attendance' => 0
+        );
+        $schedulingStats = array(
+            'total_shifts' => 0,
+            'today_shifts' => 0,
+            'upcoming_shifts' => 0,
+            'completed_schedules' => 0,
+            'volunteer_hours_month' => 0
+        );
+        $donationStats = array(
+            'total_donors' => 0,
+            'monthly_donations_count' => 0,
+            'monthly_donations_amount' => 0,
+            'yearly_donations' => 0
+        );
+        $foodStockStatus = array(
+            'items_in_stock' => 0,
+            'low_stock_items' => 0,
+            'expired_items' => 0,
+            'total_stock_value' => 0
+        );
+        $stockSummary = array(
+            'low_stock_count' => 0,
+            'expired_count' => 0
+        );
+        $lowStockItems = array();
+        $recentActivities = array();
+        $topDonors = array();
+        $beneficiaryTrend = array();
+        $attendanceByRole = array();
+        $todaySummary = array();
+    } else {
+        $database = new Database();
+        $db = $database->getConnection();
+
+        $dashboard = new Dashboard($db);
+        $stats = $dashboard->getSystemStats();
+        $feedingStats = $dashboard->getFeedingStats();
+        $schedulingStats = $dashboard->getSchedulingStats();
+        $donationStats = $dashboard->getDonationStats();
+        $foodStockStatus = $dashboard->getFoodStockStatus();
+        $stockSummary = (new FoodStock($db))->getStockSummary();
+        $lowStockItems = (new FoodStock($db))->getLowStockItems();
+        $recentActivities = $dashboard->getRecentActivities(8);
+        $topDonors = $dashboard->getTopDonors(5);
+        $beneficiaryTrend = $dashboard->getBeneficiaryTrend();
+        $attendanceByRole = $dashboard->getAttendanceByRole();
+        
+        $attendanceModel = new Attendance($db);
+        $todaySummary = $attendanceModel->getDailyAttendanceSummary(date('Y-m-d'));
+    }
+} catch (Exception $e) {
+    $stats = [];
+    $feedingStats = [];
+    $schedulingStats = [];
+    $donationStats = [];
+    $foodStockStatus = [];
+    $stockSummary = null;
+    $lowStockItems = [];
+    $recentActivities = [];
+    $topDonors = [];
+    $beneficiaryTrend = [];
+    $attendanceByRole = [];
+    $todaySummary = [];
+    $user = null;
+    error_log("Dashboard initialization error: " . $e->getMessage());
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -267,15 +352,26 @@ $pageTitle = 'Dashboard';
     </style>
 </head>
 <body>
-    <?php include __DIR__ . "/includes/navbar.php"; ?>
+    <?php
+    // Defensive include: prevents blank screen if navbar partial fails.
+    try {
+        include __DIR__ . "/includes/navbar.php";
+    } catch (Exception $e) {
+        echo '<div style="padding:16px;color:#b91c1c;font-family:Arial;">Dashboard header failed to load.</div>';
+        if (defined('DEBUG_MODE') && DEBUG_MODE) {
+            echo '<pre style="white-space:pre-wrap;color:#991b1b">' . htmlspecialchars($e->getMessage()) . '</pre>';
+        }
+    }
+    ?>
+
 
     <main class="container-fluid dashboard-wrap pb-5">
         <section class="kpi-grid" aria-label="Key performance indicators">
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Total Beneficiaries</div>
-                    <div class="kpi-value">342</div>
-                    <div class="kpi-meta">+12 this month</div>
+                    <div class="kpi-value"><?php echo isset($stats['total_beneficiaries']) ? (int)$stats['total_beneficiaries'] : 0; ?></div>
+                    <div class="kpi-meta"><?php echo isset($stats['active_beneficiaries']) ? (int)$stats['active_beneficiaries'] : 0; ?> active</div>
                 </div>
                 <span class="kpi-icon blue"><i class="fas fa-users" aria-hidden="true"></i></span>
             </div>
@@ -283,8 +379,8 @@ $pageTitle = 'Dashboard';
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Meals Served Today</div>
-                    <div class="kpi-value">138</div>
-                    <div class="kpi-meta">As of 2:30 PM</div>
+                    <div class="kpi-value"><?php echo isset($feedingStats['today_attendance']) ? (int)$feedingStats['today_attendance'] : 0; ?></div>
+                    <div class="kpi-meta"><?php echo date('M d, Y'); ?></div>
                 </div>
                 <span class="kpi-icon green"><i class="fas fa-utensils" aria-hidden="true"></i></span>
             </div>
@@ -292,8 +388,8 @@ $pageTitle = 'Dashboard';
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Active Volunteers</div>
-                    <div class="kpi-value">24</div>
-                    <div class="kpi-meta">8 scheduled today</div>
+                    <div class="kpi-value"><?php echo isset($schedulingStats['today_shifts']) ? (int)$schedulingStats['today_shifts'] : 0; ?></div>
+                    <div class="kpi-meta">scheduled shifts</div>
                 </div>
                 <span class="kpi-icon purple"><i class="fas fa-user-check" aria-hidden="true"></i></span>
             </div>
@@ -301,8 +397,8 @@ $pageTitle = 'Dashboard';
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Low Stock Alerts</div>
-                    <div class="kpi-value">2</div>
-                    <div class="kpi-meta">Requires attention</div>
+                    <div class="kpi-value"><?php echo isset($stockSummary['low_stock_count']) ? (int)$stockSummary['low_stock_count'] : (isset($foodStockStatus['low_stock_items']) ? (int)$foodStockStatus['low_stock_items'] : 0); ?></div>
+                    <div class="kpi-meta"><?php echo isset($stockSummary['expired_count']) ? (int)$stockSummary['expired_count'] : (isset($foodStockStatus['expired_items']) ? (int)$foodStockStatus['expired_items'] : 0); ?> expired</div>
                 </div>
                 <span class="kpi-icon orange"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
             </div>
@@ -356,47 +452,45 @@ $pageTitle = 'Dashboard';
         <section class="dashboard-bottom-grid">
             <div class="proto-card">
                 <h2>Food Stock Status</h2>
-                <?php
-                $stockRows = [
-                    ['label' => 'Rice', 'value' => 45, 'bar' => 'bg-success', 'danger' => false],
-                    ['label' => 'Beans', 'value' => 78, 'bar' => 'bg-success', 'danger' => false],
-                    ['label' => 'Oil', 'value' => 25, 'bar' => 'bg-danger', 'danger' => true],
-                    ['label' => 'Maize Meal', 'value' => 82, 'bar' => 'bg-success', 'danger' => false],
-                ];
-                ?>
-                <?php foreach ($stockRows as $row): ?>
-                    <div class="stock-row">
-                        <div class="stock-line">
-                            <span><?php echo htmlspecialchars($row['label']); ?></span>
-                            <span class="<?php echo $row['danger'] ? 'danger' : ''; ?>"><?php echo (int)$row['value']; ?>%</span>
+                <?php if (!empty($lowStockItems)): ?>
+                    <?php foreach (array_slice($lowStockItems, 0, 4) as $row): ?>
+                        <?php
+                            $qty = isset($row['Quantity']) ? (int)$row['Quantity'] : 0;
+                            $pct = $qty > 0 ? min(100, round(($qty / 100) * 100)) : 0;
+                            $isDanger = $qty <= 5 || (isset($row['expiry_status']) && $row['expiry_status'] === 'expired');
+                            $bar = $isDanger ? 'bg-danger' : 'bg-success';
+                        ?>
+                        <div class="stock-row">
+                            <div class="stock-line">
+                                <span><?php echo htmlspecialchars($row['ItemName']); ?></span>
+                                <span class="<?php echo $isDanger ? 'danger' : ''; ?>"><?php echo $qty; ?> <?php echo htmlspecialchars(isset($row['Unit']) ? $row['Unit'] : ''); ?></span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="<?php echo htmlspecialchars($row['ItemName']); ?> stock level" aria-valuenow="<?php echo $pct; ?>" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar <?php echo $bar; ?>" style="width: <?php echo $pct; ?>%"></div>
+                            </div>
                         </div>
-                        <div class="progress" role="progressbar" aria-label="<?php echo htmlspecialchars($row['label']); ?> stock level" aria-valuenow="<?php echo (int)$row['value']; ?>" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar <?php echo htmlspecialchars($row['bar']); ?>" style="width: <?php echo (int)$row['value']; ?>%"></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted">No stock data available</p>
+                <?php endif; ?>
             </div>
 
             <div class="proto-card">
                 <h2>Recent Activity</h2>
-                <?php
-                $activities = [
-                    ['title' => 'New beneficiary registered', 'by' => 'by John Doe', 'time' => '10 min ago'],
-                    ['title' => 'Attendance recorded (Morning)', 'by' => 'by Sarah Admin', 'time' => '2 hours ago'],
-                    ['title' => 'Stock updated: Rice +50kg', 'by' => 'by Mike Manager', 'time' => '3 hours ago'],
-                    ['title' => 'Donation received: R5,000', 'by' => 'by Admin', 'time' => '5 hours ago'],
-                ];
-                ?>
-                <?php foreach ($activities as $activity): ?>
-                    <div class="activity-item">
-                        <span class="activity-dot" aria-hidden="true"></span>
-                        <div>
-                            <div class="activity-title"><?php echo htmlspecialchars($activity['title']); ?></div>
-                            <div class="activity-by"><?php echo htmlspecialchars($activity['by']); ?></div>
+                <?php if (!empty($recentActivities)): ?>
+                    <?php foreach ($recentActivities as $activity): ?>
+                        <div class="activity-item">
+                            <span class="activity-dot" aria-hidden="true"></span>
+                            <div>
+                                <div class="activity-title"><?php echo htmlspecialchars(isset($activity['ActivityType']) ? $activity['ActivityType'] : (isset($activity['Action']) ? $activity['Action'] : 'Activity')); ?></div>
+                                <div class="activity-by">by <?php echo htmlspecialchars(isset($activity['username']) ? $activity['username'] : 'System'); ?></div>
+                            </div>
+                            <div class="activity-time"><?php echo isset($activity['Timestamp']) ? date('M d, Y H:i', strtotime($activity['Timestamp'])) : ''; ?></div>
                         </div>
-                        <div class="activity-time"><?php echo htmlspecialchars($activity['time']); ?></div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted">No recent activities</p>
+                <?php endif; ?>
             </div>
         </section>
     </main>

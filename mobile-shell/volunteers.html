@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1D9E75">
+    <title>Volunteers - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content">
+            <!-- KPI Summary -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Active Volunteers</div>
+                        <div class="kpi-value" data-kpi="active_volunteers">—</div>
+                        <div class="kpi-meta" data-kpi="volunteer_count_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon green"><i class="fas fa-handshake-angle"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Scheduled Today</div>
+                        <div class="kpi-value" data-kpi="scheduled_today">—</div>
+                        <div class="kpi-meta" data-kpi="scheduled_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon blue"><i class="fas fa-calendar-check"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Hours This Week</div>
+                        <div class="kpi-value" data-kpi="hours_this_week">—</div>
+                        <div class="kpi-meta" data-kpi="hours_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon purple"><i class="fas fa-clock"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Open Slots</div>
+                        <div class="kpi-value" data-kpi="open_slots">—</div>
+                        <div class="kpi-meta" data-kpi="slots_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon orange"><i class="fas fa-user-plus"></i></span>
+                </div>
+            </div>
+
+            <!-- Register Volunteer -->
+            <div class="proto-card">
+                <h2><i class="fas fa-user-plus" style="color:var(--mobile-primary);margin-right:8px;"></i>Register Volunteer</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>First name</label>
+                        <input type="text" id="vol-firstname" placeholder="e.g. Nomsa">
+                    </div>
+                    <div class="form-group">
+                        <label>Last name</label>
+                        <input type="text" id="vol-lastname" placeholder="e.g. Mahlangu">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact number</label>
+                        <input type="tel" id="vol-phone" placeholder="0XX XXX XXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="vol-role"><option>Meal preparation</option><option>Distribution</option><option>Administration</option><option>Transport</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Availability</label>
+                        <select id="vol-availability"><option>Monday-Friday</option><option>Weekends only</option><option>As needed</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Start date</label>
+                        <input type="date" id="vol-startdate">
+                    </div>
+                </div>
+                <div style="margin-top:14px;">
+                    <button class="btn btn-primary btn-block" id="save-volunteer-btn">Save Volunteer</button>
+                </div>
+            </div>
+
+            <!-- Weekly Schedule -->
+            <div class="proto-card">
+                <h2><i class="fas fa-calendar-week" style="color:var(--mobile-primary);margin-right:8px;"></i>Weekly Schedule</h2>
+                <p style="font-size:12px;color:var(--mobile-muted);margin-bottom:12px;" id="schedule-week-label">Loading schedule...</p>
+                <div class="schedule-week" id="volunteer-schedule-grid">
+                    <div class="placeholder" style="grid-column:1/-1;"><i class="fas fa-spinner fa-pulse"></i><p>Loading...</p></div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="mobile-bottom-nav" role="navigation" aria-label="Primary">
+            <a class="mobile-nav-item" href="dashboard.html"><i class="fas fa-house"></i><span>Home</span></a>
+            <a class="mobile-nav-item" href="beneficiaries.html"><i class="fas fa-users"></i><span>Beneficiaries</span></a>
+            <a class="mobile-nav-item" href="attendance.html"><i class="fas fa-clipboard-check"></i><span>Attendance</span></a>
+            <a class="mobile-nav-item" href="stock.html"><i class="fas fa-boxes-stacked"></i><span>Stock</span></a>
+        </nav>
+    </div>
+    <script src="assets/api.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Volunteers', 'volunteers');
+
+        (async function loadVolunteerData() {
+            // Set default start date
+            document.getElementById('vol-startdate').valueAsDate = new Date();
+
+            try {
+                const schedData = await API.get('/api/volunteers/schedule.php');
+                const grid = document.getElementById('volunteer-schedule-grid');
+                const label = document.getElementById('schedule-week-label');
+                
+                if (schedData.success && schedData.week_label) {
+                    label.textContent = 'Week of ' + schedData.week_label;
+                }
+                
+                if (schedData.success && schedData.data && schedData.data.length > 0) {
+                    // Group by day
+                    const days = {};
+                    schedData.data.forEach(slot => {
+                        const day = slot.Day || slot.day || 'Unknown';
+                        if (!days[day]) days[day] = [];
+                        days[day].push(slot);
+                    });
+
+                    const dayNames = Object.keys(days);
+                    grid.innerHTML = dayNames.map(day => `
+                        <div class="schedule-day">
+                            <div class="schedule-day-name">${day}</div>
+                            ${days[day].map(slot => `
+                                <div class="schedule-day-slot">
+                                    <span class="time">${slot.Time || slot.time}</span> — ${slot.VolunteerName || slot.volunteer || slot.name}
+                                </div>
+                            `).join('')}
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                // Keep placeholder
+            }
+
+            // Save volunteer
+            document.getElementById('save-volunteer-btn').addEventListener('click', async function() {
+                const data = {
+                    first_name: document.getElementById('vol-firstname').value.trim(),
+                    last_name: document.getElementById('vol-lastname').value.trim(),
+                    phone: document.getElementById('vol-phone').value.trim(),
+                    role: document.getElementById('vol-role').value,
+                    availability: document.getElementById('vol-availability').value,
+                    start_date: document.getElementById('vol-startdate').value
+                };
+
+                if (!data.first_name || !data.last_name) {
+                    alert('Please enter first and last name');
+                    return;
+                }
+
+                try {
+                    const result = await API.post('/api/volunteers/register.php', data);
+                    if (result.success) {
+                        alert('Volunteer registered!');
+                        location.reload();
+                    }
+                } catch (err) {
+                    alert('Failed to register: ' + err.message);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

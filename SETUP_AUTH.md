@@ -17,11 +17,11 @@ mysql -u root fsms_database < sql/schema.sql
 ```sql
 -- Create admin account (password: admin123)
 INSERT INTO Users (Username, Email, PasswordHash, Role) 
-VALUES ('admin', 'admin@fsms.local', '$2y$10$N0KZEfz7y6j4/V6rwK1rXOqTpA1GC2.WB1mZVR/D4xFZwTg3OQjNq', 'admin');
+VALUES ('admin', 'admin@fsms.local', '$2y$10$LlKWvtODBW1WBFkGHldWdeukGE7OOvOC/tuj4LwovuAzLFj9Pjygm', 'admin');
 
 -- Create test volunteer (password: test123)
 INSERT INTO Users (Username, Email, PasswordHash, Role) 
-VALUES ('volunteer1', 'volunteer@fsms.local', '$2y$10$1.VvfVJL1sVKsZ8Qh5K9puzL0qJZxKvL7LqN0T6xP8xF1qZq7U1yG6', 'volunteer');
+VALUES ('volunteer1', 'volunteer@fsms.local', '$2y$10$Lz.BZMz3jHQTagbMmlpzne3nMBTlEa7K8AEmhxMtTO51jO2nmUOMO', 'volunteer');
 ```
 
 ### 3. Test the Application

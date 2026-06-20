@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1D9E75">
+    <title>Reports - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content">
+            <!-- KPI Summary -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">This Month</div>
+                        <div class="kpi-value" data-kpi="reports_month">—</div>
+                        <div class="kpi-meta" data-kpi="reports_month_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon green"><i class="fas fa-calendar"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Avg. Daily Meals</div>
+                        <div class="kpi-value" data-kpi="avg_daily_meals">—</div>
+                        <div class="kpi-meta" data-kpi="avg_meals_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon blue"><i class="fas fa-utensils"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Monthly Costs</div>
+                        <div class="kpi-value" data-kpi="monthly_costs">—</div>
+                        <div class="kpi-meta" data-kpi="costs_meta">Loading...</div>
+                    </div>
+                    <span class="kpi-icon purple"><i class="fas fa-money-bill-wave"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">YTD Meals Served</div>
+                        <div class="kpi-value" data-kpi="ytd_meals">—</div>
+                        <div class="kpi-meta" data-kpi="ytd_meta">Since Jan 2026</div>
+                    </div>
+                    <span class="kpi-icon orange"><i class="fas fa-chart-bar"></i></span>
+                </div>
+            </div>
+
+            <!-- Report Buttons -->
+            <div class="proto-card">
+                <h2><i class="fas fa-download" style="color:var(--mobile-primary);margin-right:8px;"></i>Generate Reports</h2>
+                <div id="report-buttons">
+                    <div class="report-btn" data-report="beneficiaries">
+                        <div class="report-icon" style="background:var(--mobile-primary-light);color:var(--mobile-primary);"><i class="fas fa-users"></i></div>
+                        <div><div class="report-label">Beneficiary Report</div><div class="report-desc">Active beneficiaries, categories, demographics</div></div>
+                    </div>
+                    <div class="report-btn" data-report="attendance">
+                        <div class="report-icon" style="background:rgba(37,99,255,0.2);color:#93c5fd;"><i class="fas fa-clipboard-check"></i></div>
+                        <div><div class="report-label">Attendance Report</div><div class="report-desc">Daily attendance rates, trends, history</div></div>
+                    </div>
+                    <div class="report-btn" data-report="stock">
+                        <div class="report-icon" style="background:rgba(186,117,23,0.2);color:#F5B041;"><i class="fas fa-boxes-stacked"></i></div>
+                        <div><div class="report-label">Stock Report</div><div class="report-desc">Current inventory, low stock alerts, usage</div></div>
+                    </div>
+                    <div class="report-btn" data-report="volunteers">
+                        <div class="report-icon" style="background:rgba(173,61,245,0.2);color:#c084fc;"><i class="fas fa-handshake-angle"></i></div>
+                        <div><div class="report-label">Volunteer Report</div><div class="report-desc">Active volunteers, schedules, hours contributed</div></div>
+                    </div>
+                    <div class="report-btn" data-report="donations">
+                        <div class="report-icon" style="background:rgba(29,158,117,0.2);color:#5DCAA5;"><i class="fas fa-hand-holding-heart"></i></div>
+                        <div><div class="report-label">Donations Report</div><div class="report-desc">Donation history, top donors, monthly totals</div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="proto-card">
+                <h2><i class="fas fa-chart-simple" style="color:var(--mobile-primary);margin-right:8px;"></i>Quick Stats</h2>
+                <div id="quick-stats">
+                    <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading statistics...</p></div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="mobile-bottom-nav" role="navigation" aria-label="Primary">
+            <a class="mobile-nav-item" href="dashboard.html"><i class="fas fa-house"></i><span>Home</span></a>
+            <a class="mobile-nav-item" href="beneficiaries.html"><i class="fas fa-users"></i><span>Beneficiaries</span></a>
+            <a class="mobile-nav-item" href="attendance.html"><i class="fas fa-clipboard-check"></i><span>Attendance</span></a>
+            <a class="mobile-nav-item" href="stock.html"><i class="fas fa-boxes-stacked"></i><span>Stock</span></a>
+        </nav>
+    </div>
+    <script src="assets/api.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Reports', 'reports');
+
+        // Report generation handlers
+        document.querySelectorAll('.report-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const type = this.dataset.report;
+                this.style.opacity = '0.6';
+                
+                try {
+                    const result = await API.get('/api/reports/generate.php?type=' + type);
+                    if (result.success && result.url) {
+                        // Open report in new tab (or trigger download)
+                        window.open(result.url, '_blank');
+                    } else if (result.success && result.data) {
+                        // Display report data inline or as alert
+                        alert('Report ready! Check the console for data.');
+                        console.log('Report data:', result.data);
+                    } else {
+                        alert('Report generated successfully!');
+                    }
+                } catch (err) {
+                    alert('Report generation failed: ' + err.message);
+                } finally {
+                    this.style.opacity = '1';
+                }
+            });
+        });
+
+        // Load quick stats
+        (async function loadQuickStats() {
+            try {
+                const stats = await API.get('/api/reports/summary.php');
+                const container = document.getElementById('quick-stats');
+                if (stats.success && stats.data) {
+                    const d = stats.data;
+                    container.innerHTML = `
+                        <div style="display:grid;gap:10px;">
+                            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);">Total meals served (30 days)</span>
+                                <span style="font-weight:600;">${d.meals_30d || '—'}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);">Average daily attendance</span>
+                                <span style="font-weight:600;">${d.avg_daily || '—'}%</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);">Most active volunteer</span>
+                                <span style="font-weight:600;">${d.top_volunteer || '—'}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);">Top donor this month</span>
+                                <span style="font-weight:600;">${d.top_donor || '—'}</span>
+                            </div>
+                            <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                                <span style="color:var(--mobile-muted);">Stock health score</span>
+                                <span style="font-weight:600;color:${d.stock_score > 70 ? '#5DCAA5' : d.stock_score > 40 ? '#F5B041' : '#fca5a5'};">${d.stock_score || '—'}%</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                document.getElementById('quick-stats').innerHTML = '<div class="placeholder"><i class="fas fa-exclamation-circle"></i><p>Statistics unavailable</p></div>';
+            }
+        })();
+    </script>
+</body>
+</html>

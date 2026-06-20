@@ -3,30 +3,19 @@
  * File: DonationController.php
  * Purpose: Workflow controller for donation management and tracking
  * Author: FSMS Development Agent
- * Architecture Layer: Domain (Controller)
- * Reference: MVC Pattern (Satzinger, Jackson & Burd, 2014)
- * 
- * Reference Code Base:
- * [1] MVC Controller Pattern (Satzinger et al., 2014)
- * [2] PHP Session Management (PHP Manual, 2025)
- * [3] Web Security Best Practices (OWASP, 2025)
  */
-
 require_once __DIR__ . "/../helpers/SessionHandler.php";
 require_once __DIR__ . "/../models/Donation.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../helpers/db.php";
+require_once __DIR__ . "/../../config/database.php";
 
-// HZ-DON-CTRL-001: Require user authentication and authorization
-requireLogin();
-$currentUser = getCurrentUser();
-
-// Initialize database connection and model
 $pdo = getDBConnection();
 $donationModel = new Donation($pdo);
-
-// Get action from request
 $action = $_GET['action'] ?? 'list';
+
+// Set currentUser for use in functions
+$GLOBALS['currentUser'] = getCurrentUser();
 
 // Initialize response variables
 $pageTitle = 'Donation Management';

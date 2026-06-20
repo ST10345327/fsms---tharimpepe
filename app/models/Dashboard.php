@@ -11,9 +11,31 @@ require_once __DIR__ . "/../../config/database.php";
 class Dashboard {
     private $pdo;
 
-    public function __construct() {
+    public function __construct(PDO $db = null) {
+        if ($db instanceof PDO) {
+            $this->pdo = $db;
+            return;
+        }
+
         global $pdo;
-        $this->pdo = $pdo;
+        if ($pdo instanceof PDO) {
+            $this->pdo = $pdo;
+            return;
+        }
+
+        $this->pdo = getConnection();
+    }
+
+    /**
+     * Return a row value when present, otherwise fall back to a default.
+     * Keeps the dashboard model compatible with older PHP versions.
+     */
+    private function rowValue($row, $key, $default = 0) {
+        if (is_array($row) && isset($row[$key])) {
+            return $row[$key];
+        }
+
+        return $default;
     }
 
     /**
@@ -24,23 +46,28 @@ class Dashboard {
         
         // Active beneficiaries
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM Beneficiaries WHERE Status = 'active'");
-        $stats['active_beneficiaries'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['active_beneficiaries'] = $this->rowValue($row, 'count', 0);
         
         // Total beneficiaries
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM Beneficiaries");
-        $stats['total_beneficiaries'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total_beneficiaries'] = $this->rowValue($row, 'count', 0);
         
-        // Active volunteers
-        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM Volunteers WHERE Status = 'active'");
-        $stats['active_volunteers'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        // Active volunteers (using AvailabilityStatus)
+        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM Volunteers WHERE AvailabilityStatus = 'available'");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['active_volunteers'] = $this->rowValue($row, 'count', 0);
         
         // Total volunteers
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM Volunteers");
-        $stats['total_volunteers'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total_volunteers'] = $this->rowValue($row, 'count', 0);
         
-        // Total system users
+        // Total system users (using Status)
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM Users WHERE Status = 'active'");
-        $stats['system_users'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['system_users'] = $this->rowValue($row, 'count', 0);
         
         return $stats;
     }
@@ -53,23 +80,26 @@ class Dashboard {
         
         // Today's attendance
         $today = date('Y-m-d');
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM Attendance WHERE DATE(AttendanceDate) = ?");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM Attendance WHERE DATE(SessionDate) = ?");
         $stmt->execute([$today]);
-        $stats['today_attendance'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['today_attendance'] = $this->rowValue($row, 'count', 0);
         
         // This week's sessions
         $startOfWeek = date('Y-m-d', strtotime('monday this week'));
         $endOfWeek = date('Y-m-d', strtotime('sunday this week'));
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM Attendance WHERE AttendanceDate BETWEEN ? AND ?");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM Attendance WHERE SessionDate BETWEEN ? AND ?");
         $stmt->execute([$startOfWeek, $endOfWeek]);
-        $stats['weekly_attendance'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['weekly_attendance'] = $this->rowValue($row, 'count', 0);
         
         // This month's sessions
         $startOfMonth = date('Y-m-01');
         $endOfMonth = date('Y-m-t');
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM Attendance WHERE AttendanceDate BETWEEN ? AND ?");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM Attendance WHERE SessionDate BETWEEN ? AND ?");
         $stmt->execute([$startOfMonth, $endOfMonth]);
-        $stats['monthly_attendance'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['monthly_attendance'] = $this->rowValue($row, 'count', 0);
         
         return $stats;
     }
@@ -81,23 +111,26 @@ class Dashboard {
         $stats = [];
         
         // Total items in stock
-        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM FoodStock WHERE QuantityRemaining > 0");
-        $stats['items_in_stock'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM FoodStock WHERE Quantity > 0");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['items_in_stock'] = $this->rowValue($row, 'count', 0);
         
-        // Low stock items (below reorder level)
-        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM FoodStock WHERE QuantityRemaining <= ReorderLevel AND QuantityRemaining > 0");
-        $stats['low_stock_items'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        // Low stock items (below threshold of 5 units)
+        $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM FoodStock WHERE Quantity <= 5 AND Quantity > 0");
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['low_stock_items'] = $this->rowValue($row, 'count', 0);
         
         // Expired items
         $today = date('Y-m-d');
-        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM FoodStock WHERE ExpiryDate < ? AND QuantityRemaining > 0");
+        $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM FoodStock WHERE ExpiryDate < ? AND Quantity > 0");
         $stmt->execute([$today]);
-        $stats['expired_items'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['expired_items'] = $this->rowValue($row, 'count', 0);
         
-        // Total stock value
-        $stmt = $this->pdo->query("SELECT SUM(QuantityRemaining * UnitCost) as total_value FROM FoodStock");
+        // Total items count (value metric not available in schema)
+        $stmt = $this->pdo->query("SELECT COUNT(*) as total_items FROM FoodStock WHERE Quantity > 0");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $stats['total_stock_value'] = (float)($result['total_value'] ?? 0);
+        $stats['total_stock_value'] = (float)$this->rowValue($result, 'total_items', 0);
         
         return $stats;
     }
@@ -110,7 +143,8 @@ class Dashboard {
         
         // Total donors
         $stmt = $this->pdo->query("SELECT COUNT(DISTINCT DonorID) as count FROM Donations");
-        $stats['total_donors'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total_donors'] = $this->rowValue($row, 'count', 0);
         
         // This month's donations
         $startOfMonth = date('Y-m-01');
@@ -118,8 +152,8 @@ class Dashboard {
         $stmt = $this->pdo->prepare("SELECT COUNT(*) as count, SUM(Amount) as total FROM Donations WHERE DonationDate BETWEEN ? AND ?");
         $stmt->execute([$startOfMonth, $endOfMonth]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $stats['monthly_donations_count'] = $result['count'] ?? 0;
-        $stats['monthly_donations_amount'] = (float)($result['total'] ?? 0);
+        $stats['monthly_donations_count'] = $this->rowValue($result, 'count', 0);
+        $stats['monthly_donations_amount'] = (float)$this->rowValue($result, 'total', 0);
         
         // This year's donations
         $startOfYear = date('Y-01-01');
@@ -127,7 +161,7 @@ class Dashboard {
         $stmt = $this->pdo->prepare("SELECT SUM(Amount) as total FROM Donations WHERE DonationDate BETWEEN ? AND ?");
         $stmt->execute([$startOfYear, $endOfYear]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $stats['yearly_donations'] = (float)($result['total'] ?? 0);
+        $stats['yearly_donations'] = (float)$this->rowValue($result, 'total', 0);
         
         return $stats;
     }
@@ -140,19 +174,22 @@ class Dashboard {
         
         // Total scheduled shifts
         $stmt = $this->pdo->query("SELECT COUNT(*) as count FROM VolunteerSchedules");
-        $stats['total_shifts'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['total_shifts'] = $this->rowValue($row, 'count', 0);
         
         // Today's scheduled shifts
         $today = date('Y-m-d');
         $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM VolunteerSchedules WHERE ScheduleDate = ?");
         $stmt->execute([$today]);
-        $stats['today_shifts'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['today_shifts'] = $this->rowValue($row, 'count', 0);
         
         // Upcoming shifts (next 7 days)
         $futureDate = date('Y-m-d', strtotime('+7 days'));
         $stmt = $this->pdo->prepare("SELECT COUNT(*) as count FROM VolunteerSchedules WHERE ScheduleDate BETWEEN ? AND ? AND Status = 'scheduled'");
         $stmt->execute([$today, $futureDate]);
-        $stats['upcoming_shifts'] = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $stats['upcoming_shifts'] = $this->rowValue($row, 'count', 0);
         
         // Completed schedules this month
         $startOfMonth = date('Y-m-01');
@@ -160,8 +197,8 @@ class Dashboard {
         $stmt = $this->pdo->prepare("SELECT COUNT(*) as count, SUM(HoursWorked) as total_hours FROM VolunteerSchedules WHERE ScheduleDate BETWEEN ? AND ? AND Status = 'completed'");
         $stmt->execute([$startOfMonth, $endOfMonth]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $stats['completed_schedules'] = $result['count'] ?? 0;
-        $stats['volunteer_hours_month'] = (float)($result['total_hours'] ?? 0);
+        $stats['completed_schedules'] = $this->rowValue($result, 'count', 0);
+        $stats['volunteer_hours_month'] = (float)$this->rowValue($result, 'total_hours', 0);
         
         return $stats;
     }
@@ -220,10 +257,10 @@ class Dashboard {
      */
     public function getBeneficiaryTrend() {
         $stmt = $this->pdo->prepare("
-            SELECT DATE(AttendanceDate) as date, COUNT(DISTINCT BeneficiaryID) as beneficiary_count
+            SELECT DATE(SessionDate) as date, COUNT(DISTINCT BeneficiaryID) as beneficiary_count
             FROM Attendance
-            WHERE AttendanceDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-            GROUP BY DATE(AttendanceDate)
+            WHERE SessionDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            GROUP BY DATE(SessionDate)
             ORDER BY date ASC
         ");
         $stmt->execute();
@@ -238,7 +275,7 @@ class Dashboard {
             SELECT b.Role, COUNT(*) as count
             FROM Attendance a
             JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
-            WHERE a.AttendanceDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+            WHERE a.SessionDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
             GROUP BY b.Role
             ORDER BY count DESC
         ");
@@ -271,12 +308,12 @@ class Dashboard {
             FROM (
                 SELECT COUNT(*) as daily_attendance
                 FROM Attendance
-                WHERE AttendanceDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-                GROUP BY AttendanceDate
+                WHERE SessionDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                GROUP BY SessionDate
             ) as daily_stats
         ");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $kpis['avg_attendance_per_session'] = round((float)($result['avg_attendance'] ?? 0), 2);
+        $kpis['avg_attendance_per_session'] = round((float)$this->rowValue($result, 'avg_attendance', 0), 2);
         
         // Volunteer utilization rate
         $stmt = $this->pdo->query("
@@ -285,8 +322,8 @@ class Dashboard {
                 (SELECT COUNT(*) FROM VolunteerSchedules) as total
         ");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $total = $result['total'] ?? 1;
-        $completed = $result['completed'] ?? 0;
+        $total = $this->rowValue($result, 'total', 1);
+        $completed = $this->rowValue($result, 'completed', 0);
         $kpis['volunteer_utilization_rate'] = round(($completed / $total) * 100, 1);
         
         // Donation fulfillment ratio
@@ -296,8 +333,8 @@ class Dashboard {
                 (SELECT SUM(Amount) FROM Donations WHERE DATE(DonationDate) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)) as yesterday_donations
         ");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $today = (float)($result['today_donations'] ?? 0);
-        $yesterday = (float)($result['yesterday_donations'] ?? 0);
+        $today = (float)$this->rowValue($result, 'today_donations', 0);
+        $yesterday = (float)$this->rowValue($result, 'yesterday_donations', 0);
         $kpis['daily_donation_trend_percent'] = $yesterday > 0 ? round((($today - $yesterday) / $yesterday) * 100, 1) : 0;
         
         return $kpis;

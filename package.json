@@ -1,0 +1,34 @@
+{
+  "name": "fsms---tharimpepe",
+  "version": "1.0.0",
+  "description": "This repository contains the Feeding Scheme Management System (FSMS) for the Tharimpepe Feeding Scheme. The project is based on the academic requirements and design documents in `docs/academic/`.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "mobile:add:android": "cap add android",
+    "mobile:sync": "cap sync android",
+    "mobile:open": "cap open android",
+    "mobile:run": "cap run android",
+    "mobile:serve": "php -S 0.0.0.0:8000 -t public public/router.php",
+    "test": "echo \"No automated JavaScript tests configured\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ST10345327/fsms---tharimpepe.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ST10345327/fsms---tharimpepe/issues"
+  },
+  "homepage": "https://github.com/ST10345327/fsms---tharimpepe#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/cli": "^8.4.0",
+    "@capacitor/core": "^8.4.0"
+  }
+}

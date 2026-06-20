@@ -12,7 +12,7 @@
  * [3] Database Normalization Principles (Codd, 1970)
  */
 
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../config/database.php";
 
 class FoodStock {
     private $pdo;
@@ -49,7 +49,7 @@ class FoodStock {
                 htmlspecialchars($data['Unit']),
                 !empty($data['ExpiryDate']) ? $data['ExpiryDate'] : null,
                 date('Y-m-d'),
-                htmlspecialchars($data['Notes'] ?? '')
+                htmlspecialchars(isset($data['Notes']) ? $data['Notes'] : '')
             ]);
 
             if ($result) {
@@ -168,7 +168,7 @@ class FoodStock {
                 (int)$data['Quantity'],
                 htmlspecialchars($data['Unit']),
                 !empty($data['ExpiryDate']) ? $data['ExpiryDate'] : null,
-                htmlspecialchars($data['Notes'] ?? ''),
+                htmlspecialchars(isset($data['Notes']) ? $data['Notes'] : ''),
                 (int)$id
             ]);
 

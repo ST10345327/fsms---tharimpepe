@@ -22,10 +22,10 @@ This Figma prototype showcases the complete user interface design for all module
 
 ## Stack
 
-- Backend: PHP, PDO, MySQL/MariaDB
+- Backend: PHP, PDO, MySQL/MariaDB (MySQL/XAMPP is the only supported database; SQLite is not supported)
 - Frontend: PHP views, HTML, Bootstrap
 - Architecture: MVC-style separation across `app/controllers`, `app/models`, and `app/views`
-- Testing: lightweight PHP test runner in `tests/`
+- Testing: lightweight PHP test runner in `tests/` (uses MySQL only)
 
 ## Repository Structure
 

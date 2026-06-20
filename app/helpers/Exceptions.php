@@ -30,13 +30,13 @@ class FSMSException extends Exception
      * @param string $message Internal error message (logged)
      * @param int $statusCode HTTP status code
      * @param string $userMessage User-friendly message (displayed)
-     * @param Throwable $previous Previous exception
+     * @param Exception $previous Previous exception
      */
     public function __construct(
         $message = "",
         $statusCode = 500,
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct($message, 0, $previous);
         
@@ -76,12 +76,12 @@ class DatabaseException extends FSMSException
     public function __construct(
         $message = "Database operation failed",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct(
             $message,
             500,
-            $userMessage ?? "A database error occurred. Please try again later.",
+            $userMessage !== null ? $userMessage : "A database error occurred. Please try again later.",
             $previous
         );
     }
@@ -100,9 +100,9 @@ class ValidationException extends FSMSException
      * 
      * @param array|string $errors Validation errors
      * @param string $message Internal message
-     * @param Throwable $previous Previous exception
+     * @param Exception $previous Previous exception
      */
-    public function __construct($errors = [], $message = "Validation failed", Throwable $previous = null)
+    public function __construct($errors = [], $message = "Validation failed", Exception $previous = null)
     {
         // Store errors array
         if (is_array($errors)) {
@@ -149,12 +149,12 @@ class AuthenticationException extends FSMSException
     public function __construct(
         $message = "Authentication failed",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct(
             $message,
             401,
-            $userMessage ?? "Invalid username or password",
+            $userMessage !== null ? $userMessage : "Invalid username or password",
             $previous
         );
     }
@@ -169,12 +169,12 @@ class AuthorizationException extends FSMSException
     public function __construct(
         $message = "Access denied",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct(
             $message,
             403,
-            $userMessage ?? "You do not have permission to access this resource.",
+            $userMessage !== null ? $userMessage : "You do not have permission to access this resource.",
             $previous
         );
     }
@@ -189,13 +189,13 @@ class ResourceNotFoundException extends FSMSException
     public function __construct(
         $resourceType = "Resource",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         $message = "{$resourceType} not found";
         parent::__construct(
             $message,
             404,
-            $userMessage ?? "The requested {$resourceType} could not be found.",
+            $userMessage !== null ? $userMessage : "The requested {$resourceType} could not be found.",
             $previous
         );
     }
@@ -210,12 +210,12 @@ class ConflictException extends FSMSException
     public function __construct(
         $message = "A conflict occurred",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct(
             $message,
             409,
-            $userMessage ?? "A conflict occurred while processing your request. This item may already exist.",
+            $userMessage !== null ? $userMessage : "A conflict occurred while processing your request. This item may already exist.",
             $previous
         );
     }
@@ -230,11 +230,11 @@ class DuplicateException extends ConflictException
     public function __construct(
         $field = "item",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct(
             "Duplicate {$field}",
-            $userMessage ?? "This {$field} already exists. Please try a different one.",
+            $userMessage !== null ? $userMessage : "This {$field} already exists. Please try a different one.",
             $previous
         );
     }
@@ -249,12 +249,12 @@ class InvalidOperationException extends FSMSException
     public function __construct(
         $message = "Invalid operation",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct(
             $message,
             422,
-            $userMessage ?? "This operation cannot be performed at this time.",
+            $userMessage !== null ? $userMessage : "This operation cannot be performed at this time.",
             $previous
         );
     }
@@ -269,12 +269,12 @@ class ExternalServiceException extends FSMSException
     public function __construct(
         $serviceName = "External Service",
         $userMessage = null,
-        Throwable $previous = null
+        Exception $previous = null
     ) {
         parent::__construct(
             "{$serviceName} error",
             503,
-            $userMessage ?? "An external service is temporarily unavailable. Please try again later.",
+            $userMessage !== null ? $userMessage : "An external service is temporarily unavailable. Please try again later.",
             $previous
         );
     }

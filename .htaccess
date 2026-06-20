@@ -1,0 +1,12 @@
+# Enable Apache mod_rewrite for API endpoints.
+# Goal: requests like /api/auth/login.php must execute the real PHP file
+# (and therefore return JSON from that file), not an HTML 404.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # If the requested /api/*.php file exists, serve it directly.
+  RewriteCond %{REQUEST_FILENAME} -f
+  RewriteRule ^api/(.+\.php)$ api/$1 [L]
+</IfModule>
+

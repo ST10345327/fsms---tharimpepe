@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "github.com/VapiAI/mcp-server": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@vapi-ai/mcp-server",
+        "mcp-remote",
+        "https://mcp.vapi.ai/mcp"
+      ]
+    }
+  }
+}
+
+

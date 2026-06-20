@@ -1,0 +1,53 @@
+/* Unified Mobile/Web Safe Areas */
+:root {
+    /* Figma Design Tokens */
+    --primary-green: #1D9E75;
+    --dark-green: #0F6E56;
+    --primary-blue: #378ADD;
+    --primary-amber: #BA7517;
+    --primary-red: #E24B4A;
+    --text-primary: #1F2937;
+    --text-secondary: #667085;
+    --bg-secondary: #F8FAFC;
+    --border-secondary: #CFD8E3;
+    --radius-lg: 16px;
+    
+    /* Safe Area Support */
+    --safe-area-inset-top: env(safe-area-inset-top, 0px);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Force visual consistency with Web App */
+body {
+    font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+.card, .kpi-card, .mobile-section {
+    border-radius: var(--radius-lg) !important;
+    border: 1px solid var(--border-secondary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.btn-primary, .quick-action.green {
+    background-color: var(--primary-green) !important;
+    border-color: var(--dark-green) !important;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+.navbar-mobile-bottom {
+    padding-bottom: var(--safe-area-inset-bottom);
+    height: calc(60px + var(--safe-area-inset-bottom));
+}
+
+.mobile-bottom-nav .mobile-nav-item.active {
+    color: var(--primary-green); /* Apply primary green to active navigation item text and icon */
+    /* Consider adding a subtle background or border if the Figma design for active state includes it */
+}
+
+body.is-capacitor {
+    user-select: none; /* Prevent accidental text selection on native app */
+    -webkit-tap-highlight-color: transparent;
+}

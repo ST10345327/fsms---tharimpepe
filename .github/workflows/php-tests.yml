@@ -9,31 +9,52 @@ on:
 jobs:
   php-tests:
     runs-on: ubuntu-latest
-
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: fsms_test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpass
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_NAME: fsms_test
+      DB_USERNAME: testuser
+      DB_PASSWORD: testpass
+      DB_CHARSET: utf8mb4
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: sqlite, pdo_sqlite, mbstring
-
+          extensions: mbstring, pdo_mysql
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y imagemagick
-
+          sudo apt-get install -y mysql-client imagemagick
+      - name: Wait for MySQL
+        run: |
+          for i in {1..20}; do
+            mysqladmin ping -h 127.0.0.1 -uroot -proot && break
+            sleep 3
+          done
+      - name: Import schema
+        run: mysql -h 127.0.0.1 -utestuser -ptestpass fsms_test < sql/schema.sql
       - name: PHP lint
         run: |
-          # run syntax check for all php files (skip vendor and .git)
           find . -name '*.php' -not -path './.git/*' -print0 | xargs -0 -n1 php -l
-
       - name: Pre-generate rasters
         run: php tools/generate_all_rasters.php
-
-      - name: Run tests (SQLite)
-        env:
-          FSMS_TEST_SQLITE: '1'
-        run: php tools/run_all_tests_sqlite.php
+      - name: Run tests (MySQL)
+        run: php tests/run_all_tests.php

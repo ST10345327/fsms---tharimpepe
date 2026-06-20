@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1D9E75">
+    <title>Login - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root { --primary: #1D9E75; --primary-hover: #0F6E56; --bg: #0b1220; --surface: #0f172a; --card: #0b1326; --text: #e5e7eb; --muted: #9ca3af; --border: rgba(255,255,255,.10); }
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 20px; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: var(--surface); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 320px; border: 1px solid var(--border); }
+        .logo { text-align: center; margin-bottom: 24px; }
+        .logo-img { width: 64px; height: 64px; border-radius: 14px; margin-bottom: 12px; object-fit: contain; }
+        .logo h1 { color: #fff; font-size: 22px; font-weight: 700; margin: 0; }
+        .logo p { color: var(--muted); font-size: 13px; margin: 6px 0 0; }
+        .form-group { margin-bottom: 14px; }
+        input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); color: var(--text); font-size: 15px; }
+        input::placeholder { color: var(--muted); }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(29, 158, 117, 0.2); }
+        button { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; min-height: 44px; transition: background 0.2s; }
+        button:hover { background: var(--primary-hover); }
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 16px; }
+        .error { background: #7f1d1d; border: 1px solid #dc2626; color: #fca5a5; padding: 10px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; display: none; }
+        .footer-text { text-align: center; margin-top: 20px; font-size: 11px; color: var(--muted); }
+        .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; vertical-align: middle; margin-right: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">
+            <img src="assets/tharimpepe-logo.png" alt="Tharimpepe" class="logo-img" onerror="this.style.display='none'">
+            <h1>Tharimpepe FSMS</h1>
+            <p>Feeding Scheme Management System</p>
+        </div>
+        <div id="error-msg" class="error"></div>
+        <form id="login-form">
+            <div class="form-group">
+                <input type="text" id="username" name="username" placeholder="Username" required autocomplete="username" minlength="1">
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" name="password" placeholder="Password" required autocomplete="current-password" minlength="1">
+            </div>
+            <button type="submit" id="login-btn">Sign In</button>
+        </form>
+        <p class="hint">Demo: admin / admin123</p>
+        <div class="footer-text">© 2026 Tharimpepe Feeding Scheme</div>
+    </div>
+    <script src="assets/api.js"></script>
+    <script>
+        // Check for existing valid session on page load
+        (async function checkSession() {
+            if (API.isAuthenticated()) {
+                try {
+                    const user = await API.validateToken();
+                    if (user) {
+                        window.location.href = './dashboard.html';
+                        return;
+                    }
+                } catch {
+                    // Token invalid, clear and show login
+                    API.clearAuth();
+                }
+            }
+        })();
+
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const error = document.getElementById('error-msg');
+            const btn = document.getElementById('login-btn');
+
+            // Reset error
+            error.style.display = 'none';
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+            try {
+                // Attempt API login
+                const user = await API.login(username, password);
+                // Success - redirect to dashboard
+                window.location.href = './dashboard.html';
+            } catch (err) {
+                error.style.display = 'block';
+                if (err.code === 'NETWORK_ERROR') {
+                    error.textContent = 'Cannot reach server. Check your connection.';
+                } else if (err.code === 'SESSION_EXPIRED') {
+                    error.textContent = 'Session expired. Please try again.';
+                } else {
+                    error.textContent = err.message || 'Invalid username or password';
+                }
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>

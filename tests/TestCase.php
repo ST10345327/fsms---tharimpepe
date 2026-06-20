@@ -417,7 +417,8 @@ class TestRunner
 
 /**
  * HZ-TEST-013
- * Database test case with transaction rollback
+ * Database test case with transaction rollback.
+ * Note: This framework uses MySQL exclusively for all database tests. SQLite is not supported.
  */
 class DatabaseTestCase extends TestCase
 {
@@ -430,32 +431,13 @@ class DatabaseTestCase extends TestCase
     public function setUp()
     {
         try {
-            // Allow tests to run against an in-memory SQLite DB when requested.
-            if (getenv('FSMS_TEST_SQLITE') === '1') {
-                $this->db = new PDO('sqlite::memory:');
-                $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-                // Create a minimal Users table compatible with the User model
-                $create = "CREATE TABLE IF NOT EXISTS Users (
-                    UserID INTEGER PRIMARY KEY AUTOINCREMENT,
-                    Username TEXT UNIQUE,
-                    Email TEXT UNIQUE,
-                    PasswordHash TEXT,
-                    Role TEXT,
-                    CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
-                    IsActive INTEGER DEFAULT 1
-                );";
-
-                $this->db->exec($create);
-            } else {
-                $this->db = getDBConnection();
-            }
-
-            $this->db->beginTransaction();
-            $this->inTransaction = true;
+            $this->db = getDBConnection();
         } catch (Exception $e) {
             throw new Exception("Database setup failed: " . $e->getMessage());
         }
+
+        $this->db->beginTransaction();
+        $this->inTransaction = true;
     }
     
     /**

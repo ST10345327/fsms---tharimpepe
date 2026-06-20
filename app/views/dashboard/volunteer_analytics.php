@@ -158,11 +158,11 @@
                                     <td><strong><?php echo htmlspecialchars($volunteer['FullName']); ?></strong></td>
                                     <td><?php echo (int)$volunteer['total_shifts']; ?></td>
                                     <td><?php echo (int)$volunteer['completed_shifts']; ?></td>
-                                    <td><?php echo number_format((float)($volunteer['total_hours'] ?? 0), 1); ?></td>
+                                    <td><?php echo number_format((float)(isset($volunteer['total_hours']) ? $volunteer['total_hours'] : 0), 1); ?></td>
                                     <td>
                                         <?php 
                                             $completed = (int)$volunteer['completed_shifts'];
-                                            $hours = (float)($volunteer['total_hours'] ?? 0);
+                                            $hours = (float)(isset($volunteer['total_hours']) ? $volunteer['total_hours'] : 0);
                                             $avg = $completed > 0 ? $hours / $completed : 0;
                                             echo number_format($avg, 1);
                                         ?>

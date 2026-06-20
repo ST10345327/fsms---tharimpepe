@@ -11,25 +11,22 @@ require_once __DIR__ . '/../app/helpers/bootstrap.php';
 
 /**
  * HZ-ENTRY-001
- * Purpose: Route users based on authentication status
- * Flow: Check session -> Redirect to appropriate page
+ * Purpose: Redirect users based on authentication status
+ * Flow: Check session -> Redirect to URL handled by router.php
  */
 
 try {
-    // Check if user is already logged in
     if (isUserLoggedIn()) {
-        // Serve dashboard view directly (avoid external redirect outside DocumentRoot)
-        require_once __DIR__ . '/../app/views/dashboard.php';
+        header("Location: /views/dashboard.php");
         exit();
     } else {
-        // Serve login view directly
-        require_once __DIR__ . '/../app/views/login.php';
+        header("Location: /views/login.php");
         exit();
     }
 } catch (Exception $e) {
     // Log error and show user-friendly message
     logMessage("Entry point error: " . $e->getMessage(), 'ERROR');
-    header("Location: ../app/views/login.php?error=system_error");
+    header("Location: /views/login.php?error=system_error");
     exit();
 }
 ?>

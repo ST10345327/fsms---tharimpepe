@@ -43,3 +43,6 @@ pnpm-lock.yaml
 
 # Local runtime placeholders
 .fake
+
+# PHP settings for development
+.user.ini

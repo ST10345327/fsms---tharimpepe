@@ -1,0 +1,22 @@
+/* Responsive adjustments */
+@media (min-width: 768px){
+  .mobile-content{max-width: 680px; margin: 0 auto;}
+  :root{ --mobile-nav-height: 70px; }
+  .mobile-nav-item span{font-size:12px;}
+}
+
+@media (prefers-color-scheme: light){
+  :root{
+    --mobile-bg:#f4f7ff;
+    --mobile-surface:#ffffff;
+    --mobile-card:#ffffff;
+    --mobile-text:#0b1220;
+    --mobile-muted:#5b6475;
+    --mobile-border:rgba(0,0,0,.08);
+    --mobile-nav-height:74px;
+  }
+  .mobile-bottom-nav{background: rgba(255,255,255,.92);}
+  .mobile-drawer-panel{background:#ffffff;}
+  .mobile-drawer-scrim{background: rgba(0,0,0,.35);}
+}
+

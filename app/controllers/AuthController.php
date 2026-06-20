@@ -9,15 +9,21 @@
 // Initialize application with error handling and validation
 require_once __DIR__ . "/../helpers/bootstrap.php";
 require_once __DIR__ . "/../models/User.php";
+require_once __DIR__ . "/../models/ActivityLog.php";
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'login';
 $error = "";
 $success = "";
 
 try {
-    // Get database connection
-    $db = getDBConnection();
-    
+    // Always attempt database connection
+    $db = null;
+    try {
+        $db = getDBConnection();
+    } catch (Exception $dbError) {
+        logMessage("Database unavailable: " . $dbError->getMessage(), 'WARNING');
+    }
+
     // Create user model
     $userModel = new User($db);
 
@@ -28,32 +34,62 @@ try {
      */
     if ($action === 'login' && $_SERVER["REQUEST_METHOD"] === "POST") {
         FormValidator::reset();
-        
+
         // Get and validate input
         $username = FormValidator::getRequired('username', 'Username');
         $password = FormValidator::getOptional('password', '');
-        
+
         // Check required fields
         if (empty($username) || empty($password)) {
             $error = "Username and password are required";
         } else {
             try {
-                // Attempt authentication
-                $user = $userModel->authenticate($username, $password);
+                $user = false;
+
+                // Attempt database authentication first
+                if ($db !== null) {
+                    try {
+                        $user = $userModel->authenticate($username, $password);
+                    } catch (Exception $e) {
+                        logMessage("DB auth error: " . $e->getMessage(), 'ERROR');
+                    }
+                }
+
+                // Fallback to demo users only if DB is unavailable
+                if (!$user && $db === null) {
+                    $demoFile = dirname(__DIR__, 2) . '/.demo_users.json';
+                    if (is_file($demoFile)) {
+                        $demoUsers = json_decode(file_get_contents($demoFile), true);
+                        if (!empty($demoUsers[$username]) && 
+                            password_verify($password, $demoUsers[$username]['password_hash'] ?? '')) {
+                            $demo = $demoUsers[$username];
+                            $user = [
+                                'UserID' => $demo['user_id'] ?? 1,
+                                'Username' => $username,
+                                'Email' => $demo['email'] ?? '',
+                                'Role' => $demo['role'] ?? 'volunteer'
+                            ];
+                        }
+                    }
+                }
 
                 if ($user) {
-                    // HZ-AUTH-002: Create secure session
+                    // Regenerate session ID to prevent session fixation
+                    session_regenerate_id(true);
+
                     $_SESSION["user_id"] = $user["UserID"];
                     $_SESSION["username"] = $user["Username"];
                     $_SESSION["email"] = $user["Email"];
                     $_SESSION["role"] = $user["Role"];
                     $_SESSION["login_time"] = time();
+                    $_SESSION["last_activity"] = time();
 
-                    // Log login activity
-                    ActivityLog::log($user['UserID'], 'login', 'Users', $user['UserID'], 'User logged in');
+                    // Log successful login
+                    if (function_exists('logMessage')) {
+                        logMessage("User '{$username}' logged in successfully", 'INFO');
+                    }
 
-                    // Redirect to dashboard
-                    header("Location: ../views/dashboard.php");
+                    header("Location: /index.php");
                     exit();
                 } else {
                     $error = "Invalid username or password";
@@ -92,7 +128,7 @@ try {
             
             // Check password match
             if ($password !== $password_confirm) {
-                FormValidator::$errors[] = "Passwords do not match";
+                FormValidator::validatePasswordMatch($password, $password_confirm);
             }
 
             if (FormValidator::hasErrors()) {
@@ -107,8 +143,8 @@ try {
                 ActivityLog::log($userId, 'register', 'Users', $userId, 'New user registered');
                 
                 $success = "Account created successfully! Redirecting to login...";
-                // Redirect after 2 seconds
-                header("Refresh: 2; URL=../views/login.php?registered=success");
+                // Redirect after 2 seconds to login via router
+                header("Refresh: 2; URL=/views/login.php");
             } else {
                 throw new Exception("Registration failed. Please try again.");
             }
@@ -145,8 +181,8 @@ try {
         }
         session_destroy();
 
-        // Redirect to login page
-        header("Location: ../views/login.php?logout=success");
+        // Redirect to login via router
+        header("Location: /views/login.php");
         exit();
     }
 

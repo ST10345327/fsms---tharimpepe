@@ -6,14 +6,15 @@
  * Hazard ID: HZ-DASH-CTRL-*
  */
 
-require_once __DIR__ . "/../../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/SessionHandler.php";
 require_once __DIR__ . "/../models/Dashboard.php";
 
 // HZ-DASH-CTRL-001: Require authentication
 requireLogin();
 
-$dashboard = new Dashboard();
-$action = $_GET['action'] ?? 'overview';
+$db = getConnection();
+$dashboard = new Dashboard($db);
+$action = isset($_GET['action']) ? $_GET['action'] : 'overview';
 
 try {
     switch ($action) {

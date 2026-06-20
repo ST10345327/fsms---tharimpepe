@@ -62,7 +62,7 @@ class FormValidator
      */
     public static function validateEmail($email, $fieldName = 'Email')
     {
-        $email = trim($email ?? '');
+        $email = trim($email === null ? '' : $email);
         
         if (empty($email)) {
             self::$errors[] = "{$fieldName} is required";
@@ -92,7 +92,7 @@ class FormValidator
      */
     public static function validateUsername($username, $fieldName = 'Username')
     {
-        $username = trim($username ?? '');
+        $username = trim($username === null ? '' : $username);
         
         if (empty($username)) {
             self::$errors[] = "{$fieldName} is required";
@@ -129,7 +129,7 @@ class FormValidator
      */
     public static function validatePassword($password, $fieldName = 'Password', $minLength = 6)
     {
-        $password = $_POST[$password] ?? '';
+        $password = trim($password === null ? '' : $password);
         
         if (empty($password)) {
             self::$errors[] = "{$fieldName} is required";
@@ -159,8 +159,8 @@ class FormValidator
      */
     public static function validatePasswordMatch($password, $passwordConfirm)
     {
-        $pwd = $_POST[$password] ?? '';
-        $pwd_confirm = $_POST[$passwordConfirm] ?? '';
+        $pwd = trim($password === null ? '' : $password);
+        $pwd_confirm = trim($passwordConfirm === null ? '' : $passwordConfirm);
         
         if ($pwd !== $pwd_confirm) {
             self::$errors[] = "Passwords do not match";
@@ -180,7 +180,7 @@ class FormValidator
      */
     public static function validatePhone($phone, $fieldName = 'Phone')
     {
-        $phone = trim($phone ?? '');
+        $phone = trim($phone === null ? '' : $phone);
         
         if (empty($phone)) {
             // Phone is optional, return true
@@ -212,7 +212,7 @@ class FormValidator
      */
     public static function validateLength($value, $minLength, $maxLength, $fieldName = 'Field')
     {
-        $value = trim($value ?? '');
+        $value = trim($value === null ? '' : $value);
         $length = strlen($value);
         
         if ($length < $minLength) {
@@ -238,7 +238,7 @@ class FormValidator
      */
     public static function validateDate($date, $fieldName = 'Date')
     {
-        $date = trim($date ?? '');
+        $date = trim($date === null ? '' : $date);
         
         if (empty($date)) {
             self::$errors[] = "{$fieldName} is required";
@@ -273,7 +273,7 @@ class FormValidator
      */
     public static function validateInteger($value, $min = null, $max = null, $fieldName = 'Field')
     {
-        $value = trim($value ?? '');
+        $value = trim($value === null ? '' : $value);
         
         if (empty($value)) {
             self::$errors[] = "{$fieldName} is required";
@@ -312,7 +312,7 @@ class FormValidator
      */
     public static function validateDecimal($value, $min = null, $max = null, $fieldName = 'Field')
     {
-        $value = trim($value ?? '');
+        $value = trim($value === null ? '' : $value);
         
         if (empty($value)) {
             self::$errors[] = "{$fieldName} is required";
@@ -349,7 +349,7 @@ class FormValidator
     public static function sanitizeString($value)
     {
         // Trim whitespace
-        $value = trim($value ?? '');
+        $value = trim($value === null ? '' : $value);
         
         // Remove HTML tags
         $value = strip_tags($value);
@@ -369,7 +369,7 @@ class FormValidator
      */
     public static function sanitizeEmail($value)
     {
-        return filter_var(trim($value ?? ''), FILTER_SANITIZE_EMAIL);
+        return filter_var(trim($value === null ? '' : $value), FILTER_SANITIZE_EMAIL);
     }
     
     /**
@@ -381,7 +381,7 @@ class FormValidator
      */
     public static function sanitizeUrl($value)
     {
-        return filter_var(trim($value ?? ''), FILTER_SANITIZE_URL);
+        return filter_var(trim($value === null ? '' : $value), FILTER_SANITIZE_URL);
     }
     
     /**
@@ -394,8 +394,8 @@ class FormValidator
      */
     public static function getRequired($param, $fieldName = null)
     {
-        $value = $_POST[$param] ?? '';
-        $fieldName = $fieldName ?? ucfirst(str_replace('_', ' ', $param));
+        $value = isset($_POST[$param]) ? $_POST[$param] : '';
+        $fieldName = $fieldName !== null ? $fieldName : ucfirst(str_replace('_', ' ', $param));
         
         if (empty(trim($value))) {
             self::$errors[] = "{$fieldName} is required";
@@ -414,7 +414,7 @@ class FormValidator
      */
     public static function getOptional($param, $default = '')
     {
-        return trim($_POST[$param] ?? $default);
+        return trim(isset($_POST[$param]) ? $_POST[$param] : $default);
     }
 }
 ?>

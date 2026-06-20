@@ -6,14 +6,15 @@
  * Hazard ID: HZ-RPT-CTRL-*
  */
 
-require_once __DIR__ . "/../../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/SessionHandler.php";
 require_once __DIR__ . "/../models/Reports.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
 
 // HZ-RPT-CTRL-001: Require authentication
 requireLogin();
 
-$reports = new Reports();
+$db = getConnection();
+$reports = new Reports($db);
 $action = $_GET['action'] ?? 'dashboard';
 
 try {

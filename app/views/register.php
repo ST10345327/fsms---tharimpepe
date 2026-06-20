@@ -136,7 +136,7 @@
         <?php endif; ?>
 
         <!-- HZ-UI-REGISTER-002: Registration Form -->
-        <form method="POST" action="../controllers/AuthController.php?action=register" class="register-form">
+        <form method="POST" action="/controllers/AuthController.php?action=register" class="register-form">
             <div class="form-group">
                 <label for="username" class="form-label">Username</label>
                 <input 
@@ -149,7 +149,7 @@
                     minlength="3"
                     maxlength="50"
                     autocomplete="username"
-                    value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>"
+                    value="<?php echo htmlspecialchars(isset($_POST['username']) ? $_POST['username'] : ''); ?>"
                 />
                 <div class="password-requirements">Minimum 3 characters, no spaces</div>
             </div>
@@ -164,7 +164,7 @@
                     placeholder="Enter your email address"
                     required
                     autocomplete="email"
-                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
+                    value="<?php echo htmlspecialchars(isset($_POST['email']) ? $_POST['email'] : ''); ?>"
                 />
             </div>
 

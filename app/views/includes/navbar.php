@@ -6,12 +6,12 @@
 
 require_once __DIR__ . "/../../helpers/SessionHandler.php";
 $currentUser = getCurrentUser();
-$username = $currentUser['username'] ?? 'Guest';
-$role = $currentUser['role'] ?? 'volunteer';
+$username = isset($currentUser['username']) ? $currentUser['username'] : 'Guest';
+$role = isset($currentUser['role']) ? $currentUser['role'] : 'volunteer';
 $displayName = strtolower($username) === 'admin' ? 'Admin User' : $username;
 $displayRole = strtolower($role) === 'admin' ? 'Administrator' : ucfirst($role);
 $initials = strtolower($username) === 'admin' ? 'AD' : strtoupper(substr($username, 0, 1));
-$currentAction = basename($_SERVER['PHP_SELF'] ?? '');
+$currentAction = basename(isset($_SERVER['PHP_SELF']) ? $_SERVER['PHP_SELF'] : '');
 
 $navItems = [
     ['label' => 'Dashboard', 'icon' => 'fa-house', 'href' => '../controllers/DashboardController.php?action=overview', 'match' => 'DashboardController.php'],
@@ -29,6 +29,7 @@ $navItems = [
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/css/fsms-ui.css">
+<script src="/assets/js/fsms-app.js" defer></script>
 
 <aside class="fsms-sidebar" aria-label="Primary navigation">
     <a class="fsms-brand" href="../controllers/DashboardController.php?action=overview">
@@ -88,7 +89,7 @@ $navItems = [
         <i class="fas fa-bars" aria-hidden="true"></i>
     </button>
     <div>
-        <h1 class="fsms-page-title"><?php echo htmlspecialchars($pageTitle ?? 'Admin Portal'); ?></h1>
+        <h1 class="fsms-page-title"><?php echo htmlspecialchars(isset($pageTitle) ? $pageTitle : 'Admin Portal'); ?></h1>
         <div class="fsms-page-subtitle">Tharimpepe Feeding Scheme</div>
     </div>
     <div class="fsms-top-actions">

@@ -56,7 +56,7 @@ class ErrorHandler
      * Purpose: Handle uncaught exceptions
      * Provides appropriate response based on context (web/API)
      * 
-     * @param Throwable $exception The exception to handle
+     * @param Exception $exception The exception to handle
      */
     public static function handleException($exception)
     {
@@ -137,7 +137,7 @@ class ErrorHandler
      * HZ-ERROR-006
      * Purpose: Log exceptions to error log
      * 
-     * @param Throwable $exception The exception to log
+     * @param Exception $exception The exception to log
      */
     private static function logException($exception)
     {
@@ -167,7 +167,7 @@ class ErrorHandler
         }
         
         // Check if API endpoint
-        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
         return strpos($request_uri, '/api/') !== false;
     }
     
@@ -175,7 +175,7 @@ class ErrorHandler
      * HZ-ERROR-008
      * Purpose: Send JSON error response for API requests
      * 
-     * @param Throwable $exception The exception
+     * @param Exception $exception The exception
      */
     private static function sendJsonError($exception)
     {
@@ -205,7 +205,7 @@ class ErrorHandler
      * HZ-ERROR-009
      * Purpose: Send HTML error page for web requests
      * 
-     * @param Throwable $exception The exception
+     * @param Exception $exception The exception
      */
     private static function sendHtmlError($exception)
     {
@@ -342,7 +342,7 @@ class ErrorHandler
             E_USER_DEPRECATED => 'USER_DEPRECATED',
         ];
         
-        return $levels[$severity] ?? 'UNKNOWN';
+        return isset($levels[$severity]) ? $levels[$severity] : 'UNKNOWN';
     }
     
     /**

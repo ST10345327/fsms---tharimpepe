@@ -101,38 +101,48 @@ function listUsers() {
     }
     
     $conn = getConnection();
-    $query = "SELECT UserID, Username, Email, FullName, Phone, Role, Status, CreatedAt 
-              FROM Users WHERE 1=1";
+    
+    // Build query with parameterized conditions
+    $conditions = [];
+    $params = [];
     
     if (!empty($filters['role'])) {
-        $query .= " AND Role = '" . $conn->quote($filters['role']) . "'";
+        $conditions[] = "Role = :role";
+        $params[':role'] = $filters['role'];
     }
     if (!empty($filters['status'])) {
-        $query .= " AND Status = '" . $conn->quote($filters['status']) . "'";
+        $conditions[] = "Status = :status";
+        $params[':status'] = $filters['status'];
     }
     if (!empty($filters['search'])) {
-        $search = '%' . $filters['search'] . '%';
-        $query .= " AND (Username LIKE '" . $conn->quote($search) . "' OR FullName LIKE '" . $conn->quote($search) . "')";
+        $conditions[] = "(Username LIKE :search OR FullName LIKE :search2)";
+        $params[':search'] = '%' . $filters['search'] . '%';
+        $params[':search2'] = '%' . $filters['search'] . '%';
     }
     
+    $whereClause = count($conditions) > 0 ? ' AND ' . implode(' AND ', $conditions) : '';
+    
+    $query = "SELECT UserID, Username, Email, FullName, Phone, Role, Status, CreatedAt 
+              FROM Users WHERE 1=1" . $whereClause;
     $query .= " ORDER BY CreatedAt DESC LIMIT :limit OFFSET :offset";
+    
     $stmt = $conn->prepare($query);
+    foreach ($params as $key => $val) {
+        $stmt->bindValue($key, $val);
+    }
     $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Get total count
-    $countQuery = "SELECT COUNT(*) FROM Users WHERE 1=1";
-    if (!empty($filters['role'])) {
-        $countQuery .= " AND Role = '" . $conn->quote($filters['role']) . "'";
+    // Get total count with same params (without limit/offset)
+    $countQuery = "SELECT COUNT(*) FROM Users WHERE 1=1" . $whereClause;
+    $countStmt = $conn->prepare($countQuery);
+    foreach ($params as $key => $val) {
+        $countStmt->bindValue($key, $val);
     }
-    if (!empty($filters['status'])) {
-        $countQuery .= " AND Status = '" . $conn->quote($filters['status']) . "'";
-    }
-    $stmt = $conn->prepare($countQuery);
-    $stmt->execute();
-    $totalCount = $stmt->fetchColumn();
+    $countStmt->execute();
+    $totalCount = $countStmt->fetchColumn();
     $totalPages = ceil($totalCount / $limit);
     
     include __DIR__ . "/../views/users/list.php";
@@ -159,19 +169,20 @@ function storeUser() {
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
     
     try {
-        $query = "INSERT INTO Users (Username, Email, Password, FullName, Phone, Role, Status, CreatedAt) 
-                  VALUES (:username, :email, :password, :fullname, :phone, :role, 'active', NOW())";
+        $query = "INSERT INTO Users (Username, Email, PasswordHash, FullName, Phone, Role, Status, CreatedAt) 
+                  VALUES (:username, :email, :password_hash, :fullname, :phone, :role, 'active', NOW())";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':username', $username);
         $stmt->bindParam(':email', $email);
-        $stmt->bindParam(':password', $hashedPassword);
+        $stmt->bindParam(':password_hash', $hashedPassword);
         $stmt->bindParam(':fullname', $fullname);
         $stmt->bindParam(':phone', $phone);
         $stmt->bindParam(':role', $role);
         
         if ($stmt->execute()) {
             $userId = $conn->lastInsertId();
-            ActivityLog::log(getCurrentUser()['user_id'], 'create_user', 'User', $userId, "Created user: $username (Temp pwd: $password)");
+            // Log user creation without exposing plaintext password
+            ActivityLog::log(getCurrentUser()['user_id'], 'create_user', 'User', $userId, "Created user: $username");
             
             $_SESSION['success'] = "User created successfully. Temporary password: " . htmlspecialchars($password);
             header("Location: UserController.php?action=list");

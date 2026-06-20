@@ -15,11 +15,13 @@
 require_once __DIR__ . "/../helpers/SessionHandler.php";
 require_once __DIR__ . "/../models/FoodStock.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../config/database.php";
+require_once __DIR__ . "/../helpers/db.php";
 
 // HZ-FOOD-CTRL-001: Require user authentication and authorization
 requireLogin();
 $currentUser = getCurrentUser();
+$GLOBALS['currentUser'] = $currentUser;
 
 // Initialize database connection and model
 $pdo = getDBConnection();

@@ -53,12 +53,80 @@ require_once HELPERS_PATH . '/FormValidator.php';
 // Load database configuration
 require_once CONFIG_PATH . '/database.php';
 
+// CORS headers for cross-origin requests (mobile app, API clients)
+// Only set CORS for API requests to avoid conflicts with web app
+$isApiRequest = isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/') === 0;
+if ($isApiRequest) {
+    // Let API endpoints handle their own CORS headers
+    // to avoid conflicts with bootstrap headers
+} else {
+    // For web app requests, allow same-origin
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if (!empty($origin)) {
+        header('Access-Control-Allow-Origin: ' . $origin);
+        header('Access-Control-Allow-Credentials: true');
+    }
+    header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+    header('Access-Control-Max-Age: 86400');
+
+    // Handle preflight OPTIONS request
+    if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(204);
+        exit();
+    }
+}
+
 // Load session handler
 require_once HELPERS_PATH . '/SessionHandler.php';
+
+// Configure secure session cookies before starting session
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 86400,      // 24 hours
+        'path' => '/',
+        'domain' => '',
+        'secure' => isset($_SERVER['HTTPS']),  // true if HTTPS
+        'httponly' => true,                    // Not accessible via JavaScript
+        'samesite' => 'Lax'                    // CSRF protection
+    ]);
+}
 
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
+}
+
+// Check session timeout (30 minutes of inactivity)
+if (isset($_SESSION['last_activity'])) {
+    $sessionTimeout = 1800; // 30 minutes
+    if (time() - $_SESSION['last_activity'] > $sessionTimeout) {
+        // Session expired - destroy it
+        $_SESSION = array();
+        if (ini_get("session.use_cookies")) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', time() - 42000,
+                $params["path"], $params["domain"],
+                $params["secure"], $params["httponly"]
+            );
+        }
+        session_destroy();
+        
+        // Redirect to login if this was an authenticated session
+        $isApiRequest = (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false)
+                        || (isset($_SERVER['CONTENT_TYPE']) && strpos($_SERVER['CONTENT_TYPE'], 'application/json') !== false);
+        
+        if (!$isApiRequest && isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/') === false) {
+            $redirectPath = '/views/login.php?timeout=1';
+            header("Location: {$redirectPath}");
+            exit();
+        }
+    }
+}
+
+// Update last activity time for authenticated sessions
+if (isset($_SESSION['user_id'])) {
+    $_SESSION['last_activity'] = time();
 }
 
 /**
@@ -111,9 +179,10 @@ function redirectWithMessage($location, $message, $type = 'success')
 function getSessionMessage()
 {
     if (isset($_SESSION['message'])) {
+        $messageType = isset($_SESSION['message_type']) ? $_SESSION['message_type'] : 'info';
         $message = [
             'message' => $_SESSION['message'],
-            'type' => $_SESSION['message_type'] ?? 'info'
+            'type' => $messageType
         ];
         
         // Clear message
@@ -168,7 +237,7 @@ function formatCurrency($amount, $currency = 'USD')
         'GBP' => '£'
     ];
     
-    $symbol = $symbols[$currency] ?? $currency;
+    $symbol = isset($symbols[$currency]) ? $symbols[$currency] : $currency;
     return $symbol . number_format($amount, 2);
 }
 

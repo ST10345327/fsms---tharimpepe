@@ -300,9 +300,9 @@ class Attendance
         try {
             foreach ($attendanceData as $data) {
                 $beneficiaryId = $data['beneficiary_id'];
-                $status = $data['status'] ?? 'present';
-                $notes = $data['notes'] ?? null;
-                $mealSessionId = $data['meal_session_id'] ?? null;
+                $status = isset($data['status']) ? $data['status'] : 'present';
+                $notes = isset($data['notes']) ? $data['notes'] : null;
+                $mealSessionId = isset($data['meal_session_id']) ? $data['meal_session_id'] : null;
 
                 if ($this->attendanceExists($beneficiaryId, $sessionDate)) {
                     $results[] = [

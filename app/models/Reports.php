@@ -11,9 +11,19 @@ require_once __DIR__ . "/../../config/database.php";
 class Reports {
     private $pdo;
 
-    public function __construct() {
+    public function __construct(PDO $db = null) {
+        if ($db instanceof PDO) {
+            $this->pdo = $db;
+            return;
+        }
+
         global $pdo;
-        $this->pdo = $pdo;
+        if ($pdo instanceof PDO) {
+            $this->pdo = $pdo;
+            return;
+        }
+
+        $this->pdo = getConnection();
     }
 
     /**
@@ -21,8 +31,8 @@ class Reports {
      */
     public function getAttendanceReport($fromDate = null, $toDate = null, $beneficiaryId = null) {
         $query = "
-            SELECT a.AttendanceID, a.BeneficiaryID, a.AttendanceDate, 
-                   b.FullName, b.Role, b.Status, a.MealProvided, a.Notes
+            SELECT a.AttendanceID, a.BeneficiaryID, a.SessionDate, 
+                   CONCAT(b.FirstName, ' ', b.LastName) as FullName, a.Status, a.Notes
             FROM Attendance a
             JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
             WHERE 1=1
@@ -30,11 +40,11 @@ class Reports {
         
         $params = [];
         if ($fromDate) {
-            $query .= " AND a.AttendanceDate >= ?";
+            $query .= " AND a.SessionDate >= ?";
             $params[] = $fromDate;
         }
         if ($toDate) {
-            $query .= " AND a.AttendanceDate <= ?";
+            $query .= " AND a.SessionDate <= ?";
             $params[] = $toDate;
         }
         if ($beneficiaryId) {
@@ -42,7 +52,7 @@ class Reports {
             $params[] = $beneficiaryId;
         }
         
-        $query .= " ORDER BY a.AttendanceDate DESC, b.FullName ASC";
+        $query .= " ORDER BY a.SessionDate DESC, b.LastName ASC";
         
         $stmt = $this->pdo->prepare($query);
         $stmt->execute($params);
@@ -86,10 +96,10 @@ class Reports {
      */
     public function getDonorSummaryReport() {
         $stmt = $this->pdo->query("
-            SELECT DonorID, DonorName, COUNT(*) as donation_count, 
+            SELECT DonorName, COUNT(*) as donation_count, 
                    SUM(Amount) as total_amount, MAX(DonationDate) as last_donation
             FROM Donations
-            GROUP BY DonorID, DonorName
+            GROUP BY DonorName
             ORDER BY total_amount DESC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -100,10 +110,10 @@ class Reports {
      */
     public function getFoodStockReport() {
         $stmt = $this->pdo->query("
-            SELECT FoodStockID, FoodItem, Quantity, QuantityRemaining, 
-                   UnitOfMeasure, UnitCost, ReorderLevel, ExpiryDate, Status
+            SELECT FoodStockID, ItemName, Quantity, Unit,
+                   ExpiryDate, StockDate, Notes
             FROM FoodStock
-            ORDER BY QuantityRemaining ASC
+            ORDER BY Quantity ASC, ExpiryDate ASC
         ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -112,83 +122,113 @@ class Reports {
      * HZ-RPT-005: Get food distribution report
      */
     public function getFoodDistributionReport($fromDate = null, $toDate = null) {
-        $query = "
-            SELECT fd.DistributionID, fd.FoodStockID, f.FoodItem, 
-                   fd.QuantityDistributed, fd.DistributionDate, 
-                   fd.Location, fd.Purpose, fd.Notes
-            FROM FoodDistribution fd
-            JOIN FoodStock f ON fd.FoodStockID = f.FoodStockID
-            WHERE 1=1
-        ";
-        
-        $params = [];
-        if ($fromDate) {
-            $query .= " AND fd.DistributionDate >= ?";
-            $params[] = $fromDate;
+        try {
+            $check = $this->pdo->query("SHOW TABLES LIKE 'FoodDistribution'");
+            if ($check->rowCount() === 0) {
+                return [];
+            }
+            
+            $query = "
+                SELECT fd.DistributionID, fd.FoodStockID, f.ItemName, 
+                       fd.QuantityDistributed, fd.DistributionDate, 
+                       fd.Location, fd.Purpose, fd.Notes
+                FROM FoodDistribution fd
+                JOIN FoodStock f ON fd.FoodStockID = f.FoodStockID
+                WHERE 1=1
+            ";
+            
+            $params = [];
+            if ($fromDate) {
+                $query .= " AND fd.DistributionDate >= ?";
+                $params[] = $fromDate;
+            }
+            if ($toDate) {
+                $query .= " AND fd.DistributionDate <= ?";
+                $params[] = $toDate;
+            }
+            
+            $query .= " ORDER BY fd.DistributionDate DESC";
+            
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Reports::getFoodDistributionReport - " . $e->getMessage());
+            return [];
         }
-        if ($toDate) {
-            $query .= " AND fd.DistributionDate <= ?";
-            $params[] = $toDate;
-        }
-        
-        $query .= " ORDER BY fd.DistributionDate DESC";
-        
-        $stmt = $this->pdo->prepare($query);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
      * HZ-RPT-006: Get volunteer performance report
      */
     public function getVolunteerPerformanceReport() {
-        $stmt = $this->pdo->query("
-            SELECT v.VolunteerID, v.FullName, v.Email, v.Phone, v.Status,
-                   COUNT(vs.ScheduleID) as total_shifts,
-                   SUM(CASE WHEN vs.Status = 'completed' THEN 1 ELSE 0 END) as completed_shifts,
-                   SUM(vs.HoursWorked) as total_hours,
-                   SUM(CASE WHEN vs.Status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_shifts,
-                   SUM(CASE WHEN vs.Status = 'no-show' THEN 1 ELSE 0 END) as no_show_shifts
-            FROM Volunteers v
-            LEFT JOIN VolunteerSchedules vs ON v.VolunteerID = vs.VolunteerID
-            GROUP BY v.VolunteerID, v.FullName, v.Email, v.Phone, v.Status
-            ORDER BY total_hours DESC
-        ");
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $check = $this->pdo->query("SHOW TABLES LIKE 'VolunteerSchedules'");
+            if ($check->rowCount() === 0) {
+                return [];
+            }
+            
+            $stmt = $this->pdo->query("
+                SELECT v.VolunteerID, CONCAT(v.FirstName, ' ', v.LastName) as FullName, v.Phone, v.AvailabilityStatus as Status,
+                       COUNT(vs.ScheduleID) as total_shifts,
+                       SUM(CASE WHEN vs.Status = 'completed' THEN 1 ELSE 0 END) as completed_shifts,
+                       SUM(vs.HoursWorked) as total_hours,
+                       SUM(CASE WHEN vs.Status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_shifts,
+                       SUM(CASE WHEN vs.Status = 'no-show' THEN 1 ELSE 0 END) as no_show_shifts
+                FROM Volunteers v
+                LEFT JOIN VolunteerSchedules vs ON v.VolunteerID = vs.VolunteerID
+                GROUP BY v.VolunteerID, v.FirstName, v.LastName, v.Phone, v.AvailabilityStatus
+                ORDER BY total_hours DESC
+            ");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Reports::getVolunteerPerformanceReport - " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
      * HZ-RPT-007: Get volunteer schedule report
      */
     public function getVolunteerScheduleReport($fromDate = null, $toDate = null, $status = null) {
-        $query = "
-            SELECT vs.ScheduleID, vs.VolunteerID, v.FullName, v.Email,
-                   vs.ScheduleDate, vs.StartTime, vs.EndTime, 
-                   vs.Role, vs.Location, vs.Status, vs.HoursWorked, vs.Notes
-            FROM VolunteerSchedules vs
-            JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID
-            WHERE 1=1
-        ";
-        
-        $params = [];
-        if ($fromDate) {
-            $query .= " AND vs.ScheduleDate >= ?";
-            $params[] = $fromDate;
+        try {
+            $check = $this->pdo->query("SHOW TABLES LIKE 'VolunteerSchedules'");
+            if ($check->rowCount() === 0) {
+                return [];
+            }
+            
+            $query = "
+                SELECT vs.ScheduleID, vs.VolunteerID, CONCAT(v.FirstName, ' ', v.LastName) as FullName, v.Phone,
+                       vs.ScheduleDate, vs.StartTime, vs.EndTime, 
+                       vs.Role, vs.Location, vs.Status, vs.HoursWorked, vs.Notes
+                FROM VolunteerSchedules vs
+                JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID
+                WHERE 1=1
+            ";
+            
+            $params = [];
+            if ($fromDate) {
+                $query .= " AND vs.ScheduleDate >= ?";
+                $params[] = $fromDate;
+            }
+            if ($toDate) {
+                $query .= " AND vs.ScheduleDate <= ?";
+                $params[] = $toDate;
+            }
+            if ($status) {
+                $query .= " AND vs.Status = ?";
+                $params[] = $status;
+            }
+            
+            $query .= " ORDER BY vs.ScheduleDate DESC, v.LastName ASC";
+            
+            $stmt = $this->pdo->prepare($query);
+            $stmt->execute($params);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Reports::getVolunteerScheduleReport - " . $e->getMessage());
+            return [];
         }
-        if ($toDate) {
-            $query .= " AND vs.ScheduleDate <= ?";
-            $params[] = $toDate;
-        }
-        if ($status) {
-            $query .= " AND vs.Status = ?";
-            $params[] = $status;
-        }
-        
-        $query .= " ORDER BY vs.ScheduleDate DESC, v.FullName ASC";
-        
-        $stmt = $this->pdo->prepare($query);
-        $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -196,8 +236,7 @@ class Reports {
      */
     public function getBeneficiaryReport($roleFilter = null, $statusFilter = null) {
         $query = "
-            SELECT BeneficiaryID, FullName, Age, Gender, Role, Status,
-                   ContactPerson, ContactPhone, RegistrationDate
+            SELECT BeneficiaryID, FirstName, LastName, Age, Gender, ContactPerson, ContactPhone, RegistrationDate,Status
             FROM Beneficiaries
             WHERE 1=1
         ";
@@ -212,7 +251,7 @@ class Reports {
             $params[] = $statusFilter;
         }
         
-        $query .= " ORDER BY FullName ASC";
+        $query .= " ORDER BY LastName ASC, FirstName ASC";
         
         $stmt = $this->pdo->prepare($query);
         $stmt->execute($params);
@@ -224,8 +263,8 @@ class Reports {
      */
     public function getActivityAuditReport($fromDate = null, $toDate = null, $userId = null, $activityType = null) {
         $query = "
-            SELECT al.ActivityID, al.UserID, u.Username, al.ActivityType,
-                   al.Description, al.Timestamp, al.IPAddress
+            SELECT al.ActivityID, al.UserID, u.Username, al.Action as ActivityType,
+                   al.Details as Description, al.Timestamp, al.AffectedEntityName, al.AffectedEntityID
             FROM ActivityLog al
             JOIN Users u ON al.UserID = u.UserID
             WHERE 1=1
@@ -245,7 +284,7 @@ class Reports {
             $params[] = $userId;
         }
         if ($activityType) {
-            $query .= " AND al.ActivityType = ?";
+            $query .= " AND al.Action = ?";
             $params[] = $activityType;
         }
         
@@ -266,11 +305,11 @@ class Reports {
         $query = "SELECT COUNT(*) as total, COUNT(DISTINCT BeneficiaryID) as unique_beneficiaries FROM Attendance WHERE 1=1";
         $params = [];
         if ($fromDate) {
-            $query .= " AND AttendanceDate >= ?";
+            $query .= " AND SessionDate >= ?";
             $params[] = $fromDate;
         }
         if ($toDate) {
-            $query .= " AND AttendanceDate <= ?";
+            $query .= " AND SessionDate <= ?";
             $params[] = $toDate;
         }
         $stmt = $this->pdo->prepare($query);
@@ -308,7 +347,7 @@ class Reports {
         $summary['volunteers'] = $stmt->fetch(PDO::FETCH_ASSOC);
         
         // Inventory summary
-        $stmt = $this->pdo->query("SELECT COUNT(*) as total_items, SUM(QuantityRemaining * UnitCost) as total_value FROM FoodStock");
+        $stmt = $this->pdo->query("SELECT COUNT(*) as total_items, SUM(Quantity) as total_quantity FROM FoodStock");
         $summary['inventory'] = $stmt->fetch(PDO::FETCH_ASSOC);
         
         return $summary;

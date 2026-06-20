@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1D9E75">
+    <title>Beneficiaries - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content">
+            <!-- KPI Summary -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Total Beneficiaries</div>
+                        <div class="kpi-value" data-kpi="total_beneficiaries">—</div>
+                        <div class="kpi-meta" data-kpi="beneficiary_status">Loading...</div>
+                    </div>
+                    <span class="kpi-icon green"><i class="fas fa-users" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Active This Month</div>
+                        <div class="kpi-value" data-kpi="active_this_month">—</div>
+                        <div class="kpi-meta" data-kpi="attendance_rate">Loading...</div>
+                    </div>
+                    <span class="kpi-icon blue"><i class="fas fa-user-check" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Children</div>
+                        <div class="kpi-value" data-kpi="children_count">—</div>
+                        <div class="kpi-meta" data-kpi="children_pct">Loading...</div>
+                    </div>
+                    <span class="kpi-icon purple"><i class="fas fa-child" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card">
+                    <div>
+                        <div class="kpi-label">Elderly</div>
+                        <div class="kpi-value" data-kpi="elderly_count">—</div>
+                        <div class="kpi-meta" data-kpi="elderly_pct">Loading...</div>
+                    </div>
+                    <span class="kpi-icon orange"><i class="fas fa-person-cane" aria-hidden="true"></i></span>
+                </div>
+            </div>
+
+            <!-- Register Beneficiary -->
+            <div class="proto-card">
+                <h2><i class="fas fa-user-plus" style="color:var(--mobile-primary);margin-right:8px;"></i>Register Beneficiary</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>First name</label>
+                        <input type="text" placeholder="e.g. Kabo">
+                    </div>
+                    <div class="form-group">
+                        <label>Last name</label>
+                        <input type="text" placeholder="e.g. Sithole">
+                    </div>
+                    <div class="form-group">
+                        <label>Date of birth</label>
+                        <input type="date">
+                    </div>
+                    <div class="form-group">
+                        <label>Gender</label>
+                        <select><option>Male</option><option>Female</option><option>Other</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Guardian name</label>
+                        <input type="text" placeholder="Parent / caregiver">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact number</label>
+                        <input type="tel" placeholder="0XX XXX XXXX">
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" placeholder="Street, suburb">
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select><option>Child</option><option>Elderly</option><option>Disabled adult</option></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Registration date</label>
+                        <input type="date">
+                    </div>
+                </div>
+                <div style="margin-top:14px;display:flex;gap:8px;">
+                    <button class="btn btn-primary">Save Beneficiary</button>
+                    <button class="btn">Clear</button>
+                </div>
+            </div>
+
+            <!-- Beneficiary List -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2 style="font-size:16px;font-weight:700;color:#fff;margin:0;"><i class="fas fa-list" style="color:var(--mobile-primary);margin-right:8px;"></i>Beneficiary List</h2>
+                    <input type="text" id="search-beneficiary" placeholder="Search..." style="max-width:140px;padding:8px 10px;border:1px solid var(--mobile-border);border-radius:8px;background:var(--mobile-bg);color:var(--mobile-text);font-size:13px;" oninput="filterBeneficiaries(this.value)">
+                </div>
+                <div class="table-wrap">
+                    <table id="beneficiary-table">
+                        <thead>
+                            <tr><th>ID</th><th>Name</th><th>Category</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4" style="text-align:center;color:var(--mobile-muted);">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <nav class="mobile-bottom-nav" role="navigation" aria-label="Primary">
+            <a class="mobile-nav-item" href="dashboard.html"><i class="fas fa-house" aria-hidden="true"></i><span>Home</span></a>
+            <a class="mobile-nav-item active" href="beneficiaries.html"><i class="fas fa-users" aria-hidden="true"></i><span>Beneficiaries</span></a>
+            <a class="mobile-nav-item" href="attendance.html"><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Attendance</span></a>
+            <a class="mobile-nav-item" href="stock.html"><i class="fas fa-boxes-stacked" aria-hidden="true"></i><span>Stock</span></a>
+        </nav>
+    </div>
+
+    <script src="assets/api.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Beneficiaries', 'beneficiaries', { loadData: true, dataType: 'beneficiaries' });
+
+        // Filter beneficiaries client-side
+        function filterBeneficiaries(query) {
+            const tbody = document.querySelector('#beneficiary-table tbody');
+            const rows = tbody.querySelectorAll('tr');
+            const q = query.toLowerCase().trim();
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = (!q || text.includes(q)) ? '' : 'none';
+            });
+        }
+    </script>
+</body>
+</html>
