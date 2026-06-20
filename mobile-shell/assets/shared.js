@@ -256,9 +256,8 @@ async function loadAttendance() {
     const data = await API.get('/api/attendance/today.php');
     if (data.success && data.data) {
       container.innerHTML = data.data.map(b => `
-        <div class="beneficiary-tile ${b.status === 'Present' || b.status === 'present' ? 'present' : ''}" 
-             data-id="${b.BeneficiaryID || b.id}" 
-             onclick="toggleAttendance(this, ${b.BeneficiaryID || b.id})">
+        <div class="beneficiary-tile ${b.status === 'Present' || b.status === 'present' ? 'present' : ''}"
+             data-id="${b.BeneficiaryID || b.id}">
           <div class="tile-avatar" style="background:${getAvatarColor(b.FullName || b.name)};">${getInitials(b.FullName || b.name)}</div>
           <div class="tile-name">${b.FullName || b.name}</div>
           <div class="tile-status">${b.status || 'Pending'}</div>
