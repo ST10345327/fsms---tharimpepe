@@ -168,16 +168,29 @@ function closeHamburger() {
 /**
  * Logout - clear auth and redirect to login
  */
-function logout() {
+async function logout() {
+  // Best-effort server-side token revocation.
+  // We ignore failures because the local session MUST be cleared regardless.
+  try {
+    if (typeof API !== 'undefined' && API.isAuthenticated()) {
+      await API.logout();
+      return;
+    }
+  } catch {
+    // Proceed to local cleanup below
+  }
+
   // Clear localStorage (persistent storage)
-  localStorage.removeItem('access_token');
-  localStorage.removeItem('refresh_token');
-  localStorage.removeItem('token_expires_at');
-  localStorage.removeItem('user');
-  
-  // Clear sessionStorage as well
-  sessionStorage.removeItem('user');
-  
+  try {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('token_expires_at');
+    localStorage.removeItem('user');
+    sessionStorage.removeItem('user');
+  } catch {
+    // no-op
+  }
+
   window.location.href = './index.html';
 }
 
@@ -314,6 +327,20 @@ function initPage(pageTitle, currentPage, options = {}) {
   // Check authentication
   const user = getCurrentUser();
   if (!user || (!user.username && !user.user_id)) {
+    // Clean any stale token remnants before redirecting back to login
+    try {
+      if (typeof API !== 'undefined') {
+        API.clearAuth();
+      } else {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('token_expires_at');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+      }
+    } catch {
+      // no-op
+    }
     window.location.href = './index.html';
     return;
   }
@@ -352,6 +379,19 @@ function initPage(pageTitle, currentPage, options = {}) {
       closeHamburger();
     }
   });
+
+  // Prevent the WebView from navigating back to blank pages via browser history.
+  // We maintain a single-page-like experience inside the WebView.
+  try {
+    history.pushState(null, '', location.href);
+    window.addEventListener('popstate', function() {
+      if (!document.querySelector('.hamburger-overlay.open')) {
+        history.pushState(null, '', location.href);
+      }
+    });
+  } catch {
+    // no-op on environments where History API is restricted
+  }
 
   // Auto-load data if requested
   if (options.loadData) {
