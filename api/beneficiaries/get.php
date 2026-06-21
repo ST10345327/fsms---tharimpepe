@@ -46,7 +46,7 @@ try {
                 CONCAT(FirstName, ' ', LastName) AS FullName,
                 Age, Gender, Phone, Email, Address,
                 RegistrationDate, Status, Notes, CreatedAt, UpdatedAt
-         FROM Beneficiaries 
+         FROM beneficiaries
          WHERE BeneficiaryID = :id
          LIMIT 1"
     );

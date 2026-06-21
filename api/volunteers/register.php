@@ -27,7 +27,7 @@ require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 try {
     $db = getDBConnection();
     $auth = new AuthMiddleware($db);
-    $user = $auth->requireAuth();
+    $user = $auth->requireRole(['admin', 'staff']);
 
     if ($db === null) {
         http_response_code(503);

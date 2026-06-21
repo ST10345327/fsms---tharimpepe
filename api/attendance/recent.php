@@ -39,8 +39,8 @@ try {
         "SELECT a.AttendanceID, a.SessionDate AS `date`, a.Status,
                 CONCAT(b.FirstName, ' ', b.LastName) AS `name`,
                 b.BeneficiaryID
-         FROM Attendance a
-         JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+         FROM attendance a
+         JOIN beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
          WHERE a.SessionDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
          ORDER BY a.SessionDate DESC, a.AttendanceID DESC
          LIMIT :limit"

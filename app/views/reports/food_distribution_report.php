@@ -1,48 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Distribution Report - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        .table-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .filter-form {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Food Distribution Report';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <h1><i class="fas fa-box"></i> Food Distribution Report</h1>
             <p class="mb-0 mt-2">Food distribution history and tracking</p>
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <!-- Filter Form -->
         <div class="filter-form">
@@ -210,7 +177,7 @@
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
 
     <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <h1><i class="fas fa-dolly"></i> Food Distribution Report</h1>
             <p class="mb-0 mt-2">Track food distribution history and consumption trends</p>
@@ -322,9 +289,4 @@
             </a>
         </div>
     </div>
-
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

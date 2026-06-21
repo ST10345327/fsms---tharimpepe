@@ -1,90 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KPI Dashboard - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        .kpi-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            text-align: center;
-            border-top: 4px solid #667eea;
-        }
-        .kpi-value {
-            font-size: 3rem;
-            font-weight: 700;
-            margin: 15px 0;
-            color: #667eea;
-        }
-        .kpi-label {
-            color: #666;
-            font-size: 1rem;
-            margin-bottom: 10px;
-        }
-        .kpi-unit {
-            color: #999;
-            font-size: 0.9rem;
-        }
-        .analytics-nav {
-            background: white;
-            border-radius: 10px;
-            padding: 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            overflow: hidden;
-        }
-        .analytics-nav a {
-            display: block;
-            padding: 12px 20px;
-            color: #333;
-            text-decoration: none;
-            border-left: 4px solid transparent;
-            transition: all 0.2s;
-        }
-        .analytics-nav a:hover {
-            background: #f8f9fa;
-            border-left-color: #667eea;
-        }
-        .analytics-nav a.active {
-            background: #f0f4ff;
-            border-left-color: #667eea;
-            color: #667eea;
-            font-weight: 600;
-        }
-        .kpi-green { border-top-color: #28a745; }
-        .kpi-green .kpi-value { color: #28a745; }
-        .kpi-orange { border-top-color: #fd7e14; }
-        .kpi-orange .kpi-value { color: #fd7e14; }
-        .kpi-blue { border-top-color: #17a2b8; }
-        .kpi-blue .kpi-value { color: #17a2b8; }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'KPI Dashboard';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <h1><i class="fas fa-tachometer-alt"></i> Key Performance Indicators</h1>
             <p class="mb-0 mt-2">System-wide performance metrics and goals</p>
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <!-- Analytics Navigation -->
         <div class="row mb-4">
@@ -203,9 +128,4 @@
             </a>
         </div>
     </div>
-
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

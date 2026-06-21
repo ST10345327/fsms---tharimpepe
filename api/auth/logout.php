@@ -26,6 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 require_once __DIR__ . '/../../app/helpers/bootstrap.php';
+require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
 try {
     $db = null;

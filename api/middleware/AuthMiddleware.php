@@ -91,6 +91,15 @@ class AuthMiddleware
             ?? '';
 
         if (empty($authHeader) || !preg_match('/^Bearer\s+(.+)$/i', $authHeader, $matches)) {
+            if (class_exists('AuditLogger')) {
+                AuditLogger::log('token_missing', 'auth', null, null, [
+                    'actor_username' => null,
+                    'response_status' => 401,
+                    'is_success' => false,
+                    'failure_reason' => 'Missing or invalid authorization header',
+                    'severity' => 'warning'
+                ]);
+            }
             return null;
         }
 
@@ -98,14 +107,22 @@ class AuthMiddleware
         $tokenHash = hash('sha256', $token);
 
         if ($this->db === null) {
+            if (class_exists('AuditLogger')) {
+                AuditLogger::log('token_validation_failed', 'auth', null, null, [
+                    'response_status' => 503,
+                    'is_success' => false,
+                    'failure_reason' => 'Database unavailable',
+                    'severity' => 'error'
+                ]);
+            }
             return null;
         }
 
         try {
             $stmt = $this->db->prepare(
-                "SELECT t.UserID, u.Username, u.Email, u.Role, u.FullName, t.ExpiresAt 
-                 FROM AuthTokens t 
-                 JOIN Users u ON t.UserID = u.UserID 
+                "SELECT t.UserID, t.TokenID, u.Username, u.Email, u.Role, u.FullName, t.ExpiresAt 
+                 FROM authtokens t
+                 JOIN users u ON t.UserID = u.UserID
                  WHERE t.TokenHash = :token_hash 
                  AND t.RevokedAt IS NULL 
                  AND t.ExpiresAt > NOW() 
@@ -116,16 +133,24 @@ class AuthMiddleware
             $tokenData = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$tokenData) {
+                if (class_exists('AuditLogger')) {
+                    AuditLogger::log('token_invalid', 'auth', 'user', null, [
+                        'response_status' => 401,
+                        'is_success' => false,
+                        'failure_reason' => 'Token is invalid or expired',
+                        'severity' => 'warning'
+                    ]);
+                }
                 return null;
             }
 
             // Update last used timestamp
             $updateStmt = $this->db->prepare(
-                "UPDATE AuthTokens SET LastUsedAt = NOW() WHERE TokenHash = :token_hash"
+                "UPDATE authtokens SET LastUsedAt = NOW() WHERE TokenHash = :token_hash"
             );
             $updateStmt->execute([':token_hash' => $tokenHash]);
 
-            return [
+            $user = [
                 'user_id' => (int)$tokenData['UserID'],
                 'username' => $tokenData['Username'],
                 'email' => $tokenData['Email'],
@@ -133,7 +158,29 @@ class AuthMiddleware
                 'role' => $tokenData['Role']
             ];
 
+            // Log successful token validation
+            if (class_exists('AuditLogger')) {
+                AuditLogger::log('token_valid', 'auth', 'user', $user['user_id'], [
+                    'actor_user_id' => $user['user_id'],
+                    'actor_username' => $user['username'],
+                    'actor_role' => $user['role'],
+                    'response_status' => 200,
+                    'is_success' => true,
+                    'severity' => 'info'
+                ]);
+            }
+
+            return $user;
+
         } catch (Exception $e) {
+            if (class_exists('AuditLogger')) {
+                AuditLogger::log('token_validation_error', 'auth', null, null, [
+                    'response_status' => 500,
+                    'is_success' => false,
+                    'failure_reason' => $e->getMessage(),
+                    'severity' => 'error'
+                ]);
+            }
             logMessage("Auth middleware error: " . $e->getMessage(), 'ERROR');
             return null;
         }
@@ -154,7 +201,7 @@ class AuthMiddleware
         try {
             $tokenHash = hash('sha256', $token);
             $stmt = $this->db->prepare(
-                "UPDATE AuthTokens SET RevokedAt = NOW() WHERE TokenHash = :token_hash"
+                "UPDATE authtokens SET RevokedAt = NOW() WHERE TokenHash = :token_hash"
             );
             $stmt->execute([':token_hash' => $tokenHash]);
             return $stmt->rowCount() > 0;
@@ -178,7 +225,7 @@ class AuthMiddleware
 
         try {
             $stmt = $this->db->prepare(
-                "UPDATE AuthTokens SET RevokedAt = NOW() 
+                "UPDATE authtokens SET RevokedAt = NOW()
                  WHERE UserID = :user_id AND RevokedAt IS NULL"
             );
             $stmt->execute([':user_id' => $userId]);

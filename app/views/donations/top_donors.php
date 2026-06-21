@@ -1,110 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Top Donors - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 0;
-            margin-bottom: 30px;
-        }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .content-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .donor-rank {
-            display: flex;
-            align-items: center;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            border-left: 4px solid #28a745;
-        }
-        .rank-badge {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 1.5rem;
-            color: white;
-            margin-right: 20px;
-            flex-shrink: 0;
-        }
-        .rank-1 { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
-        .rank-2 { background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%); }
-        .rank-3 { background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%); }
-        .rank-other { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
-        .donor-info {
-            flex-grow: 1;
-        }
-        .donor-name {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        .donor-details {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .donor-stats {
-            text-align: right;
-        }
-        .stat-item {
-            margin-bottom: 8px;
-        }
-        .stat-label {
-            color: #666;
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #28a745;
-        }
-        .table-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .table thead {
-            background: #f8f9fa;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .btn-success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; }
-        .btn-success:hover { background: linear-gradient(135deg, #218838 0%, #1aa085 100%); }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Top Donors';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -118,7 +17,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <!-- Ranking Period Filter -->
         <div class="content-card mb-4">
@@ -264,9 +162,4 @@
             </a>
         </div>
     </div>
-
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

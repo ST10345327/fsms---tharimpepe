@@ -20,6 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    exit();
+}
+
 require_once __DIR__ . '/../../app/helpers/bootstrap.php';
 
 try {
@@ -59,11 +65,12 @@ try {
     // Look up token in database
     $stmt = $db->prepare(
         "SELECT t.*, u.Username, u.Email, u.Role, u.FullName 
-         FROM AuthTokens t 
-         JOIN Users u ON t.UserID = u.UserID 
+         FROM authtokens t
+         JOIN users u ON t.UserID = u.UserID
          WHERE t.TokenHash = :token_hash 
          AND t.RevokedAt IS NULL 
          AND t.ExpiresAt > NOW() 
+         AND u.Status = 'active'
          LIMIT 1"
     );
     $stmt->execute([':token_hash' => $tokenHash]);
@@ -80,7 +87,7 @@ try {
 
     // Update last used timestamp
     $updateStmt = $db->prepare(
-        "UPDATE AuthTokens SET LastUsedAt = NOW() WHERE TokenID = :token_id"
+        "UPDATE authtokens SET LastUsedAt = NOW() WHERE TokenID = :token_id"
     );
     $updateStmt->execute([':token_id' => $tokenData['TokenID']]);
 

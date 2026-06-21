@@ -1,61 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create User - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        .form-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .form-section {
-            margin-bottom: 30px;
-        }
-        .form-section h5 {
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
-        .btn-success { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
-        .btn-success:hover { background: linear-gradient(135deg, #5568d3 0%, #693a90 100%); }
-        .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Create User';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <h1><i class="fas fa-user-plus"></i> Create New User</h1>
             <p class="mb-0 mt-2">Add a new system user account</p>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="container-fluid pt-4 pb-5">
+    <main class="container-fluid pt-4 pb-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-circle me-2"></i> <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i> <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
+                    </div>
+                <?php endif; ?>
+
                 <div class="form-card">
                     <!-- Info Box -->
                     <div class="info-box">
@@ -162,5 +131,4 @@
             });
         })();
     </script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

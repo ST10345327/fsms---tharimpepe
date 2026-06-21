@@ -45,7 +45,7 @@ try {
     // Determine which session to close
     if (!empty($input['session_id'])) {
         $sessionId = (int)$input['session_id'];
-        $stmt = $db->prepare("SELECT MealSessionID, SessionDate FROM MealSession WHERE MealSessionID = :id");
+        $stmt = $db->prepare("SELECT MealSessionID, SessionDate FROM mealsession WHERE MealSessionID = :id");
         $stmt->execute([':id' => $sessionId]);
         $session = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$session) {
@@ -66,12 +66,12 @@ try {
 
     // Mark all active beneficiaries without attendance for this date as absent
     $stmt = $db->prepare(
-        "INSERT INTO Attendance (BeneficiaryID, SessionDate, Status, Notes, CreatedAt)
+        "INSERT INTO attendance (BeneficiaryID, SessionDate, Status, Notes, CreatedAt)
          SELECT b.BeneficiaryID, :date, 'absent', 'Auto-marked absent on session close', NOW()
-         FROM Beneficiaries b
+         FROM beneficiaries b
          WHERE b.Status = 'active'
            AND b.BeneficiaryID NOT IN (
-               SELECT a.BeneficiaryID FROM Attendance a 
+               SELECT a.BeneficiaryID FROM attendance a
                WHERE a.SessionDate = :date2
            )"
     );

@@ -1,91 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo htmlspecialchars($pageTitle); ?> - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 0;
-            margin-bottom: 30px;
-        }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .content-card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .alert-item {
-            border-left: 4px solid #ffc107;
-            background: #fffbf0;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
-        }
-        .alert-item:hover { box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .alert-item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-            margin-bottom: 15px;
-        }
-        .item-name { font-size: 1.2rem; font-weight: 600; color: #333; }
-        .quantity-badge {
-            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        .item-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .detail-item {
-            padding: 10px;
-            background: white;
-            border-radius: 6px;
-        }
-        .detail-label { font-size: 0.9rem; color: #666; font-weight: 500; }
-        .detail-value { font-size: 1.1rem; color: #333; font-weight: 600; margin-top: 5px; }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .btn-sm { padding: 6px 12px; font-size: 0.9rem; }
-        .btn-warning { background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); border: none; color: white; }
-        .btn-warning:hover { background: linear-gradient(135deg, #ffb300 0%, #e68900 100%); color: white; }
-        .alert-container { margin-bottom: 20px; }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .empty-state-icon {
-            font-size: 5rem;
-            color: #28a745;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'FSMS';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -99,7 +17,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <!-- Explanation Alert -->
         <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -242,5 +159,4 @@
             alert('Reorder functionality would integrate with your procurement system. This is a placeholder.');
         }
     </script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

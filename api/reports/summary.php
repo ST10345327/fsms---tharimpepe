@@ -39,7 +39,7 @@ try {
     if ($db !== null) {
         // Total meals in last 30 days
         $stmt = $db->query(
-            "SELECT COUNT(*) as cnt FROM Attendance WHERE SessionDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND Status = 'present'"
+            "SELECT COUNT(*) as cnt FROM attendance WHERE SessionDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) AND Status = 'present'"
         );
         $data['meals_30d'] = (int)$stmt->fetch(PDO::FETCH_ASSOC)['cnt'];
 
@@ -48,7 +48,7 @@ try {
             "SELECT ROUND(AVG(rate)) as avg_rate FROM (
                 SELECT SessionDate, 
                        SUM(CASE WHEN Status = 'present' THEN 1 ELSE 0 END) / COUNT(*) * 100 AS rate
-                FROM Attendance
+                FROM attendance
                 WHERE SessionDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
                 GROUP BY SessionDate
             ) daily"
@@ -59,10 +59,10 @@ try {
         // Most active volunteer
         $stmt = $db->query(
             "SELECT u.FullName, COUNT(vs.ScheduleID) as shifts
-             FROM VolunteerSchedules vs
-             JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID
-             JOIN Users u ON v.UserID = u.UserID
-             WHERE vs.Status = 'completed'
+             FROM volunteerschedules vs
+             JOIN volunteers v ON vs.VolunteerID = v.VolunteerID
+             JOIN users u ON v.UserID = u.UserID
+             WHERE vs.STATUS = 'completed'
              GROUP BY v.VolunteerID
              ORDER BY shifts DESC LIMIT 1"
         );
@@ -72,7 +72,7 @@ try {
         // Top donor this month
         $stmt = $db->query(
             "SELECT DonorName, COUNT(*) as donations
-             FROM Donations
+             FROM donations
              WHERE MONTH(DonationDate) = MONTH(CURDATE()) AND YEAR(DonationDate) = YEAR(CURDATE())
              GROUP BY DonorName
              ORDER BY donations DESC LIMIT 1"
@@ -83,7 +83,7 @@ try {
         // Stock health score (percentage of items with sufficient stock > 25)
         $stmt = $db->query(
             "SELECT ROUND(SUM(CASE WHEN Quantity > 25 THEN 1 ELSE 0 END) / COUNT(*) * 100) as score
-             FROM FoodStock WHERE Quantity > 0"
+             FROM foodstock WHERE Quantity > 0"
         );
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         $data['stock_score'] = $row ? (int)$row['score'] : 0;

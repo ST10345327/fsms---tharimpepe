@@ -1,76 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volunteer Availability - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        .form-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-        .availability-row {
-            display: grid;
-            grid-template-columns: 100px 1fr 200px;
-            gap: 20px;
-            padding: 20px;
-            border-bottom: 1px solid #f0f0f0;
-            align-items: center;
-        }
-        .availability-row:last-child {
-            border-bottom: none;
-        }
-        .day-label {
-            font-weight: 600;
-            color: #667eea;
-        }
-        .btn-success { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
-        .btn-success:hover { background: linear-gradient(135deg, #5568d3 0%, #693a90 100%); }
-        .availability-toggle {
-            display: flex;
-            gap: 10px;
-        }
-        .toggle-btn {
-            flex: 1;
-            padding: 8px 10px;
-            border: 2px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .toggle-btn.active {
-            background: #667eea;
-            color: white;
-        }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Volunteer Availability';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <h1><i class="fas fa-calendar-alt"></i> Volunteer Availability</h1>
             <p class="mb-0 mt-2">Set your preferred availability days</p>
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <div class="row justify-content-center">
             <div class="col-lg-8">
@@ -192,5 +131,4 @@
             }
         });
     </script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

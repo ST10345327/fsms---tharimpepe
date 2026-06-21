@@ -1,5 +1,8 @@
 <?php
 // ping test
-error_log('PING SCRIPT EXECUTED');
-echo 'pong';
-?>
+header('Content-Type: application/json');
+echo json_encode([
+  'status' => 'ok',
+  'message' => 'pong',
+  'timestamp' => date('c')
+]);

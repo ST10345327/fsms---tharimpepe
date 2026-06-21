@@ -361,4 +361,3 @@ class ErrorHandler
         return PHP_SAPI === 'cli';
     }
 }
-?>

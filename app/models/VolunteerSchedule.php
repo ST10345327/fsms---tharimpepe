@@ -11,10 +11,12 @@ require_once __DIR__ . "/../../config/database.php";
 
 class VolunteerSchedule {
     // HZ-SCHED-001: Create a new schedule
-    public static function createSchedule($pdo, $volunteerId, $scheduleDate, $startTime, $endTime, $location, $role, $notes = '') {
+    public static function createSchedule($volunteerId, $scheduleDate, $startTime, $endTime, $location, $role, $notes = '') {
+        $pdo = getConnection();
+        if (!$pdo) return false;
         
         try {
-            $query = "INSERT INTO VolunteerSchedules (VolunteerID, ScheduleDate, StartTime, EndTime, Location, Role, Notes, Status, CreatedAt) 
+            $query = "INSERT INTO volunteerschedules (VolunteerID, ScheduleDate, StartTime, EndTime, Location, Role, Notes, Status, CreatedAt)
                       VALUES (:volunteer_id, :schedule_date, :start_time, :end_time, :location, :role, :notes, 'scheduled', NOW())";
             $stmt = $pdo->prepare($query);
             $stmt->bindParam(':volunteer_id', $volunteerId);
@@ -37,8 +39,9 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT vs.*, v.FullName, v.Phone, v.Email FROM VolunteerSchedules vs 
-                      LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
+            $query = "SELECT vs.*, v.AvailabilityStatus, u.FullName, u.Phone, u.Email FROM volunteerschedules vs
+                      LEFT JOIN volunteers v ON vs.VolunteerID = v.VolunteerID
+                      LEFT JOIN users u ON v.UserID = u.UserID
                       WHERE 1=1";
             
             if (!empty($filters['status'])) {
@@ -75,8 +78,9 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT vs.*, v.FullName, v.Phone, v.Email FROM VolunteerSchedules vs 
-                      LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
+            $query = "SELECT vs.*, u.FullName, u.Phone, u.Email FROM volunteerschedules vs
+                      LEFT JOIN volunteers v ON vs.VolunteerID = v.VolunteerID
+                      LEFT JOIN users u ON v.UserID = u.UserID
                       WHERE vs.ScheduleID = :schedule_id";
             $stmt = $connection->prepare($query);
             $stmt->bindParam(':schedule_id', $scheduleId);
@@ -94,7 +98,7 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "UPDATE VolunteerSchedules SET StartTime = :start_time, EndTime = :end_time, 
+            $query = "UPDATE volunteerschedules SET StartTime = :start_time, EndTime = :end_time,
                       Location = :location, Role = :role, Status = :status, Notes = :notes, UpdatedAt = NOW() 
                       WHERE ScheduleID = :schedule_id";
             $stmt = $connection->prepare($query);
@@ -118,7 +122,7 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "DELETE FROM VolunteerSchedules WHERE ScheduleID = :schedule_id";
+            $query = "DELETE FROM volunteerschedules WHERE ScheduleID = :schedule_id";
             $stmt = $connection->prepare($query);
             $stmt->bindParam(':schedule_id', $scheduleId);
             
@@ -134,7 +138,7 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT * FROM VolunteerAvailability WHERE VolunteerID = :volunteer_id ORDER BY DayOfWeek ASC";
+            $query = "SELECT * FROM volunteeravailability WHERE VolunteerID = :volunteer_id ORDER BY DayOfWeek ASC";
             $stmt = $connection->prepare($query);
             $stmt->bindParam(':volunteer_id', $volunteerId);
             $stmt->execute();
@@ -152,17 +156,17 @@ class VolunteerSchedule {
         
         try {
             // Check if record exists
-            $checkQuery = "SELECT * FROM VolunteerAvailability WHERE VolunteerID = :volunteer_id AND DayOfWeek = :day";
+            $checkQuery = "SELECT * FROM volunteeravailability WHERE VolunteerID = :volunteer_id AND DayOfWeek = :day";
             $checkStmt = $connection->prepare($checkQuery);
             $checkStmt->bindParam(':volunteer_id', $volunteerId);
             $checkStmt->bindParam(':day', $dayOfWeek);
             $checkStmt->execute();
             
             if ($checkStmt->rowCount() > 0) {
-                $updateQuery = "UPDATE VolunteerAvailability SET IsAvailable = :is_available, Notes = :notes WHERE VolunteerID = :volunteer_id AND DayOfWeek = :day";
+                $updateQuery = "UPDATE volunteeravailability SET IsAvailable = :is_available, Notes = :notes WHERE VolunteerID = :volunteer_id AND DayOfWeek = :day";
                 $stmt = $connection->prepare($updateQuery);
             } else {
-                $updateQuery = "INSERT INTO VolunteerAvailability (VolunteerID, DayOfWeek, IsAvailable, Notes) VALUES (:volunteer_id, :day, :is_available, :notes)";
+                $updateQuery = "INSERT INTO volunteeravailability (VolunteerID, DayOfWeek, IsAvailable, Notes) VALUES (:volunteer_id, :day, :is_available, :notes)";
                 $stmt = $connection->prepare($updateQuery);
             }
             
@@ -183,8 +187,11 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT vs.*, v.FullName, v.Phone FROM VolunteerSchedules vs 
-                      LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
+            $query = "SELECT vs.*, u.FullName, u.Phone,
+                             v.FirstName, v.LastName
+                      FROM volunteerschedules vs
+                      LEFT JOIN volunteers v ON vs.VolunteerID = v.VolunteerID
+                      LEFT JOIN users u ON v.UserID = u.UserID
                       WHERE vs.ScheduleDate BETWEEN :from_date AND :to_date 
                       ORDER BY vs.ScheduleDate ASC, vs.StartTime ASC";
             $stmt = $connection->prepare($query);
@@ -204,7 +211,7 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT * FROM VolunteerSchedules WHERE VolunteerID = :volunteer_id 
+            $query = "SELECT * FROM volunteerschedules WHERE VolunteerID = :volunteer_id
                       AND ScheduleDate >= CURDATE() 
                       ORDER BY ScheduleDate ASC, StartTime ASC";
             $stmt = $connection->prepare($query);
@@ -229,8 +236,8 @@ class VolunteerSchedule {
                         SUM(CASE WHEN Status = 'completed' THEN 1 ELSE 0 END) as completed,
                         SUM(CASE WHEN Status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
                         COUNT(DISTINCT VolunteerID) as total_volunteers,
-                        (SELECT COUNT(*) FROM VolunteerSchedules WHERE ScheduleDate = CURDATE()) as today_schedules
-                      FROM VolunteerSchedules";
+                        (SELECT COUNT(*) FROM volunteerschedules WHERE ScheduleDate = CURDATE()) as today_schedules
+                      FROM volunteerschedules";
             $stmt = $connection->prepare($query);
             $stmt->execute();
             
@@ -246,7 +253,7 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "UPDATE VolunteerSchedules SET Status = 'completed'";
+            $query = "UPDATE volunteerschedules SET Status = 'completed'";
             if ($hoursWorked !== null) {
                 $query .= ", HoursWorked = :hours_worked";
             }
@@ -274,7 +281,7 @@ class VolunteerSchedule {
                         SUM(HoursWorked) as total_hours,
                         COUNT(CASE WHEN Status = 'completed' THEN 1 END) as completed_shifts,
                         COUNT(CASE WHEN Status = 'scheduled' THEN 1 END) as upcoming_shifts
-                      FROM VolunteerSchedules 
+                      FROM volunteerschedules
                       WHERE VolunteerID = :volunteer_id";
             
             if ($monthYear) {

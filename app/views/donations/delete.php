@@ -1,85 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Delete Donation - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 0;
-            margin-bottom: 30px;
-        }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .content-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .warning-box {
-            background: #fff3cd;
-            border-left: 4px solid #ff6b6b;
-            padding: 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-        .donation-info {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
-        .donation-info div {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-        }
-        .info-item {
-            padding: 15px;
-            background: white;
-            border-radius: 6px;
-        }
-        .info-label {
-            font-size: 0.85rem;
-            color: #666;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .info-value {
-            font-size: 1.2rem;
-            color: #333;
-            font-weight: 600;
-            margin-top: 8px;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        .btn-danger { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; }
-        .btn-danger:hover { background: linear-gradient(135deg, #c82333 0%, #b01b2e 100%); }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Delete Donation';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <h1><i class="fas fa-exclamation-triangle"></i> Delete Donation</h1>
             <p class="mb-0 mt-2">Warning: This action cannot be undone</p>
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <div class="row justify-content-center">
             <div class="col-lg-6">
@@ -166,9 +96,4 @@
             </div>
         </div>
     </div>
-
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

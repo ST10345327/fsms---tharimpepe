@@ -69,6 +69,12 @@ function listSchedules() {
     
     $schedules = VolunteerSchedule::getAllSchedules($limit, $offset, $filters);
     $stats = VolunteerSchedule::getScheduleStats();
+
+    $weekStart = date('Y-m-d', strtotime('monday this week'));
+    $weekEnd = date('Y-m-d', strtotime('sunday this week'));
+    $weekSchedules = VolunteerSchedule::getSchedulesByDateRange($weekStart, $weekEnd);
+    $week = buildVolunteerWeekGrid($weekSchedules, $weekStart);
+    $weekLabel = date('M d, Y', strtotime($weekStart));
     
     $conn = getConnection();
     $countStmt = $conn->prepare("SELECT COUNT(*) FROM VolunteerSchedules WHERE 1=1");
@@ -79,12 +85,42 @@ function listSchedules() {
     include __DIR__ . "/../views/schedules/list.php";
 }
 
+function buildVolunteerWeekGrid(array $schedules, string $weekStart): array {
+    $dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    $byDate = [];
+
+    foreach ($schedules as $row) {
+        $date = $row['ScheduleDate'] ?? '';
+        if ($date === '') {
+            continue;
+        }
+        $name = trim((string)($row['FullName'] ?? ''));
+        if ($name === '') {
+            $name = trim(trim((string)($row['FirstName'] ?? '')) . ' ' . trim((string)($row['LastName'] ?? '')));
+        }
+        if ($name === '') {
+            $name = 'Volunteer #' . (int)($row['VolunteerID'] ?? 0);
+        }
+        $byDate[$date][] = $name;
+    }
+
+    $week = [];
+    for ($i = 0; $i < 7; $i++) {
+        $date = date('Y-m-d', strtotime($weekStart . " +$i days"));
+        $names = array_values(array_unique($byDate[$date] ?? []));
+        $week[] = [$dayNames[$i], $date, $names];
+    }
+
+    return $week;
+}
+
 function showCreateForm() {
-    $conn = getConnection();
-    $stmt = $conn->prepare("SELECT VolunteerID, FullName FROM Volunteers WHERE Status = 'active' ORDER BY FullName ASC");
-    $stmt->execute();
-    $volunteers = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+    require_once __DIR__ . "/../models/Volunteer.php";
+    $database = new Database();
+    $db = $database->connect();
+    $volunteerModel = new Volunteer($db);
+    $volunteers = $volunteerModel->getAvailableVolunteers();
+
     include __DIR__ . "/../views/schedules/create.php";
 }
 

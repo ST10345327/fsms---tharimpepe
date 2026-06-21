@@ -1,101 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Daily Attendance Summary - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 0;
-            margin-bottom: 30px;
-        }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .stats-card {
-            background: white;
-            border-radius: 10px;
-            padding: 25px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-        .stats-card:hover { transform: translateY(-5px); }
-        .stats-card .number {
-            font-size: 36px;
-            font-weight: 700;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        .stats-card .label { color: #666; font-size: 14px; }
-        .summary-section {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .beneficiary-row {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .beneficiary-row:last-child { border-bottom: none; }
-        .beneficiary-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .beneficiary-avatar {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-        .beneficiary-details h6 { margin: 0; color: #333; }
-        .beneficiary-details small { color: #666; }
-        .status-indicator {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .status-present { background-color: #d4edda; color: #155724; }
-        .status-absent { background-color: #f8d7da; color: #721c24; }
-        .status-not_recorded { background-color: #e2e3e5; color: #383d41; }
-        .status-marked { background-color: #fff3cd; color: #856404; }
-        .date-selector {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
-        .btn-primary:hover { background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%); }
-        .quick-actions { margin-bottom: 30px; }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Daily Attendance Summary';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -109,7 +17,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <!-- Date Selector -->
         <div class="date-selector">
@@ -251,10 +158,4 @@
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

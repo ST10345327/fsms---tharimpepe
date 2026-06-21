@@ -95,7 +95,14 @@ try {
                     $counter++;
                 }
 
-                $userId = $userModel->register($username, $email, $tempPassword, 'volunteer');
+                $userId = $userModel->register(
+                    $username,
+                    $email,
+                    $tempPassword,
+                    'volunteer',
+                    trim($firstName . ' ' . $lastName),
+                    $phone
+                );
 
                 if ($userId) {
                     // Create volunteer profile

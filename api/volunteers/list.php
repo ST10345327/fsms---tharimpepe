@@ -63,11 +63,11 @@ try {
                 v.Skills, v.AvailabilityStatus, v.Status AS volunteer_status,
                 v.Notes, v.ApprovedAt, v.CreatedAt,
                 COUNT(vs.ScheduleID) AS total_shifts,
-                COALESCE(SUM(CASE WHEN vs.Status = 'completed' THEN 1 ELSE 0 END), 0) AS completed_shifts,
+                COALESCE(SUM(CASE WHEN vs.STATUS = 'completed' THEN 1 ELSE 0 END), 0) AS completed_shifts,
                 COALESCE(SUM(vs.HoursWorked), 0) AS total_hours
-         FROM Volunteers v
-         JOIN Users u ON v.UserID = u.UserID
-         LEFT JOIN VolunteerSchedules vs ON v.VolunteerID = vs.VolunteerID
+         FROM volunteers v
+         JOIN users u ON v.UserID = u.UserID
+         LEFT JOIN volunteerschedules vs ON v.VolunteerID = vs.VolunteerID
          {$whereClause}
          GROUP BY v.VolunteerID
          ORDER BY u.FullName ASC"

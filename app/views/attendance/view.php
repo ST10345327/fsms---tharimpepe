@@ -1,105 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Details - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 0;
-            margin-bottom: 30px;
-        }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .details-card {
-            background: white;
-            border-radius: 10px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .profile-header {
-            text-align: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        .profile-avatar {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 15px;
-        }
-        .status-badge {
-            font-size: 16px;
-            padding: 10px 20px;
-            border-radius: 25px;
-            text-transform: uppercase;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 10px;
-        }
-        .status-present { background-color: #d4edda; color: #155724; }
-        .status-absent { background-color: #f8d7da; color: #721c24; }
-        .status-marked { background-color: #fff3cd; color: #856404; }
-        .info-section { margin-bottom: 25px; }
-        .info-section h5 {
-            color: #667eea;
-            border-bottom: 2px solid #667eea;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-        }
-        .info-item {
-            display: flex;
-            margin-bottom: 10px;
-            padding: 8px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .info-label {
-            font-weight: 600;
-            color: #666;
-            min-width: 140px;
-        }
-        .info-value { color: #333; }
-        .action-buttons {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
-        .btn-primary:hover { background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%); }
-        .btn-warning { background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%); border: none; }
-        .btn-danger { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); border: none; }
-        .beneficiary-history {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Attendance Details';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -113,7 +17,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <!-- Messages -->
         <?php if (!empty($error)): ?>
@@ -306,10 +209,4 @@
             </div>
         </div>
     </div>
-
-    <!-- Footer -->
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

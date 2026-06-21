@@ -3,185 +3,495 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#1D9E75">
-    <title>Stock & Donations - Tharimpepe FSMS</title>
+    <meta name="theme-color" content="#1b3a5c">
+    <title>Food Stock - Tharimpepe FSMS</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="assets/shared.css" rel="stylesheet">
 </head>
 <body>
     <div class="mobile-safe">
-        <main class="mobile-content">
-            <!-- KPI Summary -->
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Total Stock Items</div>
-                        <div class="kpi-value" data-kpi="total_items">—</div>
-                        <div class="kpi-meta" data-kpi="items_meta">Loading...</div>
-                    </div>
-                    <span class="kpi-icon green"><i class="fas fa-box" aria-hidden="true"></i></span>
+        <main class="mobile-content" role="main">
+            <!-- Inventory Statistics -->
+            <div class="stat-grid" aria-label="Inventory statistics">
+                <div class="stat-card" aria-label="Total inventory items">
+                    <div class="stat-value" id="stat-total-items">—</div>
+                    <div class="stat-label">Total Items</div>
                 </div>
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Low Stock Items</div>
-                        <div class="kpi-value" data-kpi="low_stock_count">—</div>
-                        <div class="kpi-meta" data-kpi="low_stock_meta">Loading...</div>
-                    </div>
-                    <span class="kpi-icon orange"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
+                <div class="stat-card" aria-label="Items with low stock">
+                    <div class="stat-value" style="color:var(--danger);" id="stat-low-stock">—</div>
+                    <div class="stat-label">Low Stock</div>
                 </div>
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Donations This Month</div>
-                        <div class="kpi-value" data-kpi="monthly_donations">—</div>
-                        <div class="kpi-meta" data-kpi="donations_meta">Loading...</div>
-                    </div>
-                    <span class="kpi-icon purple"><i class="fas fa-hand-holding-heart" aria-hidden="true"></i></span>
+                <div class="stat-card" aria-label="Items expiring soon">
+                    <div class="stat-value" style="color:var(--warning);" id="stat-expiring">—</div>
+                    <div class="stat-label">Expiring Soon</div>
                 </div>
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Stock Value</div>
-                        <div class="kpi-value" data-kpi="stock_value">—</div>
-                        <div class="kpi-meta" data-kpi="value_meta">Estimated</div>
-                    </div>
-                    <span class="kpi-icon blue"><i class="fas fa-coins" aria-hidden="true"></i></span>
+                <div class="stat-card" aria-label="Estimated inventory value">
+                    <div class="stat-value" id="stat-stock-value">—</div>
+                    <div class="stat-label">Est. Value (R)</div>
                 </div>
             </div>
 
-            <!-- Current Stock -->
+            <!-- Low Stock Alerts -->
             <div class="proto-card">
-                <h2><i class="fas fa-boxes-stacked" style="color:var(--mobile-primary);margin-right:8px;"></i>Current Stock Levels</h2>
+                <div class="section-header">
+                    <h2><i class="fas fa-triangle-exclamation" style="color:var(--warning);margin-right:var(--space-sm);" aria-hidden="true"></i>Low Stock Alerts</h2>
+                    <span class="chip" style="background:rgba(220,38,38,0.2);color:var(--danger);" id="low-stock-count" aria-live="polite">0</span>
+                </div>
+                <div id="low-stock-list">
+                    <div class="skeleton-list">
+                        <div class="skeleton skeleton-line" style="width:100%;height:40px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Current Stock Levels -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-boxes-stacked" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Current Stock</h2>
+                    <input type="text" id="stock-search" placeholder="Search stock..." class="search-input" oninput="filterStock(this.value)">
+                </div>
                 <div id="stock-list">
                     <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading stock data...</p></div>
                 </div>
                 <div style="margin-top:14px;">
-                    <button class="btn btn-primary btn-block" onclick="alert('Stock update form coming soon')">Update Stock</button>
+                    <button class="btn btn-primary btn-block" onclick="openStockUpdateModal()">Update Stock</button>
+                </div>
+            </div>
+
+            <!-- Stock Update Modal -->
+            <div class="modal-overlay" id="stock-update-modal">
+                <div class="modal">
+                    <div class="modal-header">
+                        <div class="modal-title">Update Stock Item</div>
+                        <button class="modal-close" onclick="closeStockUpdateModal()" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="stock-update-item">Stock item</label>
+                            <select id="stock-update-item" aria-label="Select stock item"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock-update-qty">Quantity</label>
+                            <input type="number" id="stock-update-qty" min="0" step="1" aria-label="Updated quantity">
+                        </div>
+                        <div class="form-group">
+                            <label for="stock-update-unit">Unit</label>
+                            <input type="text" id="stock-update-unit" aria-label="Unit of measure">
+                        </div>
+                        <div class="form-group">
+                            <label for="stock-update-expiry">Expiry date</label>
+                            <input type="date" id="stock-update-expiry" aria-label="Expiry date">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeStockUpdateModal()">Cancel</button>
+                        <button class="btn btn-primary" id="stock-update-save-btn" onclick="saveStockUpdate()">Save Changes</button>
+                    </div>
                 </div>
             </div>
 
             <!-- Recent Donations -->
-            <div class="proto-card">
-                <h2><i class="fas fa-hand-holding-heart" style="color:var(--mobile-primary);margin-right:8px;"></i>Recent Donations</h2>
+            <div class="proto-card" id="donations">
+                <div class="section-header">
+                    <h2><i class="fas fa-hand-holding-heart" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Recent Donations</h2>
+                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('record-donation-section').scrollIntoView({behavior:'smooth'})">Add New</button>
+                </div>
                 <div id="donation-log">
                     <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading donations...</p></div>
                 </div>
             </div>
 
-            <!-- Add Donation -->
-            <div class="proto-card">
-                <h2><i class="fas fa-plus-circle" style="color:var(--mobile-primary);margin-right:8px;"></i>Record Donation</h2>
+            <!-- Record Donation -->
+            <div class="proto-card" id="record-donation-section" aria-labelledby="record-title">
+                <h2 id="record-title"><i class="fas fa-plus-circle" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Record Donation</h2>
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>Donor name</label>
-                        <input type="text" id="donor-name" placeholder="e.g. Shoprite Checkers">
+                        <label for="donor-name">Donor name (optional)</label>
+                        <input type="text" id="donor-name" placeholder="e.g. Shoprite Checkers" aria-label="Donor name">
                     </div>
                     <div class="form-group">
-                        <label>Item</label>
-                        <input type="text" id="donation-item" placeholder="e.g. Maize meal">
+                        <label for="donation-item">Item *</label>
+                        <input type="text" id="donation-item" placeholder="e.g. Maize meal" required aria-label="Item name">
                     </div>
                     <div class="form-group">
-                        <label>Quantity</label>
-                        <input type="number" id="donation-qty" placeholder="e.g. 50">
+                        <label for="donation-qty">Quantity *</label>
+                        <input type="number" id="donation-qty" placeholder="e.g. 50" step="0.01" required aria-label="Quantity">
                     </div>
                     <div class="form-group">
-                        <label>Unit</label>
-                        <input type="text" id="donation-unit" placeholder="e.g. kg, L, units">
+                        <label for="donation-unit">Unit</label>
+                        <input type="text" id="donation-unit" placeholder="e.g. kg, L, units" aria-label="Unit of measure">
+                    </div>
+                    <div class="form-group">
+                        <label for="donation-type">Type</label>
+                        <select id="donation-type" aria-label="Donation type">
+                            <option value="food">Food</option>
+                            <option value="cash">Cash</option>
+                            <option value="other">Other</option>
+                        </select>
                     </div>
                 </div>
-                <div style="margin-top:14px;">
-                    <button class="btn btn-primary btn-block" id="record-donation-btn">Record Donation</button>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-block" id="record-donation-btn" aria-label="Submit donation record">Record Donation</button>
                 </div>
             </div>
         </main>
-
-        <nav class="mobile-bottom-nav" role="navigation" aria-label="Primary">
-            <a class="mobile-nav-item" href="dashboard.html"><i class="fas fa-house" aria-hidden="true"></i><span>Home</span></a>
-            <a class="mobile-nav-item" href="beneficiaries.html"><i class="fas fa-users" aria-hidden="true"></i><span>Beneficiaries</span></a>
-            <a class="mobile-nav-item" href="attendance.html"><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Attendance</span></a>
-            <a class="mobile-nav-item active" href="stock.html"><i class="fas fa-boxes-stacked" aria-hidden="true"></i><span>Stock</span></a>
-        </nav>
     </div>
 
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/server-discovery.js"></script>
     <script src="assets/api.js"></script>
+    <script src="assets/notifications.js"></script>
     <script src="assets/shared.js"></script>
     <script>
-        initPage('Stock & Donations', 'stock');
+        initPage('Food Stock', 'stock');
 
-        (async function loadStockData() {
+        if (window.location.hash === '#donations') {
+            setTimeout(() => document.getElementById('donations')?.scrollIntoView({ behavior: 'smooth' }), 300);
+        }
+
+        let allStockItems = [];
+        let allDonations = [];
+
+        // Load inventory statistics
+        (async function loadInventoryStats() {
             try {
-                // Load stock items
-                const stockData = await API.get('/api/stock/list.php');
-                const stockContainer = document.getElementById('stock-list');
-                if (stockData.success && stockData.data && stockData.data.length > 0) {
-                    stockContainer.innerHTML = stockData.data.map(item => {
-                        const pct = item.StockLevel || item.stock_level || item.quantity_pct || 0;
-                        const barColor = pct > 50 ? '#1D9E75' : pct > 25 ? '#F5B041' : '#dc2626';
-                        const textColor = pct > 50 ? '#5DCAA5' : pct > 25 ? '#F5B041' : '#fca5a5';
+                const statsData = await API.get('/api/stock/stats.php');
+                if (statsData.success && statsData.data) {
+                    const d = statsData.data;
+                    document.getElementById('stat-total-items').textContent = (d.total_items || 0).toLocaleString();
+                    document.getElementById('stat-low-stock').textContent = (d.low_stock || 0).toLocaleString();
+                    document.getElementById('stat-expiring').textContent = (d.expiring_soon || 0).toLocaleString();
+                    document.getElementById('stat-stock-value').textContent = (d.total_value || 0).toLocaleString();
+                }
+            } catch (e) {
+                console.warn('Inventory stats unavailable:', e.message);
+            }
+        })();
+
+        // Load low stock alerts
+        (async function loadLowStockAlerts() {
+            try {
+                const data = await API.get('/api/stock/alerts.php?type=low');
+                const container = document.getElementById('low-stock-list');
+                const countBadge = document.getElementById('low-stock-count');
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    countBadge.textContent = data.data.length;
+                    container.innerHTML = data.data.map(item => {
+                        const pct = item.StockLevel || item.stock_level || 0;
                         return `
                             <div class="stock-item">
                                 <div>
-                                    <div class="stock-item-name">${item.ItemName || item.name || item.item_name}</div>
-                                    <div class="stock-item-qty">${item.Quantity || item.quantity || '0'} ${item.Unit || item.unit || ''} remaining</div>
+                                    <div class="stock-item-name">${item.ItemName || item.name}</div>
+                                    <div class="stock-item-qty">${item.Quantity || item.quantity || 0} ${item.Unit || item.unit || ''} remaining</div>
                                 </div>
-                                <div class="stock-item-pct" style="color:${textColor};">${pct}%</div>
+                                <div class="stock-item-pct" style="color:var(--danger);">${pct}%</div>
                             </div>
-                            <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${barColor};"></div></div>
+                            <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:#dc2626;"></div></div>
                         `;
                     }).join('');
+                } else {
+                    countBadge.textContent = '0';
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i><h3>All stocked up</h3></div>';
                 }
             } catch (e) {
-                document.getElementById('stock-list').innerHTML = '<div class="placeholder"><i class="fas fa-exclamation-circle"></i><p>Stock data unavailable</p></div>';
+                document.getElementById('low-stock-list').innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Unable to load alerts</p></div>';
             }
+        })();
+
+        // Load expiry alerts
+        let currentExpiryFilter = null;
+
+        async function filterExpiry(days) {
+            currentExpiryFilter = days;
+            
+            // Update button states
+            document.querySelectorAll('[id^="expiry-"]').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            const activeBtn = document.getElementById(`expiry-${days}d`);
+            if (activeBtn) {
+                activeBtn.classList.remove('btn-secondary');
+                activeBtn.classList.add('btn-primary');
+            }
+
+            const container = document.getElementById('expiry-list');
+            container.innerHTML = '<div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Checking...</p></div>';
 
             try {
-                // Load donations
-                const donData = await API.get('/api/donations/list.php');
-                const donContainer = document.getElementById('donation-log');
-                if (donData.success && donData.data && donData.data.length > 0) {
-                    donContainer.innerHTML = donData.data.map(d => `
-                        <div class="donation-log-item">
-                            <div class="donation-log-left">
-                                <div class="donation-log-item-name">${d.ItemName || d.item || d.item_name}</div>
-                                <div class="donation-log-item-meta">${d.DonorName || d.donor || 'Anonymous'} · ${d.Date || d.date}</div>
+                const data = await API.get(`/api/stock/alerts.php?type=expiry&days=${days}`);
+                if (data.success && data.data && data.data.length > 0) {
+                    container.innerHTML = data.data.map(item => {
+                        const daysLeft = item.days_until_expiry || item.daysRemaining || 0;
+                        return `
+                            <div class="stock-item">
+                                <div>
+                                    <div class="stock-item-name">${item.ItemName || item.name}</div>
+                                    <div class="stock-item-qty">Expires: ${item.ExpiryDate || item.expiry_date || 'Unknown'}</div>
+                                </div>
+                                <div class="stock-item-pct" style="color:${daysLeft <= 7 ? 'var(--danger)' : 'var(--warning)'};">${daysLeft}d</div>
                             </div>
-                            <div class="donation-log-right">
-                                <div class="donation-log-qty">+${d.Quantity || d.quantity} ${d.Unit || d.unit || ''}</div>
-                                <div class="donation-log-source">${d.Source || d.source || 'Donation'}</div>
-                            </div>
-                        </div>
-                    `).join('');
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-check"></i><h3>No items expiring</h3></div>';
                 }
             } catch (e) {
-                document.getElementById('donation-log').innerHTML = '<div class="placeholder"><i class="fas fa-exclamation-circle"></i><p>Donations data unavailable</p></div>';
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Unable to load expiry data</p></div>';
+            }
+        }
+
+        // Load stock items
+        (async function loadStock() {
+            const container = document.getElementById('stock-list');
+            
+            try {
+                const data = await API.get('/api/stock/list.php');
+                if (data.success && data.data) {
+                    allStockItems = data.data;
+                    renderStock(allStockItems);
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Stock data unavailable</p></div>';
+            }
+        })();
+
+        function renderStock(items) {
+            const container = document.getElementById('stock-list');
+            if (!container || items.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><h3>No stock items</h3></div>';
+                return;
             }
 
-            // Record donation button
-            document.getElementById('record-donation-btn').addEventListener('click', async function() {
-                const donor = document.getElementById('donor-name').value.trim();
-                const item = document.getElementById('donation-item').value.trim();
-                const qty = document.getElementById('donation-qty').value;
-                const unit = document.getElementById('donation-unit').value.trim();
+            container.innerHTML = items.map(item => {
+                const pct = item.StockLevel || item.stock_level || item.quantity_pct || 0;
+                const barColor = pct > 50 ? 'var(--mobile-primary)' : pct > 25 ? 'var(--warning)' : '#dc2626';
+                const textColor = pct > 50 ? 'var(--success)' : pct > 25 ? 'var(--warning)' : 'var(--danger)';
+                return `
+                    <div class="stock-item">
+                        <div>
+                            <div class="stock-item-name">${item.ItemName || item.name || item.item_name}</div>
+                            <div class="stock-item-qty">${item.Quantity || item.quantity || '0'} ${item.Unit || item.unit || ''} remaining</div>
+                        </div>
+                        <div class="stock-item-pct" style="color:${textColor};">${pct}%</div>
+                    </div>
+                    <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${barColor};"></div></div>
+                `;
+            }).join('');
+        }
 
-                if (!item || !qty) {
-                    alert('Please fill in item and quantity');
-                    return;
-                }
-
-                try {
-                    const result = await API.post('/api/donations/record.php', {
-                        donor_name: donor,
-                        item_name: item,
-                        quantity: parseFloat(qty),
-                        unit: unit
-                    });
-                    if (result.success) {
-                        alert('Donation recorded!');
-                        location.reload();
-                    }
-                } catch (err) {
-                    alert('Failed to record: ' + err.message);
-                }
+        function filterStock(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderStock(allStockItems);
+                return;
+            }
+            const filtered = allStockItems.filter(item => {
+                const name = (item.ItemName || item.name || item.item_name || '').toLowerCase();
+                return name.includes(q);
             });
-        })();
+            renderStock(filtered);
+        }
+
+        // Load donations
+        window.loadDonations = async function loadDonations() {
+            const container = document.getElementById('donation-log');
+            
+            try {
+                const data = await API.get('/api/donations/history.php?limit=10');
+                if (data.success && data.data) {
+                    allDonations = data.data;
+                    renderDonations(allDonations);
+                } else {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-hand-holding-heart"></i><h3>No donations yet</h3></div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Donations data unavailable</p></div>';
+            }
+        };
+
+        function renderDonations(donations) {
+            const container = document.getElementById('donation-log');
+            if (!container || donations.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-hand-holding-heart"></i><h3>No donations yet</h3></div>';
+                return;
+            }
+
+            container.innerHTML = donations.map(d => `
+                <div class="donation-log-item">
+                    <div class="donation-log-left">
+                        <div class="donation-log-item-name">${d.ItemName || d.item || d.item_name}</div>
+                        <div class="donation-log-item-meta">${d.DonorName || d.donor || 'Anonymous'} · ${d.Date || d.date || 'Recent'}</div>
+                    </div>
+                    <div class="donation-log-right">
+                        <div class="donation-log-qty">+${d.Quantity || d.quantity} ${d.Unit || d.unit || ''}</div>
+                        <div class="donation-log-source">${d.Type || d.type || d.Source || d.source || 'Donation'}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Record donation
+        document.getElementById('record-donation-btn').addEventListener('click', async function() {
+            const btn = this;
+            const donor = document.getElementById('donor-name').value.trim();
+            const item = document.getElementById('donation-item').value.trim();
+            const qty = document.getElementById('donation-qty').value;
+            const unit = document.getElementById('donation-unit').value.trim();
+            const type = document.getElementById('donation-type').value;
+
+            if (!item || !qty) {
+                showToast('Please fill in item and quantity', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Recording...';
+
+            try {
+                const result = await API.post('/api/donations/record.php', {
+                    donor_name: donor,
+                    item_name: item,
+                    quantity: parseFloat(qty),
+                    unit: unit,
+                    type: type
+                });
+
+                if (result.success) {
+                    showToast('Donation recorded successfully!', 'success');
+                    // Clear form
+                    document.getElementById('donor-name').value = '';
+                    document.getElementById('donation-item').value = '';
+                    document.getElementById('donation-qty').value = '';
+                    document.getElementById('donation-unit').value = '';
+                    // Reload donations
+                    loadDonations();
+                } else {
+                    showToast('Failed: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('Failed to record: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Record Donation';
+            }
+        });
+
+        // Toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} toast-icon"></i>
+                <div class="toast-message">${escapeHtml(message)}</div>
+            `;
+            
+            const container = document.createElement('div');
+            container.className = 'toast-container';
+            container.appendChild(toast);
+            document.body.appendChild(container);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => container.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function openStockUpdateModal() {
+            const select = document.getElementById('stock-update-item');
+            if (!allStockItems.length) {
+                showToast('No stock items available to update', 'warning');
+                return;
+            }
+
+            select.innerHTML = allStockItems.map(item => {
+                const id = item.FoodStockID || item.stock_id || item.id;
+                const name = item.ItemName || item.name || item.item_name || 'Item';
+                return `<option value="${id}">${escapeHtml(name)}</option>`;
+            }).join('');
+
+            populateStockUpdateFields();
+            select.onchange = populateStockUpdateFields;
+            document.getElementById('stock-update-modal').classList.add('open');
+        }
+
+        function populateStockUpdateFields() {
+            const select = document.getElementById('stock-update-item');
+            const selected = allStockItems.find(item => String(item.FoodStockID || item.stock_id || item.id) === select.value);
+            if (!selected) return;
+            document.getElementById('stock-update-qty').value = selected.Quantity || selected.quantity || 0;
+            document.getElementById('stock-update-unit').value = selected.Unit || selected.unit || '';
+            document.getElementById('stock-update-expiry').value = (selected.ExpiryDate || selected.expiry_date || '').substring(0, 10);
+        }
+
+        function closeStockUpdateModal() {
+            document.getElementById('stock-update-modal').classList.remove('open');
+        }
+
+        async function saveStockUpdate() {
+            const btn = document.getElementById('stock-update-save-btn');
+            const stockId = document.getElementById('stock-update-item').value;
+            const quantity = document.getElementById('stock-update-qty').value;
+            const unit = document.getElementById('stock-update-unit').value.trim();
+            const expiry = document.getElementById('stock-update-expiry').value;
+
+            if (!stockId) {
+                showToast('Select a stock item', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const payload = {
+                    stock_id: parseInt(stockId, 10),
+                    quantity: parseInt(quantity, 10),
+                    unit: unit
+                };
+                if (expiry) {
+                    payload.expiry_date = expiry;
+                }
+
+                const result = await API.post('/api/stock/update.php', payload);
+                if (result.success) {
+                    showToast('Stock updated successfully', 'success');
+                    closeStockUpdateModal();
+                    API.invalidateCache('/api/stock/list.php');
+                    const data = await API.get('/api/stock/list.php', false, false);
+                    if (data.success && data.data) {
+                        allStockItems = data.data;
+                        renderStock(allStockItems);
+                    }
+                } else {
+                    showToast('Update failed: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('Update failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+
+        document.getElementById('stock-update-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeStockUpdateModal();
+            }
+        });
+
+        // Initialize donations list on load
+        loadDonations();
     </script>
 </body>
 </html>

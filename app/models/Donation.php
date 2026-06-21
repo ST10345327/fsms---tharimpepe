@@ -16,7 +16,7 @@ require_once __DIR__ . "/../../config/database.php";
 
 class Donation {
     private $pdo;
-    private $table = 'Donations';
+    private $table = 'donations';
 
     /**
      * HZ-DON-001: Constructor - Initialize database connection

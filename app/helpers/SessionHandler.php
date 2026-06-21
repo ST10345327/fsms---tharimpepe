@@ -93,4 +93,30 @@ function logoutUser()
     $_SESSION = array();
     session_destroy();
 }
-?>
+
+/**
+ * HZ-AUTH-CSRF-001
+ * Purpose: Generate CSRF token for form security
+ * Returns: CSRF token string
+ */
+if (!function_exists('generateCSRFToken')) {
+    function generateCSRFToken()
+    {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+        return $_SESSION['csrf_token'];
+    }
+}
+
+/**
+ * HZ-AUTH-CSRF-002
+ * Purpose: Verify CSRF token from POST request
+ * Returns: true if valid, false otherwise
+ */
+if (!function_exists('verifyCSRFToken')) {
+    function verifyCSRFToken($token)
+    {
+        return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    }
+}

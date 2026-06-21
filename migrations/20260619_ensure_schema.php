@@ -2,7 +2,8 @@
 // migrations/20260619_ensure_schema.php
 // Migration to create missing tables and columns for FSMS application.
 
-require_once __DIR__ . '/../config/database.php'
+require_once __DIR__ . '/../config/database.php';
+
 function runMigration(PDO $pdo) {
     // Create MealSession table if missing
     $pdo->exec("CREATE TABLE IF NOT EXISTS MealSession (\n        MealSessionID INT AUTO_INCREMENT PRIMARY KEY,\n        SessionDate DATE NOT NULL,\n        SessionType VARCHAR(30) NOT NULL,\n        Location VARCHAR(100),\n        Notes TEXT,\n        CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,\n        UNIQUE KEY uq_meal_session (SessionDate, SessionType, Location)\n    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");

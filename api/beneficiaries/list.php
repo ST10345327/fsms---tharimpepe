@@ -60,7 +60,7 @@ try {
     $whereClause = count($where) > 0 ? 'WHERE ' . implode(' AND ', $where) : '';
 
     // Get total count
-    $countStmt = $db->prepare("SELECT COUNT(*) as total FROM Beneficiaries {$whereClause}");
+    $countStmt = $db->prepare("SELECT COUNT(*) as total FROM beneficiaries {$whereClause}");
     $countStmt->execute($params);
     $total = (int)$countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 
@@ -76,7 +76,7 @@ try {
                     ELSE 'Adult' 
                 END AS Category,
                 Notes, CreatedAt 
-         FROM Beneficiaries 
+         FROM beneficiaries
          {$whereClause} 
          ORDER BY LastName ASC, FirstName ASC 
          LIMIT :limit OFFSET :offset"

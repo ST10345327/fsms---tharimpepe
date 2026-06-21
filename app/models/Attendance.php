@@ -10,7 +10,7 @@
 class Attendance
 {
     private $conn;
-    private $table = "Attendance";
+    private $table = "attendance";
 
     public function __construct($db)
     {
@@ -30,8 +30,8 @@ class Attendance
                          ms.SessionType, ms.Location,
                          b.FirstName, b.LastName, b.Age, b.Status as BeneficiaryStatus
                   FROM " . $this->table . " a
-                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
-                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID";
+                  LEFT JOIN beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN mealsession ms ON a.MealSessionID = ms.MealSessionID";
 
         $conditions = [];
         $params = [];
@@ -85,8 +85,8 @@ class Attendance
                          ms.SessionType, ms.Location, ms.Notes as MealSessionNotes,
                          b.FirstName, b.LastName, b.Age, b.Gender, b.Phone, b.Email, b.Address, b.RegistrationDate, b.Status as BeneficiaryStatus
                   FROM " . $this->table . " a
-                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
-                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
+                  LEFT JOIN beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN mealsession ms ON a.MealSessionID = ms.MealSessionID
                   WHERE a.AttendanceID = :attendance_id
                   LIMIT 1";
 
@@ -266,7 +266,7 @@ class Attendance
         $query = "SELECT a.AttendanceID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
                          ms.SessionType, ms.Location
                   FROM " . $this->table . " a
-                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
+                  LEFT JOIN mealsession ms ON a.MealSessionID = ms.MealSessionID
                   WHERE a.BeneficiaryID = :beneficiary_id
                   ORDER BY a.SessionDate DESC
                   LIMIT :limit";
@@ -351,9 +351,9 @@ class Attendance
                          COALESCE(a.Status, 'not_recorded') as attendance_status,
                          a.AttendanceID, a.MealSessionID, a.Notes, a.CreatedAt,
                          ms.SessionType, ms.Location
-                  FROM Beneficiaries b
+                  FROM beneficiaries b
                   LEFT JOIN " . $this->table . " a ON b.BeneficiaryID = a.BeneficiaryID AND a.SessionDate = :session_date
-                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
+                  LEFT JOIN mealsession ms ON a.MealSessionID = ms.MealSessionID
                   WHERE b.Status = 'active'
                   ORDER BY b.LastName, b.FirstName";
 
@@ -379,8 +379,8 @@ class Attendance
                          ms.SessionType, ms.Location,
                          b.BeneficiaryID, b.FirstName, b.LastName, b.Age, b.Gender
                   FROM " . $this->table . " a
-                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
-                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
+                  LEFT JOIN beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN mealsession ms ON a.MealSessionID = ms.MealSessionID
                   WHERE a.SessionDate BETWEEN :start_date AND :end_date";
 
         $params = [
@@ -428,7 +428,7 @@ class Attendance
                          SUM(CASE WHEN a.Status = 'present' THEN 1 ELSE 0 END) as present_count,
                          SUM(CASE WHEN a.Status = 'absent' THEN 1 ELSE 0 END) as absent_count,
                          SUM(CASE WHEN a.Status = 'marked' THEN 1 ELSE 0 END) as marked_count
-                  FROM Beneficiaries b
+                  FROM beneficiaries b
                   LEFT JOIN " . $this->table . " a
                     ON b.BeneficiaryID = a.BeneficiaryID
                    AND a.SessionDate BETWEEN :start_date AND :end_date";
@@ -537,8 +537,8 @@ class Attendance
                          ms.SessionType, ms.Location,
                          b.FirstName, b.LastName, b.Age
                   FROM " . $this->table . " a
-                  LEFT JOIN Beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
-                  LEFT JOIN MealSession ms ON a.MealSessionID = ms.MealSessionID
+                  LEFT JOIN beneficiaries b ON a.BeneficiaryID = b.BeneficiaryID
+                  LEFT JOIN mealsession ms ON a.MealSessionID = ms.MealSessionID
                   ORDER BY a.CreatedAt DESC
                   LIMIT :limit";
 
@@ -593,7 +593,7 @@ class Attendance
      */
     private function beneficiaryExists($beneficiaryId)
     {
-        $query = "SELECT BeneficiaryID FROM Beneficiaries WHERE BeneficiaryID = :beneficiary_id LIMIT 1";
+        $query = "SELECT BeneficiaryID FROM beneficiaries WHERE BeneficiaryID = :beneficiary_id LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":beneficiary_id", $beneficiaryId);
 
@@ -631,7 +631,7 @@ class Attendance
      */
     private function getMealSession($mealSessionId)
     {
-        $query = "SELECT * FROM MealSession WHERE MealSessionID = :meal_session_id LIMIT 1";
+        $query = "SELECT * FROM mealsession WHERE MealSessionID = :meal_session_id LIMIT 1";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(':meal_session_id', $mealSessionId, PDO::PARAM_INT);
 

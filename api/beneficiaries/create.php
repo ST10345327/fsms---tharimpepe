@@ -59,7 +59,7 @@ try {
     }
 
     $stmt = $db->prepare(
-        "INSERT INTO Beneficiaries (FirstName, LastName, Age, Gender, Phone, Email, Address, RegistrationDate, Status, Notes, CreatedBy, CreatedAt) 
+        "INSERT INTO beneficiaries (FirstName, LastName, Age, Gender, Phone, Email, Address, RegistrationDate, Status, Notes, CreatedBy, CreatedAt)
          VALUES (:first, :last, :age, :gender, :phone, :email, :address, :regdate, 'active', :notes, :createdby, NOW())"
     );
     $stmt->execute([

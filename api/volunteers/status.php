@@ -63,8 +63,20 @@ try {
         }
     }
 
-    // User can change own availability
+    // User can change own availability only
     if (isset($input['availability']) && in_array($input['availability'], ['available', 'unavailable', 'on_leave'])) {
+        $ownStmt = $db->prepare("SELECT UserID FROM Volunteers WHERE VolunteerID = :vid LIMIT 1");
+        $ownStmt->execute([':vid' => $volunteerId]);
+        $volRow = $ownStmt->fetch(PDO::FETCH_ASSOC);
+        $isOwner = $volRow && (int)$volRow['UserID'] === (int)$user['user_id'];
+        $isAdmin = in_array($user['role'], ['admin', 'staff'], true);
+
+        if (!$isOwner && !$isAdmin) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => 'You can only update your own availability']);
+            exit();
+        }
+
         $updates[] = "AvailabilityStatus = :avail";
         $params[':avail'] = $input['availability'];
     }

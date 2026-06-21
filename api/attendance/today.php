@@ -45,8 +45,8 @@ try {
                     WHEN b.Age >= 60 THEN 'Elderly' 
                     ELSE 'Adult' 
                 END AS Category
-         FROM Beneficiaries b
-         LEFT JOIN Attendance a ON b.BeneficiaryID = a.BeneficiaryID 
+         FROM beneficiaries b
+         LEFT JOIN attendance a ON b.BeneficiaryID = a.BeneficiaryID
             AND a.SessionDate = CURDATE()
          WHERE b.Status = 'active'
          ORDER BY b.LastName ASC, b.FirstName ASC"

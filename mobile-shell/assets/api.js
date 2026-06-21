@@ -1,47 +1,70 @@
 /**
  * Tharimpepe FSMS - API Client Module
- * 
- * Centralized HTTP client with:
- * - Configurable base URL
- * - Token-based authentication (access + refresh)
- * - Automatic token persistence in localStorage
- * - Token refresh on 401 responses
- * - Auth header injection
- * 
- * Usage:
- *   import { api } from './api.js';
- *   const user = await api.login(username, password);
- *   const data = await api.get('/endpoint');
+ *
+ * Centralized HTTP client.
+ * Persists state in localStorage.
  */
 
 const API = (() => {
-  // Default to same-origin, but if running inside Capacitor use a reachable backend URL.
-  // NOTE: This project does not define a server URL in capacitor.config.json, so we use a safe default.
-  let baseURL = (() => {
-    if (typeof window === 'undefined') return '';
+  // Use runtime-configurable base URL or fallback to default
+  let baseURL = (typeof RuntimeConfig !== 'undefined') ? RuntimeConfig.getAPIBase() : '';
 
-    const isCapacitor =
-      window.navigator.userAgent.includes('Capacitor') ||
-      window.location.href.startsWith('capacitor://');
+  // Request cache for idempotent reads
+  const CACHE_PREFIX = 'api_cache_';
+  const CACHE_TTL_MS = 30 * 1000;
 
-    if (!isCapacitor) return '';
+  function getCached(key) {
+    try {
+      const raw = localStorage.getItem(CACHE_PREFIX + key);
+      if (!raw) return null;
+      const entry = JSON.parse(raw);
+      if (!entry || !entry.expiresAt || Date.now() > entry.expiresAt) {
+        localStorage.removeItem(CACHE_PREFIX + key);
+        return null;
+      }
+      return entry.data;
+    } catch (e) {
+      return null;
+    }
+  }
 
-    // Prefer an explicit backend URL if provided (via Capacitor config or by overriding baseURL at runtime).
-    // If not provided, fall back to Android emulator alias (maps host localhost).
-    // You can override this by calling API.setBaseURL('http://<host>:8000').
-    const cfgUrl = (window?.CAPACITOR_BACKEND_URL || window?.process?.env?.CAPACITOR_BACKEND_URL) || '';
-    if (cfgUrl) return cfgUrl;
+  function setCache(key, data) {
+    try {
+      localStorage.setItem(CACHE_PREFIX + key, JSON.stringify({
+        data,
+        expiresAt: Date.now() + CACHE_TTL_MS
+      }));
+    } catch (e) {
+      // Ignore storage failures
+    }
+  }
 
-    return 'http://10.0.2.2:8000';
-  })();
+  function invalidateCache(pattern) {
+    if (!pattern) {
+      try {
+        const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX));
+        keys.forEach(k => localStorage.removeItem(k));
+      } catch (e) {
+        // ignore
+      }
+      return;
+    }
+    try {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith(CACHE_PREFIX) && k.includes(pattern));
+      keys.forEach(k => localStorage.removeItem(k));
+    } catch (e) {
+      // ignore
+    }
+  }
 
 
   /**
-   * Set the base URL for all API requests
-   * @param {string} url - Base URL (e.g., 'http://localhost:8000' or empty for same-origin)
+   * Set the base URL for all API requests and persist it.
+   * @param {string} url - Base URL (e.g., 'http://192.168.1.100:8000' or empty for same-origin)
    */
   function setBaseURL(url) {
     baseURL = url;
+    RuntimeConfig.setAPIBase(url);
   }
 
   /**
@@ -138,6 +161,9 @@ const API = (() => {
     try {
       response = await fetch(url, options);
     } catch (err) {
+      if (!navigator.onLine && method !== 'GET' && typeof OfflineQueue !== 'undefined') {
+        OfflineQueue.enqueue({ url, method: options.method, body: options.body, headers: options.headers });
+      }
       throw new APIError('Network error: Unable to reach server', 'NETWORK_ERROR', 0);
     }
 
@@ -165,10 +191,18 @@ const API = (() => {
 
     // Parse JSON response
     let data;
+    const responseText = await response.text();
+    
     try {
-      data = await response.json();
+      data = JSON.parse(responseText);
     } catch {
-      throw new APIError('Invalid server response', 'PARSE_ERROR', response.status);
+      // Server returned non-JSON (likely HTML error page)
+      console.error('[API] Non-JSON response:', responseText.substring(0, 200));
+      throw new APIError(
+        `Invalid server response (HTTP ${response.status}). Expected JSON but got HTML. Check if server URL is correct.`,
+        'PARSE_ERROR',
+        response.status
+      );
     }
 
     if (!response.ok) {
@@ -288,8 +322,16 @@ const API = (() => {
 
   // ===== Convenience HTTP method wrappers =====
 
-  function get(endpoint, skipAuth = false) {
-    return request('GET', endpoint, null, !skipAuth);
+  async function get(endpoint, skipAuth = false, useCache = true) {
+    if (useCache && !skipAuth) {
+      const cached = getCached(endpoint);
+      if (cached) return cached;
+    }
+    const result = await request('GET', endpoint, null, !skipAuth);
+    if (useCache && !skipAuth && result && result.success !== false) {
+      setCache(endpoint, result);
+    }
+    return result;
   }
 
   function post(endpoint, body, skipAuth = false) {
@@ -331,11 +373,12 @@ const API = (() => {
     request,
     APIError,
     clearAuth,
-    storeUser
+    storeUser,
+    getCached,
+    setCache,
+    invalidateCache
   };
 })();
 
-// Export for module systems
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { API };
-}
+// Make globally accessible
+window.API = API;

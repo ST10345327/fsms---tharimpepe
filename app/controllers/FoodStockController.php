@@ -23,6 +23,9 @@ requireLogin();
 $currentUser = getCurrentUser();
 $GLOBALS['currentUser'] = $currentUser;
 
+// Generate CSRF token for form security
+generateCSRFToken();
+
 // Initialize database connection and model
 $pdo = getDBConnection();
 $foodStockModel = new FoodStock($pdo);

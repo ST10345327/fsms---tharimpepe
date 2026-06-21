@@ -3,139 +3,357 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#1D9E75">
+    <meta name="theme-color" content="#1b3a5c">
     <title>Beneficiaries - Tharimpepe FSMS</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link href="assets/shared.css" rel="stylesheet">
 </head>
 <body>
     <div class="mobile-safe">
-        <main class="mobile-content">
-            <!-- KPI Summary -->
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Total Beneficiaries</div>
-                        <div class="kpi-value" data-kpi="total_beneficiaries">—</div>
-                        <div class="kpi-meta" data-kpi="beneficiary_status">Loading...</div>
-                    </div>
-                    <span class="kpi-icon green"><i class="fas fa-users" aria-hidden="true"></i></span>
+        <main class="mobile-content" role="main">
+            <!-- Beneficiary Statistics -->
+            <div class="stat-grid" aria-label="Beneficiary Statistics">
+                <div class="stat-card" onclick="toggleFilterPanel()" role="button" tabindex="0" aria-label="Total beneficiaries, tap to filter">
+                    <div class="stat-value" id="stat-total">—</div>
+                    <div class="stat-label">Total Beneficiaries</div>
                 </div>
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Active This Month</div>
-                        <div class="kpi-value" data-kpi="active_this_month">—</div>
-                        <div class="kpi-meta" data-kpi="attendance_rate">Loading...</div>
-                    </div>
-                    <span class="kpi-icon blue"><i class="fas fa-user-check" aria-hidden="true"></i></span>
+                <div class="stat-card" aria-label="Active beneficiaries">
+                    <div class="stat-value" style="color:var(--success);" id="stat-active">—</div>
+                    <div class="stat-label">Active</div>
                 </div>
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Children</div>
-                        <div class="kpi-value" data-kpi="children_count">—</div>
-                        <div class="kpi-meta" data-kpi="children_pct">Loading...</div>
-                    </div>
-                    <span class="kpi-icon purple"><i class="fas fa-child" aria-hidden="true"></i></span>
+                <div class="stat-card" aria-label="Inactive beneficiaries">
+                    <div class="stat-value" style="color:var(--warning);" id="stat-inactive">—</div>
+                    <div class="stat-label">Inactive</div>
                 </div>
-                <div class="kpi-card">
-                    <div>
-                        <div class="kpi-label">Elderly</div>
-                        <div class="kpi-value" data-kpi="elderly_count">—</div>
-                        <div class="kpi-meta" data-kpi="elderly_pct">Loading...</div>
-                    </div>
-                    <span class="kpi-icon orange"><i class="fas fa-person-cane" aria-hidden="true"></i></span>
+                <div class="stat-card" aria-label="Suspended beneficiaries">
+                    <div class="stat-value" style="color:var(--danger);" id="stat-suspended">—</div>
+                    <div class="stat-label">Suspended</div>
                 </div>
             </div>
 
-            <!-- Register Beneficiary -->
-            <div class="proto-card">
-                <h2><i class="fas fa-user-plus" style="color:var(--mobile-primary);margin-right:8px;"></i>Register Beneficiary</h2>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>First name</label>
-                        <input type="text" placeholder="e.g. Kabo">
-                    </div>
-                    <div class="form-group">
-                        <label>Last name</label>
-                        <input type="text" placeholder="e.g. Sithole">
-                    </div>
-                    <div class="form-group">
-                        <label>Date of birth</label>
-                        <input type="date">
-                    </div>
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select><option>Male</option><option>Female</option><option>Other</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Guardian name</label>
-                        <input type="text" placeholder="Parent / caregiver">
-                    </div>
-                    <div class="form-group">
-                        <label>Contact number</label>
-                        <input type="tel" placeholder="0XX XXX XXXX">
-                    </div>
-                    <div class="form-group">
-                        <label>Address</label>
-                        <input type="text" placeholder="Street, suburb">
-                    </div>
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select><option>Child</option><option>Elderly</option><option>Disabled adult</option></select>
-                    </div>
-                    <div class="form-group">
-                        <label>Registration date</label>
-                        <input type="date">
-                    </div>
-                </div>
-                <div style="margin-top:14px;display:flex;gap:8px;">
-                    <button class="btn btn-primary">Save Beneficiary</button>
-                    <button class="btn">Clear</button>
-                </div>
-            </div>
-
-            <!-- Beneficiary List -->
+            <!-- Search -->
             <div class="proto-card">
                 <div class="section-header">
-                    <h2 style="font-size:16px;font-weight:700;color:#fff;margin:0;"><i class="fas fa-list" style="color:var(--mobile-primary);margin-right:8px;"></i>Beneficiary List</h2>
-                    <input type="text" id="search-beneficiary" placeholder="Search..." style="max-width:140px;padding:8px 10px;border:1px solid var(--mobile-border);border-radius:8px;background:var(--mobile-bg);color:var(--mobile-text);font-size:13px;" oninput="filterBeneficiaries(this.value)">
+                    <h2 style="font-size:16px;font-weight:700;color:var(--mobile-text);margin:0;"><i class="fas fa-list" style="color:var(--mobile-primary);margin-right:8px;" aria-hidden="true"></i>Beneficiary List</h2>
+                    <div style="display:flex;gap:8px;flex:1;">
+                        <input type="text" id="search-beneficiary" placeholder="Search by name or ID..." class="search-input search-input-wide" oninput="filterBeneficiaries(this.value)" aria-label="Search beneficiaries">
+                    </div>
                 </div>
-                <div class="table-wrap">
-                    <table id="beneficiary-table">
-                        <thead>
-                            <tr><th>ID</th><th>Name</th><th>Category</th><th>Status</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr><td colspan="4" style="text-align:center;color:var(--mobile-muted);">Loading...</td></tr>
-                        </tbody>
-                    </table>
+                <div id="beneficiary-list" aria-live="polite">
+                    <div class="skeleton-list">
+                        <div class="skeleton skeleton-line" style="width:100%;height:72px;margin:8px 0;"></div>
+                        <div class="skeleton skeleton-line" style="width:100%;height:72px;margin:8px 0;"></div>
+                        <div class="skeleton skeleton-line" style="width:100%;height:72px;margin:8px 0;"></div>
+                    </div>
                 </div>
             </div>
         </main>
-
-        <nav class="mobile-bottom-nav" role="navigation" aria-label="Primary">
-            <a class="mobile-nav-item" href="dashboard.html"><i class="fas fa-house" aria-hidden="true"></i><span>Home</span></a>
-            <a class="mobile-nav-item active" href="beneficiaries.html"><i class="fas fa-users" aria-hidden="true"></i><span>Beneficiaries</span></a>
-            <a class="mobile-nav-item" href="attendance.html"><i class="fas fa-clipboard-check" aria-hidden="true"></i><span>Attendance</span></a>
-            <a class="mobile-nav-item" href="stock.html"><i class="fas fa-boxes-stacked" aria-hidden="true"></i><span>Stock</span></a>
-        </nav>
     </div>
 
+    <!-- Beneficiary Detail Modal -->
+    <div class="modal-overlay" id="beneficiary-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">Beneficiary Details</div>
+                <button class="modal-close" onclick="closeBeneficiaryModal()" aria-label="Close modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="beneficiary-modal-content">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeBeneficiaryModal()">Close</button>
+                <button class="btn btn-primary" onclick="editCurrentBeneficiary()">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/server-discovery.js"></script>
     <script src="assets/api.js"></script>
+    <script src="assets/notifications.js"></script>
     <script src="assets/shared.js"></script>
     <script>
-        initPage('Beneficiaries', 'beneficiaries', { loadData: true, dataType: 'beneficiaries' });
+        initPage('Beneficiaries', 'beneficiaries');
 
-        // Filter beneficiaries client-side
-        function filterBeneficiaries(query) {
-            const tbody = document.querySelector('#beneficiary-table tbody');
-            const rows = tbody.querySelectorAll('tr');
-            const q = query.toLowerCase().trim();
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = (!q || text.includes(q)) ? '' : 'none';
-            });
+        let allBeneficiaries = [];
+        let currentFilters = {};
+        let selectedBeneficiaryId = null;
+        let selectedBeneficiaryData = null;
+
+        // Load statistics on page load
+        (async function loadStats() {
+            try {
+                const statsData = await API.get('/api/beneficiaries/stats.php');
+                if (statsData.success && statsData.data) {
+                    const d = statsData.data;
+                    document.getElementById('stat-total').textContent = (d.total || 0).toLocaleString();
+                    document.getElementById('stat-active').textContent = (d.active || 0).toLocaleString();
+                    document.getElementById('stat-inactive').textContent = (d.inactive || 0).toLocaleString();
+                    document.getElementById('stat-suspended').textContent = (d.suspended || 0).toLocaleString();
+                }
+            } catch (e) {
+                console.warn('Stats unavailable:', e.message);
+            }
+        })();
+
+        // Load beneficiaries
+        (async function loadBeneficiaries() {
+            const container = document.getElementById('beneficiary-list');
+            if (!container) return;
+
+            try {
+                const data = await API.get('/api/beneficiaries/list.php');
+                if (data.success && data.data) {
+                    allBeneficiaries = data.data;
+                    renderBeneficiaries(allBeneficiaries);
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><h3>Unable to load data</h3><p>Please check your connection and try again.</p></div>';
+                console.warn('Beneficiaries unavailable:', err.message);
+            }
+        })();
+
+        function renderBeneficiaries(list) {
+            const container = document.getElementById('beneficiary-list');
+            renderBeneficiaryCardList(list, container, 'showBeneficiaryDetail');
         }
+
+        function filterBeneficiaries(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderBeneficiaries(allBeneficiaries);
+                return;
+            }
+            const filtered = allBeneficiaries.filter(b => {
+                const name = (b.FullName || (b.FirstName + ' ' + b.LastName) || '').toLowerCase();
+                const id = String(b.BeneficiaryID || b.id || '');
+                return name.includes(q) || id.includes(q);
+            });
+            renderBeneficiaries(filtered);
+        }
+
+        async function showBeneficiaryDetail(id) {
+            selectedBeneficiaryId = id;
+            const modal = document.getElementById('beneficiary-modal');
+            const content = document.getElementById('beneficiary-modal-content');
+
+            content.innerHTML = '<div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading...</p></div>';
+            modal.classList.add('open');
+
+            try {
+                const data = await API.get(`/api/beneficiaries/detail.php?id=${id}`);
+                if (data.success && data.data) {
+                    const b = data.data;
+                    selectedBeneficiaryData = b;
+                    content.innerHTML = `
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                            <div class="skeleton-avatar" style="background:${getAvatarColor(b.FullName || b.name)};width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:20px;">
+                                ${getInitials(b.FullName || b.name)}
+                            </div>
+                            <div>
+                                <div style="font-size:18px;font-weight:700;color:var(--mobile-text);">${b.FullName || (b.FirstName + ' ' + b.LastName)}</div>
+                                <div style="color:var(--mobile-muted);font-size:13px;">${b.Category || b.category}</div>
+                            </div>
+                        </div>
+                        <div style="display:grid;gap:12px;">
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Beneficiary ID</span>
+                                <span style="font-weight:600;">${b.BeneficiaryID || b.id}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Status</span>
+                                <span class="badge ${(b.Status === 'Active' || b.status === 'active') ? 'badge-green' : (b.Status === 'Suspended' || b.status === 'suspended') ? 'badge-red' : 'badge-amber'}">${b.Status || b.status}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Gender</span>
+                                <span>${b.Gender || b.gender || '—'}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Date of Birth</span>
+                                <span>${b.DateOfBirth || b.date_of_birth || '—'}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Age</span>
+                                <span>${calculateAge(b.DateOfBirth || b.date_of_birth)}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Guardian</span>
+                                <span>${b.GuardianName || b.guardian_name || '—'}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Contact</span>
+                                <span>${b.ContactNumber || b.contact_number || b.Phone || b.phone || '—'}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Address</span>
+                                <span>${b.Address || b.address || '—'}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Area</span>
+                                <span>${b.Area || b.area || '—'}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Registered</span>
+                                <span>${b.RegistrationDate || b.registration_date || '—'}</span>
+                            </div>
+                            <div class="sched-slot">
+                                <span style="color:var(--mobile-muted);min-width:120px;">Notes</span>
+                                <span>${b.Notes || b.notes || 'No notes'}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                content.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><h3>Unable to load</h3><p>Details unavailable</p></div>';
+            }
+        }
+
+        function editCurrentBeneficiary() {
+            if (!selectedBeneficiaryId || !selectedBeneficiaryData) {
+                showToast('No beneficiary selected', 'warning');
+                return;
+            }
+
+            const b = selectedBeneficiaryData;
+            const fullName = b.FullName || ((b.FirstName || '') + ' ' + (b.LastName || '')).trim();
+            const nameParts = fullName.split(/\s+/);
+            const defaultFirst = b.FirstName || nameParts[0] || '';
+            const defaultLast = b.LastName || nameParts.slice(1).join(' ') || '';
+            const currentStatus = (b.Status || b.status || 'active').toLowerCase();
+
+            const content = document.getElementById('beneficiary-modal-content');
+            content.innerHTML = `
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="edit-first-name">First name</label>
+                        <input type="text" id="edit-first-name" value="${escapeHtml(defaultFirst)}">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-last-name">Last name</label>
+                        <input type="text" id="edit-last-name" value="${escapeHtml(defaultLast)}">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-phone">Contact</label>
+                        <input type="text" id="edit-phone" value="${escapeHtml(b.ContactNumber || b.contact_number || b.Phone || b.phone || '')}">
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-status">Status</label>
+                        <select id="edit-status">
+                            <option value="active" ${currentStatus === 'active' ? 'selected' : ''}>Active</option>
+                            <option value="inactive" ${currentStatus === 'inactive' ? 'selected' : ''}>Inactive</option>
+                            <option value="suspended" ${currentStatus === 'suspended' ? 'selected' : ''}>Suspended</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label for="edit-notes">Notes</label>
+                        <textarea id="edit-notes" rows="3">${escapeHtml(b.Notes || b.notes || '')}</textarea>
+                    </div>
+                </div>
+            `;
+
+            const footer = document.querySelector('#beneficiary-modal .modal-footer');
+            footer.innerHTML = `
+                <button class="btn btn-secondary" onclick="closeBeneficiaryModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveBeneficiaryEdits()">Save Changes</button>
+            `;
+        }
+
+        async function saveBeneficiaryEdits() {
+            const firstName = document.getElementById('edit-first-name').value.trim();
+            const lastName = document.getElementById('edit-last-name').value.trim();
+            const phone = document.getElementById('edit-phone').value.trim();
+            const status = document.getElementById('edit-status').value;
+            const notes = document.getElementById('edit-notes').value.trim();
+
+            if (!firstName || !lastName) {
+                showToast('First and last name are required', 'warning');
+                return;
+            }
+
+            try {
+                const result = await API.post('/api/beneficiaries/update.php', {
+                    id: parseInt(selectedBeneficiaryId, 10),
+                    first_name: firstName,
+                    last_name: lastName,
+                    phone: phone,
+                    status: status,
+                    notes: notes
+                });
+
+                if (result.success) {
+                    showToast('Beneficiary updated successfully', 'success');
+                    closeBeneficiaryModal();
+                    API.invalidateCache('/api/beneficiaries/list.php');
+                    const data = await API.get('/api/beneficiaries/list.php', false, false);
+                    if (data.success && data.data) {
+                        allBeneficiaries = data.data;
+                        renderBeneficiaries(allBeneficiaries);
+                    }
+                } else {
+                    showToast('Update failed: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('Update failed: ' + err.message, 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} toast-icon"></i>
+                <div class="toast-message">${escapeHtml(message)}</div>
+            `;
+            const container = document.createElement('div');
+            container.className = 'toast-container';
+            container.appendChild(toast);
+            document.body.appendChild(container);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => container.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function closeBeneficiaryModal() {
+            document.getElementById('beneficiary-modal').classList.remove('open');
+            const footer = document.querySelector('#beneficiary-modal .modal-footer');
+            footer.innerHTML = `
+                <button class="btn btn-secondary" onclick="closeBeneficiaryModal()">Close</button>
+                <button class="btn btn-primary" onclick="editCurrentBeneficiary()">Edit</button>
+            `;
+        }
+
+        function calculateAge(dob) {
+            if (!dob) return '—';
+            try {
+                const birth = new Date(dob);
+                const today = new Date();
+                let age = today.getFullYear() - birth.getFullYear();
+                const m = today.getMonth() - birth.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+                    age--;
+                }
+                return age;
+            } catch {
+                return '—';
+            }
+        }
+
+        // Close modal on overlay click
+        document.getElementById('beneficiary-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBeneficiaryModal();
+            }
+        });
     </script>
 </body>
 </html>

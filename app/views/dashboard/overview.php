@@ -1,138 +1,14 @@
-<?php $pageTitle = 'Dashboard Overview'; ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            border-left: 4px solid #667eea;
-        }
-        .stat-value {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #667eea;
-            margin: 10px 0;
-        }
-        .stat-label {
-            color: #666;
-            font-size: 0.9rem;
-        }
-        .metric-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .chart-container {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            position: relative;
-            height: 350px;
-        }
-        .analytics-nav {
-            background: white;
-            border-radius: 10px;
-            padding: 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            overflow: hidden;
-        }
-        .analytics-nav a {
-            display: block;
-            padding: 12px 20px;
-            color: #333;
-            text-decoration: none;
-            border-left: 4px solid transparent;
-            transition: all 0.2s;
-        }
-        .analytics-nav a:hover {
-            background: #f8f9fa;
-            border-left-color: #667eea;
-        }
-        .analytics-nav a.active {
-            background: #f0f4ff;
-            border-left-color: #667eea;
-            color: #667eea;
-            font-weight: 600;
-        }
-        .activity-item {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            background: #f0f4ff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #667eea;
-        }
-        .activity-content {
-            flex: 1;
-        }
-        .activity-type {
-            font-weight: 600;
-            color: #333;
-            font-size: 0.9rem;
-        }
-        .activity-time {
-            color: #999;
-            font-size: 0.8rem;
-        }
-        .kpi-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-        .kpi-green { background: #d4edda; color: #155724; }
-        .kpi-orange { background: #fff3cd; color: #856404; }
-        .kpi-blue { background: #d1ecf1; color: #0c5460; }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php $pageTitle = 'Dashboard Overview';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
-    <!-- Page Header -->
-    <div class="page-header">
+    <div class="fsms-page-header">
         <div class="container-fluid">
             <h1><i class="fas fa-chart-line"></i> Dashboard Overview</h1>
             <p class="mb-0 mt-2">System-wide analytics and key performance indicators</p>
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="container-fluid pt-4 pb-5">
         <!-- Analytics Navigation -->
         <div class="row mb-4">
@@ -384,5 +260,4 @@
             }
         });
     </script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

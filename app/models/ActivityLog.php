@@ -12,9 +12,13 @@ class ActivityLog {
     // HZ-LOG-001: Log user activity
     public static function log($userId, $action, $entityName, $entityId, $details = '') {
         $conn = getConnection();
-        
+        if (!$conn) {
+            error_log("ActivityLog::log - No database connection available");
+            return false;
+        }
+
         try {
-            $query = "INSERT INTO ActivityLog (UserID, Action, AffectedEntityName, AffectedEntityID, Details, Timestamp) 
+            $query = "INSERT INTO activitylog (UserID, Action, AffectedEntityName, AffectedEntityID, Details, Timestamp)
                       VALUES (:user_id, :action, :entity_name, :entity_id, :details, NOW())";
             $stmt = $conn->prepare($query);
             $stmt->bindParam(':user_id', $userId);
@@ -24,8 +28,8 @@ class ActivityLog {
             $stmt->bindParam(':details', $details);
             
             return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("ActivityLog::log - " . $e->getMessage());
+        } catch (Throwable $e) {
+            error_log("ActivityLog::log error: " . $e->getMessage());
             return false;
         }
     }
@@ -35,8 +39,8 @@ class ActivityLog {
         $conn = getConnection();
         
         try {
-            $query = "SELECT al.*, u.Username FROM ActivityLog al 
-                      LEFT JOIN Users u ON al.UserID = u.UserID 
+            $query = "SELECT al.*, u.Username FROM activitylog al
+                      LEFT JOIN users u ON al.UserID = u.UserID
                       WHERE al.Timestamp BETWEEN :from_date AND :to_date 
                       ORDER BY al.Timestamp DESC LIMIT :limit";
             $stmt = $conn->prepare($query);
@@ -57,7 +61,7 @@ class ActivityLog {
         $conn = getConnection();
         
         try {
-            $query = "SELECT * FROM ActivityLog WHERE UserID = :user_id ORDER BY Timestamp DESC LIMIT :limit";
+            $query = "SELECT * FROM activitylog WHERE UserID = :user_id ORDER BY Timestamp DESC LIMIT :limit";
             $stmt = $conn->prepare($query);
             $stmt->bindParam(':user_id', $userId);
             $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
@@ -75,8 +79,8 @@ class ActivityLog {
         $conn = getConnection();
         
         try {
-            $query = "SELECT al.*, u.Username FROM ActivityLog al 
-                      LEFT JOIN Users u ON al.UserID = u.UserID 
+            $query = "SELECT al.*, u.Username FROM activitylog al
+                      LEFT JOIN users u ON al.UserID = u.UserID
                       WHERE al.Action = :action 
                       ORDER BY al.Timestamp DESC LIMIT :limit";
             $stmt = $conn->prepare($query);
@@ -96,7 +100,7 @@ class ActivityLog {
         $conn = getConnection();
         
         try {
-            $query = "DELETE FROM ActivityLog WHERE Timestamp < DATE_SUB(NOW(), INTERVAL :days DAY)";
+            $query = "DELETE FROM activitylog WHERE Timestamp < DATE_SUB(NOW(), INTERVAL :days DAY)";
             $stmt = $conn->prepare($query);
             $stmt->bindParam(':days', $daysToKeep, PDO::PARAM_INT);
             

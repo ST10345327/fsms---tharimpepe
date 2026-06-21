@@ -10,7 +10,7 @@
 class Beneficiary
 {
     private $conn;
-    private $table = "Beneficiaries";
+    private $table = "beneficiaries";
 
     public function __construct($db)
     {
@@ -90,17 +90,17 @@ class Beneficiary
         }
 
         // Validation: Age must be positive if provided
-        if ($age !== null && (!is_numeric($age) || $age < 0 || $age > 120)) {
+        if (!empty($age) && (!is_numeric($age) || $age < 0 || $age > 120)) {
             throw new Exception("Age must be a valid number between 0 and 120");
         }
 
         // Validation: Gender must be valid if provided
-        if ($gender !== null && !in_array($gender, ['Male', 'Female', 'Other'])) {
+        if (!empty($gender) && !in_array($gender, ['Male', 'Female', 'Other'])) {
             throw new Exception("Gender must be Male, Female, or Other");
         }
 
         // Validation: Email format if provided
-        if ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new Exception("Invalid email format");
         }
 
@@ -147,17 +147,17 @@ class Beneficiary
         }
 
         // Validation: Age must be positive if provided
-        if ($age !== null && (!is_numeric($age) || $age < 0 || $age > 120)) {
+        if (!empty($age) && (!is_numeric($age) || $age < 0 || $age > 120)) {
             throw new Exception("Age must be a valid number between 0 and 120");
         }
 
         // Validation: Gender must be valid if provided
-        if ($gender !== null && !in_array($gender, ['Male', 'Female', 'Other'])) {
+        if (!empty($gender) && !in_array($gender, ['Male', 'Female', 'Other'])) {
             throw new Exception("Gender must be Male, Female, or Other");
         }
 
         // Validation: Email format if provided
-        if ($email !== null && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
             throw new Exception("Invalid email format");
         }
 
@@ -265,13 +265,15 @@ class Beneficiary
 
         $query = "SELECT BeneficiaryID, FirstName, LastName, Age, RegistrationDate, Status, Notes, CreatedAt
                   FROM " . $this->table . "
-                  WHERE FirstName LIKE :search
-                     OR LastName LIKE :search
-                     OR Notes LIKE :search
+                  WHERE FirstName LIKE :search1
+                     OR LastName LIKE :search2
+                     OR Notes LIKE :search3
                   ORDER BY FirstName ASC";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":search", $searchTerm);
+        $stmt->bindParam(":search1", $searchTerm);
+        $stmt->bindParam(":search2", $searchTerm);
+        $stmt->bindParam(":search3", $searchTerm);
 
         if ($stmt->execute()) {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);

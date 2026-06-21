@@ -57,13 +57,13 @@ try {
     $updated = 0;
 
     $checkStmt = $db->prepare(
-        "SELECT AttendanceID FROM Attendance WHERE BeneficiaryID = :bid AND SessionDate = :sdate"
+        "SELECT AttendanceID FROM attendance WHERE BeneficiaryID = :bid AND SessionDate = :sdate"
     );
     $updateStmt = $db->prepare(
-        "UPDATE Attendance SET Status = :status, Notes = :notes WHERE AttendanceID = :aid"
+        "UPDATE attendance SET Status = :status, Notes = :notes WHERE AttendanceID = :aid"
     );
     $insertStmt = $db->prepare(
-        "INSERT INTO Attendance (BeneficiaryID, SessionDate, Status, Notes, CreatedAt) 
+        "INSERT INTO attendance (BeneficiaryID, SessionDate, Status, Notes, CreatedAt)
          VALUES (:bid, :sdate, :status, :notes, NOW())"
     );
 
@@ -71,7 +71,12 @@ try {
         if (empty($record['id'])) continue;
 
         $beneficiaryId = (int)$record['id'];
-        $status = ($record['status'] === 'present') ? 'present' : 'absent';
+        $rawStatus = strtolower(trim($record['status'] ?? 'absent'));
+        $statusMap = ['late' => 'marked', 'excused' => 'marked'];
+        $status = $statusMap[$rawStatus] ?? $rawStatus;
+        if (!in_array($status, ['present', 'absent', 'marked'], true)) {
+            $status = 'absent';
+        }
         $notes = $record['notes'] ?? '';
 
         // Check if record exists

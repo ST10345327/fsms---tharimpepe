@@ -10,11 +10,32 @@
 class Volunteer
 {
     private $conn;
-    private $table = "Volunteers";
+    private $table = "volunteers";
 
     public function __construct($db)
     {
         $this->conn = $db;
+    }
+
+    private function mapVolunteerRow(array $row): array
+    {
+        $fullName = trim($row['FullName'] ?? '');
+        if ($fullName !== '') {
+            $parts = preg_split('/\s+/', $fullName, 2);
+            $row['FirstName'] = $parts[0] ?? '';
+            $row['LastName'] = $parts[1] ?? '';
+        } else {
+            $row['FirstName'] = $row['FirstName'] ?? '';
+            $row['LastName'] = $row['LastName'] ?? '';
+            $row['FullName'] = trim($row['FirstName'] . ' ' . $row['LastName']);
+        }
+
+        return $row;
+    }
+
+    private function mapVolunteerRows(array $rows): array
+    {
+        return array_map([$this, 'mapVolunteerRow'], $rows);
     }
 
     /**
@@ -26,18 +47,17 @@ class Volunteer
      */
     public function getAllVolunteers($limit = 10, $offset = 0, $status = null)
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, v.FirstName, v.LastName, 
-                         v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.FullName, u.Phone,
+                         v.Address, v.AvailabilityStatus, v.Status, v.Skills, v.Notes, v.CreatedAt
                   FROM " . $this->table . " v
-                  INNER JOIN Users u ON v.UserID = u.UserID
-                  WHERE u.IsActive = TRUE";
+                  INNER JOIN users u ON v.UserID = u.UserID
+                  WHERE u.Status = 'active'";
 
-        // Filter by availability status if provided
         if ($status && in_array($status, ['available', 'unavailable', 'on_leave'])) {
             $query .= " AND v.AvailabilityStatus = :status";
         }
 
-        $query .= " ORDER BY v.CreatedAt DESC LIMIT :limit OFFSET :offset";
+        $query .= " ORDER BY u.FullName ASC, u.Username ASC LIMIT :limit OFFSET :offset";
 
         $stmt = $this->conn->prepare($query);
 
@@ -49,7 +69,7 @@ class Volunteer
         $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->mapVolunteerRows($stmt->fetchAll(PDO::FETCH_ASSOC));
         }
 
         return [];
@@ -63,10 +83,10 @@ class Volunteer
      */
     public function getVolunteerById($volunteerId)
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.Role, 
-                         v.FirstName, v.LastName, v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.FullName, u.Phone, u.Role,
+                         v.Address, v.AvailabilityStatus, v.Status, v.Skills, v.Notes, v.CreatedAt
                   FROM " . $this->table . " v
-                  INNER JOIN Users u ON v.UserID = u.UserID
+                  INNER JOIN users u ON v.UserID = u.UserID
                   WHERE v.VolunteerID = :volunteer_id
                   LIMIT 1";
 
@@ -74,7 +94,8 @@ class Volunteer
         $stmt->bindParam(":volunteer_id", $volunteerId);
 
         if ($stmt->execute()) {
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? $this->mapVolunteerRow($row) : false;
         }
 
         return false;
@@ -89,10 +110,10 @@ class Volunteer
      */
     public function getVolunteerByUserId($userId)
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, 
-                         v.FirstName, v.LastName, v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.FullName, u.Phone,
+                         v.Address, v.AvailabilityStatus, v.Status, v.Skills, v.Notes, v.CreatedAt
                   FROM " . $this->table . " v
-                  INNER JOIN Users u ON v.UserID = u.UserID
+                  INNER JOIN users u ON v.UserID = u.UserID
                   WHERE v.UserID = :user_id
                   LIMIT 1";
 
@@ -100,7 +121,8 @@ class Volunteer
         $stmt->bindParam(":user_id", $userId);
 
         if ($stmt->execute()) {
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? $this->mapVolunteerRow($row) : false;
         }
 
         return false;
@@ -115,31 +137,34 @@ class Volunteer
      */
     public function createVolunteer($userId, $firstName, $lastName, $phone, $address = null)
     {
-        // Validation: Check if volunteer already exists for this user
         if ($this->getVolunteerByUserId($userId)) {
             throw new Exception("Volunteer profile already exists for this user");
         }
 
-        // Validation: Required fields
         if (empty($firstName) || empty($lastName) || empty($phone)) {
             throw new Exception("First name, last name, and phone are required");
         }
 
-        // Validation: Phone format (basic)
         if (!preg_match('/^[0-9\s\-\+\(\)]{10,}$/', $phone)) {
             throw new Exception("Invalid phone number format");
         }
 
-        $query = "INSERT INTO " . $this->table . " 
-                  (UserID, FirstName, LastName, Phone, Address, AvailabilityStatus) 
-                  VALUES (:user_id, :first_name, :last_name, :phone, :address, 'available')";
+        $fullName = trim($firstName . ' ' . $lastName);
+        $userQuery = "UPDATE users
+                      SET FullName = :full_name, Phone = :phone
+                      WHERE UserID = :user_id";
+        $userStmt = $this->conn->prepare($userQuery);
+        $userStmt->bindParam(":full_name", $fullName);
+        $userStmt->bindParam(":phone", $phone);
+        $userStmt->bindParam(":user_id", $userId);
+        $userStmt->execute();
+
+        $query = "INSERT INTO " . $this->table . "
+                  (UserID, Address, AvailabilityStatus, Status, CreatedAt)
+                  VALUES (:user_id, :address, 'available', 'approved', NOW())";
 
         $stmt = $this->conn->prepare($query);
-
         $stmt->bindParam(":user_id", $userId);
-        $stmt->bindParam(":first_name", $firstName);
-        $stmt->bindParam(":last_name", $lastName);
-        $stmt->bindParam(":phone", $phone);
         $stmt->bindParam(":address", $address);
 
         if ($stmt->execute()) {
@@ -158,29 +183,35 @@ class Volunteer
      */
     public function updateVolunteer($volunteerId, $firstName, $lastName, $phone, $address, $status)
     {
-        // Validation: Phone format
         if (!empty($phone) && !preg_match('/^[0-9\s\-\+\(\)]{10,}$/', $phone)) {
             throw new Exception("Invalid phone number format");
         }
 
-        // Validation: Status must be valid
         if (!in_array($status, ['available', 'unavailable', 'on_leave'])) {
             throw new Exception("Invalid availability status");
         }
 
-        $query = "UPDATE " . $this->table . " 
-                  SET FirstName = :first_name, 
-                      LastName = :last_name, 
-                      Phone = :phone, 
-                      Address = :address, 
-                      AvailabilityStatus = :status 
+        $volunteer = $this->getVolunteerById($volunteerId);
+        if (!$volunteer) {
+            throw new Exception("Volunteer not found");
+        }
+
+        $fullName = trim($firstName . ' ' . $lastName);
+        $userQuery = "UPDATE users
+                      SET FullName = :full_name, Phone = :phone
+                      WHERE UserID = :user_id";
+        $userStmt = $this->conn->prepare($userQuery);
+        $userStmt->bindParam(":full_name", $fullName);
+        $userStmt->bindParam(":phone", $phone);
+        $userStmt->bindParam(":user_id", $volunteer['UserID']);
+        $userStmt->execute();
+
+        $query = "UPDATE " . $this->table . "
+                  SET Address = :address,
+                      AvailabilityStatus = :status
                   WHERE VolunteerID = :volunteer_id";
 
         $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(":first_name", $firstName);
-        $stmt->bindParam(":last_name", $lastName);
-        $stmt->bindParam(":phone", $phone);
         $stmt->bindParam(":address", $address);
         $stmt->bindParam(":status", $status);
         $stmt->bindParam(":volunteer_id", $volunteerId);
@@ -201,8 +232,8 @@ class Volunteer
             throw new Exception("Invalid availability status");
         }
 
-        $query = "UPDATE " . $this->table . " 
-                  SET AvailabilityStatus = :status 
+        $query = "UPDATE " . $this->table . "
+                  SET AvailabilityStatus = :status
                   WHERE VolunteerID = :volunteer_id";
 
         $stmt = $this->conn->prepare($query);
@@ -220,8 +251,8 @@ class Volunteer
      */
     public function getVolunteerCountByStatus()
     {
-        $query = "SELECT AvailabilityStatus, COUNT(*) as count 
-                  FROM " . $this->table . " 
+        $query = "SELECT AvailabilityStatus, COUNT(*) as count
+                  FROM " . $this->table . "
                   GROUP BY AvailabilityStatus";
 
         $stmt = $this->conn->prepare($query);
@@ -248,17 +279,18 @@ class Volunteer
      */
     public function getAvailableVolunteers()
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, v.FirstName, v.LastName, v.Phone
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.FullName, u.Phone
                   FROM " . $this->table . " v
-                  INNER JOIN Users u ON v.UserID = u.UserID
+                  INNER JOIN users u ON v.UserID = u.UserID
                   WHERE v.AvailabilityStatus = 'available'
-                  AND u.IsActive = TRUE
-                  ORDER BY v.FirstName ASC";
+                  AND u.Status = 'active'
+                  AND v.Status IN ('approved', 'pending')
+                  ORDER BY u.FullName ASC, u.Username ASC";
 
         $stmt = $this->conn->prepare($query);
 
         if ($stmt->execute()) {
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->mapVolunteerRows($stmt->fetchAll(PDO::FETCH_ASSOC));
         }
 
         return [];
@@ -274,19 +306,19 @@ class Volunteer
     {
         $searchTerm = "%{$searchTerm}%";
 
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, 
-                         v.FirstName, v.LastName, v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.FullName, u.Phone,
+                         v.Address, v.AvailabilityStatus, v.Status, v.CreatedAt
                   FROM " . $this->table . " v
-                  INNER JOIN Users u ON v.UserID = u.UserID
-                  WHERE (v.FirstName LIKE :search OR v.LastName LIKE :search OR v.Phone LIKE :search)
-                  AND u.IsActive = TRUE
-                  ORDER BY v.FirstName ASC";
+                  INNER JOIN users u ON v.UserID = u.UserID
+                  WHERE (u.FullName LIKE :search OR u.Phone LIKE :search OR u.Username LIKE :search)
+                  AND u.Status = 'active'
+                  ORDER BY u.FullName ASC";
 
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":search", $searchTerm);
 
         if ($stmt->execute()) {
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            return $this->mapVolunteerRows($stmt->fetchAll(PDO::FETCH_ASSOC));
         }
 
         return [];
@@ -301,15 +333,13 @@ class Volunteer
      */
     public function deleteVolunteer($volunteerId)
     {
-        // Get the volunteer to find associated user
         $volunteer = $this->getVolunteerById($volunteerId);
 
         if (!$volunteer) {
             throw new Exception("Volunteer not found");
         }
 
-        // Soft delete: deactivate the user account
-        $query = "UPDATE Users SET IsActive = FALSE WHERE UserID = :user_id";
+        $query = "UPDATE users SET Status = 'inactive' WHERE UserID = :user_id";
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(":user_id", $volunteer['UserID']);
 
@@ -326,9 +356,9 @@ class Volunteer
     {
         $query = "SELECT COUNT(*) as active_count
                   FROM " . $this->table . " v
-                  INNER JOIN Users u ON v.UserID = u.UserID
+                  INNER JOIN users u ON v.UserID = u.UserID
                   WHERE v.AvailabilityStatus = 'available'
-                  AND u.IsActive = TRUE";
+                  AND u.Status = 'active'";
 
         $stmt = $this->conn->prepare($query);
 
@@ -348,11 +378,14 @@ class Volunteer
      */
     public function getTodaySchedule()
     {
-        $today = date('l'); // Get day name (Monday, Tuesday, etc.)
+        $today = date('l');
 
-        $query = "SELECT vs.TimeSlot, vs.Role, GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers, vs.Status
-                   FROM VolunteerSchedules vs
-                   LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+        $query = "SELECT vs.TimeSlot, vs.Role,
+                         GROUP_CONCAT(COALESCE(u.FullName, u.Username) SEPARATOR ', ') as volunteers,
+                         vs.Status
+                   FROM volunteerschedules vs
+                   LEFT JOIN volunteers v ON vs.VolunteerID = v.VolunteerID
+                   LEFT JOIN users u ON v.UserID = u.UserID
                    WHERE vs.DayOfWeek = :day
                    GROUP BY vs.ScheduleID, vs.TimeSlot, vs.Role, vs.Status
                    ORDER BY vs.TimeSlot ASC";
@@ -376,9 +409,10 @@ class Volunteer
     public function getWeeklySchedule()
     {
         $query = "SELECT vs.DayOfWeek, vs.TimeSlot, vs.Role,
-                          GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers
-                   FROM VolunteerSchedules vs
-                   LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+                          GROUP_CONCAT(COALESCE(u.FullName, u.Username) SEPARATOR ', ') as volunteers
+                   FROM volunteerschedules vs
+                   LEFT JOIN volunteers v ON vs.VolunteerID = v.VolunteerID
+                   LEFT JOIN users u ON v.UserID = u.UserID
                    GROUP BY vs.DayOfWeek, vs.TimeSlot, vs.Role
                    ORDER BY FIELD(vs.DayOfWeek, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                             vs.TimeSlot ASC";

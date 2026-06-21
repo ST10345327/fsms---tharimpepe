@@ -1,29 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Search Results - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .volunteer-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            border-left: 5px solid #667eea;
-        }
-        .volunteer-card h5 { color: #333; margin-bottom: 10px; }
-        .volunteer-info { font-size: 14px; color: #666; margin: 5px 0; }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <?php include __DIR__ . "/../includes/navbar.php"; ?>
+<?php
+$pageTitle = 'Search Results';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
     <!-- Search Results -->
     <div class="container pt-5 pb-5">
@@ -66,10 +44,4 @@
             <i class="fas fa-arrow-left"></i> Back to List
         </a>
     </div>
-
-    <!-- Footer -->
-    <?php include __DIR__ . "/../includes/footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

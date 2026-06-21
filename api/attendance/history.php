@@ -40,7 +40,7 @@ try {
                 COUNT(*) AS registered,
                 SUM(CASE WHEN a.Status = 'present' THEN 1 ELSE 0 END) AS present,
                 ROUND(SUM(CASE WHEN a.Status = 'present' THEN 1 ELSE 0 END) / COUNT(*) * 100) AS rate
-         FROM Attendance a
+         FROM attendance a
          WHERE a.SessionDate >= DATE_SUB(CURDATE(), INTERVAL :days DAY)
          GROUP BY a.SessionDate
          ORDER BY a.SessionDate DESC"

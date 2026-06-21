@@ -16,7 +16,7 @@ require_once __DIR__ . "/../../config/database.php";
 
 class FoodStock {
     private $pdo;
-    private $table = 'FoodStock';
+    private $table = 'foodstock';
 
     /**
      * HZ-FOOD-001: Constructor - Initialize database connection
@@ -93,7 +93,7 @@ class FoodStock {
             // Get paginated records
             $stmt = $this->pdo->prepare(
                 "SELECT * FROM {$this->table} 
-                 ORDER BY ExpiryDate ASC, UpdatedAt DESC 
+                 ORDER BY ExpiryDate ASC
                  LIMIT ? OFFSET ?"
             );
             $stmt->bindParam(1, $limit, PDO::PARAM_INT);
@@ -159,7 +159,7 @@ class FoodStock {
         try {
             $stmt = $this->pdo->prepare(
                 "UPDATE {$this->table} 
-                 SET ItemName = ?, Quantity = ?, Unit = ?, ExpiryDate = ?, Notes = ?, UpdatedAt = NOW()
+                 SET ItemName = ?, Quantity = ?, Unit = ?, ExpiryDate = ?, Notes = ?
                  WHERE FoodStockID = ?"
             );
 
@@ -316,7 +316,7 @@ class FoodStock {
 
             $stmt = $this->pdo->prepare(
                 "UPDATE {$this->table} 
-                 SET Quantity = ?, UpdatedAt = NOW()
+                 SET Quantity = ?
                  WHERE FoodStockID = ?"
             );
             $result = $stmt->execute([(int)$newQuantity, (int)$id]);
@@ -387,7 +387,7 @@ class FoodStock {
                         END as expiry_status
                  FROM {$this->table}
                  WHERE LOWER(ItemName) LIKE LOWER(?) OR LOWER(Unit) LIKE LOWER(?)
-                 ORDER BY UpdatedAt DESC"
+                 ORDER BY ExpiryDate ASC"
             );
             $stmt->execute([$searchTerm, $searchTerm]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -410,8 +410,8 @@ class FoodStock {
         try {
             $stmt = $this->pdo->prepare(
                 "SELECT * FROM {$this->table}
-                 WHERE DATE(UpdatedAt) BETWEEN ? AND ?
-                 ORDER BY UpdatedAt DESC"
+                 WHERE StockDate BETWEEN ? AND ?
+                 ORDER BY StockDate DESC"
             );
             $stmt->execute([$startDate, $endDate]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);

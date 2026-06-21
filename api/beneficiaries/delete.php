@@ -44,7 +44,7 @@ try {
         exit();
     }
 
-    $stmt = $db->prepare("UPDATE Beneficiaries SET Status = 'inactive', UpdatedAt = NOW() WHERE BeneficiaryID = :id");
+    $stmt = $db->prepare("UPDATE beneficiaries SET Status = 'inactive', UpdatedAt = NOW() WHERE BeneficiaryID = :id");
     $stmt->execute([':id' => $id]);
 
     if ($stmt->rowCount() === 0) {

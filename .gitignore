@@ -8,6 +8,16 @@ Desktop.ini
 .idea/
 *.code-workspace
 
+# LLM / AI assistant tooling (local only)
+.blackbox/
+.clinerules/
+.codex-remote-attachments/
+.kilo/
+.sixth/
+.trunk/
+.cursor/
+.agents/
+
 # Local environment and secrets
 .env
 .env.*

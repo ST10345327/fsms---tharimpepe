@@ -1,75 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Messages - Inbox - FSMS</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body { background-color: #f5f7fa; }
-        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .page-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 0;
-            margin-bottom: 30px;
-        }
-        .page-header h1 { margin: 0; font-weight: 700; }
-        .message-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 15px;
-            border-left: 5px solid #667eea;
-            transition: all 0.3s ease;
-        }
-        .message-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
-        .message-card.unread {
-            border-left-color: #28a745;
-            background: linear-gradient(90deg, rgba(40, 167, 69, 0.05) 0%, white 20%);
-        }
-        .message-sender { font-weight: 600; color: #333; margin-bottom: 5px; }
-        .message-subject { font-weight: 500; color: #555; margin-bottom: 8px; }
-        .message-preview { color: #666; font-size: 14px; margin-bottom: 10px; }
-        .message-meta { font-size: 12px; color: #999; }
-        .message-meta i { margin-right: 5px; }
-        .badge-unread {
-            background-color: #28a745;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-        .action-buttons { margin-top: 15px; }
-        .search-section {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-        .nav-tabs .nav-link { color: #666; border-color: #e0e0e0; }
-        .nav-tabs .nav-link.active { color: #667eea; border-color: #667eea; }
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #666;
-        }
-        .empty-state i { font-size: 48px; color: #ddd; margin-bottom: 20px; }
-    </style>
-</head>
-<body>
-    <?php include __DIR__ . '/../includes/navbar.php'; ?>
+<?php
+$pageTitle = 'Messages - Inbox';
+require_once __DIR__ . "/../includes/layout-header.php";
+?>
 
     <div class="container-fluid">
-        <div class="page-header">
+        <div class="fsms-page-header">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1><i class="fas fa-envelope me-3"></i>Messages</h1>
@@ -197,5 +132,4 @@
                 });
         }, 30000);
     </script>
-</body>
-</html>
+<?php require_once __DIR__ . "/../includes/layout-footer.php"; ?>

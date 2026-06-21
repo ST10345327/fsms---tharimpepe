@@ -49,8 +49,8 @@ try {
         "SELECT al.ActivityID, al.Action, al.Details, al.AffectedEntityName, al.AffectedEntityID,
                 al.IPAddress, al.Timestamp,
                 u.Username, u.FullName
-         FROM ActivityLog al
-         JOIN Users u ON al.UserID = u.UserID
+         FROM activitylog al
+         JOIN users u ON al.UserID = u.UserID
          WHERE {$where}
          ORDER BY al.Timestamp DESC
          LIMIT :limit"

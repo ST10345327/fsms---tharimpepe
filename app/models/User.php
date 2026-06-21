@@ -10,7 +10,7 @@
 class User
 {
     private $conn;
-    private $table = "Users";
+    private $table = "users";
 
     public function __construct($db)
     {
@@ -111,7 +111,7 @@ class User
      * Security: Hashes password using PHP password_hash, validates input
      * Validation: Checks for duplicate username/email, validates email format
      */
-    public function register($username, $email, $password, $role = 'volunteer')
+    public function register($username, $email, $password, $role = 'volunteer', $fullName = null, $phone = null)
     {
         // Validation: Check if username already exists
         if ($this->findByUsername($username)) {
@@ -137,9 +137,9 @@ class User
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
         // Prepare and execute INSERT query
-        $query = "INSERT INTO " . $this->table . " 
-                  (Username, Email, PasswordHash, Role) 
-                  VALUES (:username, :email, :password_hash, :role)";
+        $query = "INSERT INTO " . $this->table . "
+                  (Username, Email, PasswordHash, Role, FullName, Phone, Status, CreatedAt)
+                  VALUES (:username, :email, :password_hash, :role, :full_name, :phone, 'active', NOW())";
 
         $stmt = $this->conn->prepare($query);
 
@@ -148,6 +148,8 @@ class User
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":password_hash", $hashedPassword);
         $stmt->bindParam(":role", $role);
+        $stmt->bindParam(":full_name", $fullName);
+        $stmt->bindParam(":phone", $phone);
 
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
@@ -165,7 +167,7 @@ class User
      */
     public function getUserById($userId)
     {
-        $query = "SELECT UserID, Username, Email, Role, CreatedAt, Status 
+        $query = "SELECT UserID, Username, Email, FullName, Phone, Role, CreatedAt, Status
                   FROM " . $this->table . " 
                   WHERE UserID = :user_id 
                   LIMIT 1";

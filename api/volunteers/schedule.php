@@ -38,9 +38,9 @@ try {
         "SELECT vs.ScheduleID, vs.ScheduleDate, vs.StartTime, vs.EndTime,
                 vs.Role AS `task`, vs.Location, vs.Status,
                 u.FullName AS VolunteerName, u.Username
-         FROM VolunteerSchedules vs
-         JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID
-         JOIN Users u ON v.UserID = u.UserID
+         FROM volunteerschedules vs
+         JOIN volunteers v ON vs.VolunteerID = v.VolunteerID
+         JOIN users u ON v.UserID = u.UserID
          WHERE vs.ScheduleDate >= DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)
            AND vs.ScheduleDate < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY), INTERVAL 7 DAY)
          ORDER BY vs.ScheduleDate ASC, vs.StartTime ASC"

@@ -31,7 +31,12 @@ date_default_timezone_set('UTC');
 // Set error reporting
 if (DEBUG_MODE) {
     error_reporting(E_ALL);
-    ini_set('display_errors', '1');
+    // Disable display_errors for API requests to ensure valid JSON responses
+    if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], '/api/') === 0) {
+        ini_set('display_errors', '0');
+    } else {
+        ini_set('display_errors', '1');
+    }
 } else {
     error_reporting(E_ALL);
     ini_set('display_errors', '0');
@@ -323,13 +328,15 @@ function logMessage($message, $level = 'INFO')
  * 
  * @return string CSRF token
  */
-function generateCSRFToken()
-{
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+if (!function_exists('generateCSRFToken')) {
+    function generateCSRFToken()
+    {
+        if (empty($_SESSION['csrf_token'])) {
+            $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+        }
+
+        return $_SESSION['csrf_token'];
     }
-    
-    return $_SESSION['csrf_token'];
 }
 
 /**
@@ -339,9 +346,11 @@ function generateCSRFToken()
  * @param string $token Token to verify
  * @return bool True if token is valid
  */
-function verifyCSRFToken($token)
-{
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+if (!function_exists('verifyCSRFToken')) {
+    function verifyCSRFToken($token)
+    {
+        return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    }
 }
 
 /**
@@ -350,8 +359,9 @@ function verifyCSRFToken($token)
  * 
  * @return string HTML input field
  */
-function csrfTokenInput()
-{
-    return '<input type="hidden" name="csrf_token" value="' . generateCSRFToken() . '">';
+if (!function_exists('csrfTokenInput')) {
+    function csrfTokenInput()
+    {
+        return '<input type="hidden" name="csrf_token" value="' . generateCSRFToken() . '">';
+    }
 }
-?>

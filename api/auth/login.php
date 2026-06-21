@@ -60,25 +60,16 @@ try {
 
     // Attempt database authentication
     $userModel = new User($db);
-    $user = $userModel->authenticate($username, $password);
-
-    // Fallback to demo users if DB is unavailable
-    if (!$user && $db === null) {
-        $demoFile = dirname(__DIR__, 2) . '/.demo_users.json';
-        if (is_file($demoFile)) {
-            $demoUsers = json_decode(file_get_contents($demoFile), true);
-            if (!empty($demoUsers[$username]) && 
-                password_verify($password, $demoUsers[$username]['password_hash'] ?? '')) {
-                $demo = $demoUsers[$username];
-                $user = [
-                    'UserID' => $demo['user_id'] ?? 1,
-                    'Username' => $username,
-                    'Email' => $demo['email'] ?? '',
-                    'Role' => $demo['role'] ?? 'volunteer'
-                ];
-            }
-        }
+    if ($db === null) {
+        http_response_code(503);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Database connection failed. Please try again later.'
+        ]);
+        exit();
     }
+
+    $user = $userModel->authenticate($username, $password);
 
     if (!$user) {
         http_response_code(401);
@@ -106,7 +97,7 @@ try {
     // Store tokens in database
     if ($db !== null) {
         $stmt = $db->prepare(
-            "INSERT INTO AuthTokens (UserID, TokenHash, RefreshTokenHash, ExpiresAt, RefreshExpiresAt, CreatedAt, DeviceInfo, IPAddress) 
+            "INSERT INTO authtokens (UserID, TokenHash, RefreshTokenHash, ExpiresAt, RefreshExpiresAt, CreatedAt, DeviceInfo, IPAddress)
              VALUES (:user_id, :token_hash, :refresh_hash, :expires, :refresh_expires, NOW(), :device, :ip)"
         );
         $stmt->execute([
@@ -141,9 +132,19 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    echo json_encode([
+    // Ensure we always return valid JSON, even on errors
+    $errorResponse = [
         'success' => false,
-        'message' => 'An internal server error occurred'
-    ]);
+        'message' => DEBUG_MODE ? $e->getMessage() : 'An internal server error occurred',
+        'error' => DEBUG_MODE ? $e->getMessage() : 'Internal error'
+    ];
+    
+    // Clear any previous output that might have been generated
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    
+    echo json_encode($errorResponse);
     logMessage("API login error: " . $e->getMessage(), 'ERROR');
+    exit();
 }

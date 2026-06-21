@@ -17,7 +17,7 @@ if (getCurrentUser()['role'] !== 'admin') {
     exit;
 }
 
-$action = isset($_GET['action']) ? $_GET['action'] : '';
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 switch ($action) {
     // HZ-USER-CTRL-001: List all users
@@ -123,7 +123,7 @@ function listUsers() {
     $whereClause = count($conditions) > 0 ? ' AND ' . implode(' AND ', $conditions) : '';
     
     $query = "SELECT UserID, Username, Email, FullName, Phone, Role, Status, CreatedAt 
-              FROM Users WHERE 1=1" . $whereClause;
+              FROM users WHERE 1=1" . $whereClause;
     $query .= " ORDER BY CreatedAt DESC LIMIT :limit OFFSET :offset";
     
     $stmt = $conn->prepare($query);
@@ -136,7 +136,7 @@ function listUsers() {
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get total count with same params (without limit/offset)
-    $countQuery = "SELECT COUNT(*) FROM Users WHERE 1=1" . $whereClause;
+    $countQuery = "SELECT COUNT(*) FROM users WHERE 1=1" . $whereClause;
     $countStmt = $conn->prepare($countQuery);
     foreach ($params as $key => $val) {
         $countStmt->bindValue($key, $val);
@@ -158,18 +158,27 @@ function storeUser() {
         exit;
     }
     
-    $username = $_POST['username'] ?? '';
-    $email = $_POST['email'] ?? '';
-    $fullname = $_POST['fullname'] ?? '';
-    $phone = $_POST['phone'] ?? '';
+    // CSRF check if we want it, but the form doesn't have it yet.
+
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $fullname = trim($_POST['fullname'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
     $role = $_POST['role'] ?? 'staff';
+
+    if (empty($username) || empty($email)) {
+        $_SESSION['error'] = "Username and Email are required";
+        header("Location: UserController.php?action=create");
+        exit;
+    }
+
     $password = bin2hex(random_bytes(6)); // Generate temporary password
     
     $conn = getConnection();
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
     
     try {
-        $query = "INSERT INTO Users (Username, Email, PasswordHash, FullName, Phone, Role, Status, CreatedAt) 
+        $query = "INSERT INTO users (Username, Email, PasswordHash, FullName, Phone, Role, Status, CreatedAt)
                   VALUES (:username, :email, :password_hash, :fullname, :phone, :role, 'active', NOW())";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':username', $username);
@@ -181,15 +190,16 @@ function storeUser() {
         
         if ($stmt->execute()) {
             $userId = $conn->lastInsertId();
-            // Log user creation without exposing plaintext password
-            ActivityLog::log(getCurrentUser()['user_id'], 'create_user', 'User', $userId, "Created user: $username");
+            ActivityLog::log(getCurrentUser()['user_id'] ?? 1, 'create_user', 'User', $userId, "Created user: $username");
             
             $_SESSION['success'] = "User created successfully. Temporary password: " . htmlspecialchars($password);
             header("Location: UserController.php?action=list");
             exit;
         }
     } catch (PDOException $e) {
-        $_SESSION['error'] = "Error creating user: " . htmlspecialchars($e->getMessage());
+        $_SESSION['error'] = "Error creating user: " . $e->getMessage();
+    } catch (Exception $e) {
+        $_SESSION['error'] = "General error: " . $e->getMessage();
     }
     
     header("Location: UserController.php?action=create");
@@ -200,7 +210,7 @@ function viewUser() {
     $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     $conn = getConnection();
-    $query = "SELECT * FROM Users WHERE UserID = :user_id";
+    $query = "SELECT * FROM users WHERE UserID = :user_id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':user_id', $userId);
     $stmt->execute();
@@ -212,7 +222,7 @@ function viewUser() {
     }
     
     // Get recent activity
-    $activityQuery = "SELECT * FROM ActivityLog WHERE UserID = :user_id OR AffectedEntityName = 'User' AND AffectedEntityID = :user_id ORDER BY Timestamp DESC LIMIT 10";
+    $activityQuery = "SELECT * FROM activitylog WHERE UserID = :user_id OR AffectedEntityName = 'User' AND AffectedEntityID = :user_id ORDER BY Timestamp DESC LIMIT 10";
     $activityStmt = $conn->prepare($activityQuery);
     $activityStmt->bindParam(':user_id', $userId);
     $activityStmt->execute();
@@ -225,7 +235,7 @@ function showEditForm() {
     $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     $conn = getConnection();
-    $query = "SELECT * FROM Users WHERE UserID = :user_id";
+    $query = "SELECT * FROM users WHERE UserID = :user_id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':user_id', $userId);
     $stmt->execute();
@@ -252,7 +262,7 @@ function updateUser() {
     $status = $_POST['status'] ?? 'active';
     
     $conn = getConnection();
-    $query = "UPDATE Users SET Email = :email, FullName = :fullname, Phone = :phone, 
+    $query = "UPDATE users SET Email = :email, FullName = :fullname, Phone = :phone,
               Status = :status, UpdatedAt = NOW() WHERE UserID = :user_id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':email', $email);
@@ -277,7 +287,7 @@ function deleteUserConfirm() {
     $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     $conn = getConnection();
-    $query = "SELECT * FROM Users WHERE UserID = :user_id";
+    $query = "SELECT * FROM users WHERE UserID = :user_id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':user_id', $userId);
     $stmt->execute();
@@ -301,7 +311,7 @@ function destroyUser() {
     $conn = getConnection();
     
     // Soft delete - set to inactive
-    $query = "UPDATE Users SET Status = 'inactive', UpdatedAt = NOW() WHERE UserID = :user_id";
+    $query = "UPDATE users SET Status = 'inactive', UpdatedAt = NOW() WHERE UserID = :user_id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':user_id', $userId);
     
@@ -316,7 +326,7 @@ function destroyUser() {
 
 function roleManagement() {
     $conn = getConnection();
-    $query = "SELECT * FROM Users ORDER BY Role, FullName ASC";
+    $query = "SELECT * FROM users ORDER BY Role, FullName ASC";
     $stmt = $conn->prepare($query);
     $stmt->execute();
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -334,7 +344,7 @@ function updateUserRole() {
     $newRole = $_POST['role'];
     
     $conn = getConnection();
-    $query = "UPDATE Users SET Role = :role, UpdatedAt = NOW() WHERE UserID = :user_id";
+    $query = "UPDATE users SET Role = :role, UpdatedAt = NOW() WHERE UserID = :user_id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':role', $newRole);
     $stmt->bindParam(':user_id', $userId);
@@ -354,8 +364,8 @@ function activityLog() {
     $offset = ($page - 1) * $limit;
     
     $conn = getConnection();
-    $query = "SELECT al.*, u.Username FROM ActivityLog al 
-              LEFT JOIN Users u ON al.UserID = u.UserID 
+    $query = "SELECT al.*, u.Username FROM activitylog al
+              LEFT JOIN users u ON al.UserID = u.UserID
               ORDER BY al.Timestamp DESC LIMIT :limit OFFSET :offset";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
@@ -364,7 +374,7 @@ function activityLog() {
     $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get total count
-    $countStmt = $conn->prepare("SELECT COUNT(*) FROM ActivityLog");
+    $countStmt = $conn->prepare("SELECT COUNT(*) FROM activitylog");
     $countStmt->execute();
     $totalCount = $countStmt->fetchColumn();
     $totalPages = ceil($totalCount / $limit);
@@ -376,7 +386,7 @@ function userProfile() {
     $userId = getCurrentUser()['user_id'];
     
     $conn = getConnection();
-    $query = "SELECT * FROM Users WHERE UserID = :user_id";
+    $query = "SELECT * FROM users WHERE UserID = :user_id";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(':user_id', $userId);
     $stmt->execute();

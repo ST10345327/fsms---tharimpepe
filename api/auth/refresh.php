@@ -62,8 +62,8 @@ try {
     // Look up refresh token in database
     $stmt = $db->prepare(
         "SELECT t.*, u.Username, u.Email, u.Role, u.Status 
-         FROM AuthTokens t 
-         JOIN Users u ON t.UserID = u.UserID 
+         FROM authtokens t
+         JOIN users u ON t.UserID = u.UserID
          WHERE t.RefreshTokenHash = :refresh_hash 
          AND t.RevokedAt IS NULL 
          AND t.RefreshExpiresAt > NOW() 
@@ -84,7 +84,7 @@ try {
 
     // Revoke the old token
     $revokeStmt = $db->prepare(
-        "UPDATE AuthTokens SET RevokedAt = NOW() WHERE TokenID = :token_id"
+        "UPDATE authtokens SET RevokedAt = NOW() WHERE TokenID = :token_id"
     );
     $revokeStmt->execute([':token_id' => $tokenData['TokenID']]);
 
@@ -100,7 +100,7 @@ try {
 
     // Store new tokens
     $insertStmt = $db->prepare(
-        "INSERT INTO AuthTokens (UserID, TokenHash, RefreshTokenHash, ExpiresAt, RefreshExpiresAt, CreatedAt, DeviceInfo, IPAddress) 
+        "INSERT INTO authtokens (UserID, TokenHash, RefreshTokenHash, ExpiresAt, RefreshExpiresAt, CreatedAt, DeviceInfo, IPAddress)
          VALUES (:user_id, :token_hash, :refresh_hash, :expires, :refresh_expires, NOW(), :device, :ip)"
     );
     $insertStmt->execute([
