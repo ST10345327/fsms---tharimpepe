@@ -10,7 +10,7 @@ The documented core scope is:
 - Reports and dashboard summaries
 - Secure user authentication
 
-## 🎨 Figma Prototype
+##  Figma Prototype
 
 **Interactive UI Prototype:** [https://trunk-canon-07981658.figma.site](https://trunk-canon-07981658.figma.site)
 
