@@ -70,7 +70,7 @@ body {
 
 .mobile-content {
   flex: 1;
-  padding: var(--space-md) var(--space-sm) var(--space-lg);
+  padding: var(--space-md) var(--space-sm) calc(var(--space-lg) + var(--nav-height) + env(safe-area-inset-bottom));
 }
 
 /* ===== HEADER (matches website topbar) ===== */
@@ -273,6 +273,8 @@ body {
 .hamburger-nav {
   flex: 1;
   padding: 8px 0;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .hamburger-nav-item {
@@ -311,7 +313,10 @@ body {
 
 .hamburger-menu-footer {
   padding: 16px 18px;
+  padding-bottom: max(24px, calc(env(safe-area-inset-bottom) + 24px));
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+  flex-shrink: 0;
 }
 
 .hamburger-user-info {
@@ -428,6 +433,11 @@ body {
   height: 3px;
   background: var(--fsms-green);
   border-radius: 0 0 3px 3px;
+}
+
+body.drawer-open .mobile-bottom-nav {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* ===== CONTENT ===== */

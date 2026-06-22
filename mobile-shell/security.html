@@ -19,7 +19,7 @@
     <div class="mobile-safe audit-page">
         <main class="mobile-content" role="main">
     <div class="mobile-page-header">
-        <h1><i class="fa-solid fa-shield-halved"></i> Audit Logs</h1>
+        <h1><i class="fa-solid fa-clipboard-list"></i> Audit Logs</h1>
         <p>User activity and system events</p>
     </div>
 
@@ -79,7 +79,7 @@
     <script src="assets/api.js"></script>
     <script src="assets/shared.js"></script>
     <script>
-        initPage('Users', 'users');
+        initPage('Audit Logs', 'audit');
         async function loadStats() {
             try {
                 const data = await API.get('/api/audit/stats.php');

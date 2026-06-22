@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1b3a5c">
+    <title>Users - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content" role="main">
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-shield-halved" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>User Accounts</h2>
+                    <input type="text" id="user-search" placeholder="Search users..." class="search-input" oninput="filterUsers(this.value)" aria-label="Search users">
+                </div>
+                <div id="user-list">
+                    <div class="skeleton-list">
+                        <div class="skeleton skeleton-line" style="width:100%;height:72px;margin:8px 0;"></div>
+                        <div class="skeleton skeleton-line" style="width:100%;height:72px;margin:8px 0;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="proto-card">
+                <h2><i class="fas fa-clipboard-list" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Audit Logs</h2>
+                <p style="font-size:13px;color:var(--mobile-muted);margin:0 0 12px;">View system activity and security events.</p>
+                <a class="btn btn-secondary btn-block" href="security.html" style="text-align:center;text-decoration:none;">
+                    <i class="fas fa-arrow-right" aria-hidden="true"></i> Open Audit Logs
+                </a>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/server-discovery.js"></script>
+    <script src="assets/api.js"></script>
+    <script src="assets/notifications.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Users', 'users');
+
+        let allUsers = [];
+
+        (async function loadUsers() {
+            const container = document.getElementById('user-list');
+            try {
+                const data = await API.get('/api/users/list.php');
+                if (data.success && data.data) {
+                    allUsers = data.data;
+                    renderUsers(allUsers);
+                } else {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><h3>No users found</h3></div>';
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><h3>Unable to load users</h3><p>You may not have permission to view this page.</p></div>';
+            }
+        })();
+
+        function renderUsers(list) {
+            const container = document.getElementById('user-list');
+            if (!list.length) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-users"></i><h3>No users found</h3></div>';
+                return;
+            }
+
+            container.innerHTML = `<div class="mobile-data-list">${list.map(u => {
+                const name = u.FullName || u.Username || 'User';
+                const role = (u.Role || 'user').toLowerCase();
+                const status = (u.Status || 'active').toLowerCase();
+                const statusClass = status === 'active' ? 'badge-green' : 'badge-amber';
+                return `
+                    <article class="mobile-data-card">
+                        <div class="mobile-data-card-header">
+                            <div class="mobile-data-card-title">${name}</div>
+                            <span class="badge ${statusClass}">${status}</span>
+                        </div>
+                        <div class="mobile-data-card-meta">
+                            <span>@${u.Username || '—'}</span>
+                            <span>${getRoleDisplay(role)}</span>
+                        </div>
+                        <div class="mobile-data-card-meta" style="margin-top:4px;">
+                            <span>${u.Email || 'No email'}</span>
+                        </div>
+                    </article>
+                `;
+            }).join('')}</div>`;
+        }
+
+        function filterUsers(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderUsers(allUsers);
+                return;
+            }
+            const filtered = allUsers.filter(u => {
+                const name = (u.FullName || u.Username || '').toLowerCase();
+                const email = (u.Email || '').toLowerCase();
+                const role = (u.Role || '').toLowerCase();
+                return name.includes(q) || email.includes(q) || role.includes(q);
+            });
+            renderUsers(filtered);
+        }
+    </script>
+</body>
+</html>

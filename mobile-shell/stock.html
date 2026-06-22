@@ -44,6 +44,41 @@
                 </div>
             </div>
 
+            <!-- Add Stock Item -->
+            <div class="proto-card" aria-labelledby="add-stock-title">
+                <h2 id="add-stock-title"><i class="fas fa-plus-circle" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Add Stock Item</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="new-item-name">Item name *</label>
+                        <input type="text" id="new-item-name" placeholder="e.g. Maize meal" required aria-label="Item name">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-item-qty">Quantity *</label>
+                        <input type="number" id="new-item-qty" min="0" step="1" placeholder="e.g. 50" required aria-label="Quantity">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-item-unit">Unit</label>
+                        <select id="new-item-unit" aria-label="Unit of measure">
+                            <option value="kg">kg</option>
+                            <option value="litres">litres</option>
+                            <option value="units">units</option>
+                            <option value="bags">bags</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-item-expiry">Expiry date</label>
+                        <input type="date" id="new-item-expiry" aria-label="Expiry date">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label for="new-item-notes">Notes</label>
+                        <input type="text" id="new-item-notes" placeholder="Optional notes" aria-label="Notes">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-block" id="add-stock-btn" aria-label="Add stock item">Add Stock Item</button>
+                </div>
+            </div>
+
             <!-- Current Stock Levels -->
             <div class="proto-card">
                 <div class="section-header">
@@ -91,51 +126,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Recent Donations -->
-            <div class="proto-card" id="donations">
-                <div class="section-header">
-                    <h2><i class="fas fa-hand-holding-heart" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Recent Donations</h2>
-                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('record-donation-section').scrollIntoView({behavior:'smooth'})">Add New</button>
-                </div>
-                <div id="donation-log">
-                    <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading donations...</p></div>
-                </div>
-            </div>
-
-            <!-- Record Donation -->
-            <div class="proto-card" id="record-donation-section" aria-labelledby="record-title">
-                <h2 id="record-title"><i class="fas fa-plus-circle" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Record Donation</h2>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="donor-name">Donor name (optional)</label>
-                        <input type="text" id="donor-name" placeholder="e.g. Shoprite Checkers" aria-label="Donor name">
-                    </div>
-                    <div class="form-group">
-                        <label for="donation-item">Item *</label>
-                        <input type="text" id="donation-item" placeholder="e.g. Maize meal" required aria-label="Item name">
-                    </div>
-                    <div class="form-group">
-                        <label for="donation-qty">Quantity *</label>
-                        <input type="number" id="donation-qty" placeholder="e.g. 50" step="0.01" required aria-label="Quantity">
-                    </div>
-                    <div class="form-group">
-                        <label for="donation-unit">Unit</label>
-                        <input type="text" id="donation-unit" placeholder="e.g. kg, L, units" aria-label="Unit of measure">
-                    </div>
-                    <div class="form-group">
-                        <label for="donation-type">Type</label>
-                        <select id="donation-type" aria-label="Donation type">
-                            <option value="food">Food</option>
-                            <option value="cash">Cash</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button class="btn btn-primary btn-block" id="record-donation-btn" aria-label="Submit donation record">Record Donation</button>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -147,12 +137,68 @@
     <script>
         initPage('Food Stock', 'stock');
 
-        if (window.location.hash === '#donations') {
-            setTimeout(() => document.getElementById('donations')?.scrollIntoView({ behavior: 'smooth' }), 300);
-        }
-
         let allStockItems = [];
-        let allDonations = [];
+
+        document.getElementById('add-stock-btn').addEventListener('click', async function() {
+            const btn = this;
+            const itemName = document.getElementById('new-item-name').value.trim();
+            const quantity = document.getElementById('new-item-qty').value;
+            const unit = document.getElementById('new-item-unit').value;
+            const expiry = document.getElementById('new-item-expiry').value;
+            const notes = document.getElementById('new-item-notes').value.trim();
+
+            if (!itemName || quantity === '') {
+                showToast('Item name and quantity are required', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+
+            try {
+                const payload = {
+                    item_name: itemName,
+                    quantity: parseInt(quantity, 10),
+                    unit: unit,
+                    notes: notes
+                };
+                if (expiry) payload.expiry_date = expiry;
+
+                const result = await API.post('/api/stock/add.php', payload);
+                if (result.success) {
+                    showToast('Stock item added successfully', 'success');
+                    document.getElementById('new-item-name').value = '';
+                    document.getElementById('new-item-qty').value = '';
+                    document.getElementById('new-item-expiry').value = '';
+                    document.getElementById('new-item-notes').value = '';
+                    API.invalidateCache('/api/stock/list.php');
+                    API.invalidateCache('/api/stock/stats.php');
+                    const [listData, statsData] = await Promise.all([
+                        API.get('/api/stock/list.php', false, false),
+                        API.get('/api/stock/stats.php', false, false)
+                    ]);
+                    if (listData.success && listData.data) {
+                        allStockItems = listData.data;
+                        renderStock(allStockItems);
+                    }
+                    if (statsData.success && statsData.data) {
+                        const d = statsData.data;
+                        document.getElementById('stat-total-items').textContent = (d.total_items || 0).toLocaleString();
+                        document.getElementById('stat-low-stock').textContent = (d.low_stock || 0).toLocaleString();
+                        document.getElementById('stat-expiring').textContent = (d.expiring_soon || 0).toLocaleString();
+                        document.getElementById('stat-stock-value').textContent = (d.total_value || 0).toLocaleString();
+                    }
+                    loadLowStockAlerts();
+                } else {
+                    showToast('Add failed: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('Add failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Add Stock Item';
+            }
+        });
 
         // Load inventory statistics
         (async function loadInventoryStats() {
@@ -171,7 +217,7 @@
         })();
 
         // Load low stock alerts
-        (async function loadLowStockAlerts() {
+        async function loadLowStockAlerts() {
             try {
                 const data = await API.get('/api/stock/alerts.php?type=low');
                 const container = document.getElementById('low-stock-list');
@@ -199,7 +245,9 @@
             } catch (e) {
                 document.getElementById('low-stock-list').innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Unable to load alerts</p></div>';
             }
-        })();
+        }
+
+        loadLowStockAlerts();
 
         // Load expiry alerts
         let currentExpiryFilter = null;
@@ -296,110 +344,6 @@
             renderStock(filtered);
         }
 
-        // Load donations
-        window.loadDonations = async function loadDonations() {
-            const container = document.getElementById('donation-log');
-            
-            try {
-                const data = await API.get('/api/donations/history.php?limit=10');
-                if (data.success && data.data) {
-                    allDonations = data.data;
-                    renderDonations(allDonations);
-                } else {
-                    container.innerHTML = '<div class="empty-state"><i class="fas fa-hand-holding-heart"></i><h3>No donations yet</h3></div>';
-                }
-            } catch (e) {
-                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Donations data unavailable</p></div>';
-            }
-        };
-
-        function renderDonations(donations) {
-            const container = document.getElementById('donation-log');
-            if (!container || donations.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fas fa-hand-holding-heart"></i><h3>No donations yet</h3></div>';
-                return;
-            }
-
-            container.innerHTML = donations.map(d => `
-                <div class="donation-log-item">
-                    <div class="donation-log-left">
-                        <div class="donation-log-item-name">${d.ItemName || d.item || d.item_name}</div>
-                        <div class="donation-log-item-meta">${d.DonorName || d.donor || 'Anonymous'} · ${d.Date || d.date || 'Recent'}</div>
-                    </div>
-                    <div class="donation-log-right">
-                        <div class="donation-log-qty">+${d.Quantity || d.quantity} ${d.Unit || d.unit || ''}</div>
-                        <div class="donation-log-source">${d.Type || d.type || d.Source || d.source || 'Donation'}</div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Record donation
-        document.getElementById('record-donation-btn').addEventListener('click', async function() {
-            const btn = this;
-            const donor = document.getElementById('donor-name').value.trim();
-            const item = document.getElementById('donation-item').value.trim();
-            const qty = document.getElementById('donation-qty').value;
-            const unit = document.getElementById('donation-unit').value.trim();
-            const type = document.getElementById('donation-type').value;
-
-            if (!item || !qty) {
-                showToast('Please fill in item and quantity', 'warning');
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = 'Recording...';
-
-            try {
-                const result = await API.post('/api/donations/record.php', {
-                    donor_name: donor,
-                    item_name: item,
-                    quantity: parseFloat(qty),
-                    unit: unit,
-                    type: type
-                });
-
-                if (result.success) {
-                    showToast('Donation recorded successfully!', 'success');
-                    // Clear form
-                    document.getElementById('donor-name').value = '';
-                    document.getElementById('donation-item').value = '';
-                    document.getElementById('donation-qty').value = '';
-                    document.getElementById('donation-unit').value = '';
-                    // Reload donations
-                    loadDonations();
-                } else {
-                    showToast('Failed: ' + (result.message || 'Unknown error'), 'error');
-                }
-            } catch (err) {
-                showToast('Failed to record: ' + err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Record Donation';
-            }
-        });
-
-        // Toast notification
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} toast-icon"></i>
-                <div class="toast-message">${escapeHtml(message)}</div>
-            `;
-            
-            const container = document.createElement('div');
-            container.className = 'toast-container';
-            container.appendChild(toast);
-            document.body.appendChild(container);
-            
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => container.remove(), 300);
-            }, 3000);
-        }
-
         function escapeHtml(str) {
             if (!str) return '';
             const div = document.createElement('div');
@@ -489,9 +433,6 @@
                 closeStockUpdateModal();
             }
         });
-
-        // Initialize donations list on load
-        loadDonations();
     </script>
 </body>
 </html>

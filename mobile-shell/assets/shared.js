@@ -143,9 +143,9 @@ function buildHamburgerMenu(currentPage) {
     { id: 'attendance', icon: 'fa-clipboard-check', label: 'Attendance', href: 'attendance.html', roles: ['admin', 'volunteer', 'coordinator', 'staff'] },
     { id: 'stock', icon: 'fa-boxes-stacked', label: 'Food Stock', href: 'stock.html', roles: ['admin', 'coordinator', 'staff'] },
     { id: 'volunteers', icon: 'fa-user-check', label: 'Volunteers', href: 'volunteers.html', roles: ['admin', 'coordinator', 'staff'] },
-    { id: 'donations', icon: 'fa-hand-holding-dollar', label: 'Donations', href: 'stock.html#donations', roles: ['admin', 'coordinator', 'staff'] },
+    { id: 'donations', icon: 'fa-hand-holding-dollar', label: 'Donations', href: 'donations.html', roles: ['admin', 'coordinator', 'staff'] },
     { id: 'reports', icon: 'fa-file-lines', label: 'Reports', href: 'reports.html', roles: ['admin', 'coordinator', 'staff'] },
-    { id: 'users', icon: 'fa-shield-halved', label: 'Audit Logs', href: 'security.html', roles: ['admin'] }
+    { id: 'users', icon: 'fa-shield-halved', label: 'Users', href: 'users.html', roles: ['admin'] }
   ];
 
   // Filter based on user role
@@ -195,7 +195,7 @@ function buildHamburgerMenu(currentPage) {
               ${email ? `<div class="hamburger-user-email" style="font-size:11px;color:var(--mobile-muted);margin-top:2px;">${email}</div>` : ''}
             </div>
           </div>
-          <button class="hamburger-logout-btn" onclick="logout()">
+          <button class="hamburger-logout-btn" onclick="closeHamburger(); logout();">
             <i class="fas fa-right-from-bracket"></i>
             <span>Sign Out</span>
           </button>
@@ -256,6 +256,7 @@ function openHamburger() {
   const overlay = document.getElementById('hamburger-overlay');
   if (overlay) {
     overlay.classList.add('open');
+    document.body.classList.add('drawer-open');
     document.body.style.overflow = 'hidden';
   }
 }
@@ -264,6 +265,7 @@ function closeHamburger() {
   const overlay = document.getElementById('hamburger-overlay');
   if (overlay) {
     overlay.classList.remove('open');
+    document.body.classList.remove('drawer-open');
     document.body.style.overflow = '';
   }
 }
@@ -474,6 +476,13 @@ function initPage(pageTitle, currentPage, options = {}) {
     Notifications.injectPanel();
     Notifications.injectBellButton();
     Notifications.init();
+  }
+
+  // Inject toast container if missing
+  if (!document.querySelector('.toast-container')) {
+    const toastWrap = document.createElement('div');
+    toastWrap.className = 'toast-container';
+    document.body.appendChild(toastWrap);
   }
 
   // Inject hamburger overlay

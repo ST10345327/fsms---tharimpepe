@@ -17,6 +17,30 @@ Desktop.ini
 .trunk/
 .cursor/
 .agents/
+.github/agents/
+.github/skills/
+*LLM*
+Ultimate-LLM*.md
+codebase-analysis-docs/
+
+# Scratch and debug artifacts
+body*.txt
+headers*.txt
+cookies.txt
+mcp_tmp.txt
+vapi-mcp-help.txt
+payload.json
+tmp.html
+query
+server.log
+.demo_users.json
+test_api_login.php
+test_beneficiary_search.php
+test_mysql.php
+check_beneficiaries.php
+dbcheck.php
+fix_attendance_createdat.php
+mobile-shell/debug-server.html
 
 # Local environment and secrets
 .env

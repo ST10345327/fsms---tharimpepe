@@ -3,6 +3,7 @@
 This repository contains the Feeding Scheme Management System (FSMS) for the Tharimpepe Feeding Scheme. The project is based on the academic requirements and design documents in `docs/academic/`.
 
 The documented core scope is:
+
 - Beneficiary management
 - Attendance tracking
 - Food stock and donation management
@@ -10,22 +11,22 @@ The documented core scope is:
 - Reports and dashboard summaries
 - Secure user authentication
 
-## 🎨 Figma Prototype
+## Figma Prototype
 
 **Interactive UI Prototype:** [https://trunk-canon-07981658.figma.site](https://trunk-canon-07981658.figma.site)
 
-This Figma prototype showcases the complete user interface design for all modules: Dashboard, Beneficiaries, Attendance, Stock & Donations, Volunteers, and Reports. Use this as the visual reference for frontend implementation.
+This Figma prototype showcases the complete user interface design for all modules: Dashboard, Beneficiaries, Attendance, Stock and Donations, Volunteers, and Reports. Use this as the visual reference for frontend implementation.
 
 **Prototype screenshots:** See `docs/screenshots/`.
 
-**Demo video:** YouTube link to be added.
-
 ## Stack
 
-- Backend: PHP, PDO, MySQL/MariaDB (MySQL/XAMPP is the only supported database; SQLite is not supported)
-- Frontend: PHP views, HTML, Bootstrap
+- Backend: PHP, PDO, MySQL/MariaDB (MySQL/XAMPP is the supported database)
+- Frontend: PHP views, HTML, Bootstrap 5
+- Mobile: Capacitor 8 with static HTML/JS shell in `mobile-shell/`
+- API: REST JSON endpoints under `api/`
 - Architecture: MVC-style separation across `app/controllers`, `app/models`, and `app/views`
-- Testing: lightweight PHP test runner in `tests/` (uses MySQL only)
+- Testing: PHP test runner in `tests/` (uses MySQL)
 
 ## Repository Structure
 
@@ -35,50 +36,48 @@ app/
   helpers/       bootstrap, validation, session, error handling
   models/        database access and business rules
   views/         UI templates
-api/
-  README.md      placeholder for future REST/API endpoints
-backend/
-  README.md      placeholder for separated backend code
+api/             REST JSON endpoints for mobile and integrations
+android/         Capacitor Android wrapper
 config/
   database.php   database connection layer
-database/
-  README.md      placeholder for migrations and seed data
 docs/
   academic/      submitted academic documentation
   diagrams/      diagrams and modelling artifacts
-  screenshots/   uploaded Figma prototype screenshots
+  screenshots/   Figma prototype screenshots
   proposals/     prototype handoff and planning notes
-frontend/
-  README.md      placeholder for separated frontend code
+mobile-shell/    Capacitor mobile app pages and assets
+migrations/      database migration scripts
 public/
-  index.php      application entry point
-  fsms-prototype.html
+  index.php      web application entry point
 sql/
   schema.sql     database schema
 tests/
   run_all_tests.php
-tools/
-  generate_task2_docs.py
+tools/           database utilities and maintenance scripts
 ```
 
 ## Current Status
 
-The repo is now in a workable development state:
-- database connection and test runner are functioning
-- the current PHP authentication and validation tests pass
-- the project still contains a mix of academic deliverables, prototype assets, and live implementation code
+The system is in a working state suitable for demonstration and academic submission:
 
-That means the next development phase should stay anchored to the documentation and avoid drifting into unrelated modules unless they clearly support the documented FSMS scope.
+- Database connection and schema are functional
+- Core modules operate across web, API, and mobile surfaces
+- Automated tests pass (16/16)
+- Final functionality audit: see `docs/FUNCTIONALITY_AUDIT.md`
 
 ## Quick Start
 
 ### 1. Start MySQL/MariaDB
 
-This project is currently set up around the local XAMPP MySQL installation on Windows.
+This project is set up for a local XAMPP MySQL installation on Windows.
 
 ### 2. Ensure the schema exists
 
-The repository schema lives in [sql/schema.sql](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/sql/schema.sql).
+The repository schema lives in [sql/schema.sql](sql/schema.sql). Run the setup scripts or migrations as needed:
+
+```powershell
+setup_db_clean.bat
+```
 
 ### 3. Open the app
 
@@ -88,44 +87,47 @@ Point your local PHP/XAMPP setup at:
 public/index.php
 ```
 
+Or use the included dev server script:
+
+```powershell
+start-server.bat
+```
+
 ### 4. Run tests
 
 ```powershell
 php tests\run_all_tests.php
 ```
 
+## Mobile App
+
+See [MOBILE_APP_GUIDE.md](MOBILE_APP_GUIDE.md) for Capacitor build and deployment instructions.
+
 ## Development Direction
 
-Use [DEVELOPMENT_GUIDE.md](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/DEVELOPMENT_GUIDE.md) as the working plan for backend and frontend implementation.
+Use [DEVELOPMENT_GUIDE.md](DEVELOPMENT_GUIDE.md) as the working plan for backend and frontend implementation.
 
 ### Backend phase
 
-Backend work should stay aligned with the academic model in the documentation and be reviewed as server-side, schema, validation, or reporting work:
-- user authentication
-- beneficiaries
-- attendance
-- food stock
-- donations
-- volunteers
-- schedules
-- reports
-- tests, database setup, and infrastructure support for those modules
+Backend work should stay aligned with the academic model in the documentation:
+
+- User authentication
+- Beneficiaries
+- Attendance
+- Food stock
+- Donations
+- Volunteers
+- Schedules
+- Reports
 
 ### Frontend phase
 
 Frontend work should use:
-- the system design document for input/request interaction structure
+
+- The system design document for input/request interaction structure
 - `docs/proposals/Figma_Prototype_Handoff.md` for prototype fidelity
 - `docs/screenshots/` for screen-by-screen visual references
-- existing `app/views/` patterns where they already support the documented workflows
-
-Review frontend changes as screen-level work:
-- dashboard shell and navigation
-- beneficiary management screens
-- attendance flows
-- stock and donations screens
-- volunteer and schedule screens
-- reports and summary views
+- Existing `app/views/` patterns where they already support the documented workflows
 
 ## Project Rules
 
@@ -135,19 +137,11 @@ Review frontend changes as screen-level work:
 - Prefer improving existing modules over adding new unrelated features.
 - Run the test suite after backend changes.
 
-## Review Workflow
-
-To make code review easy:
-- keep backend and frontend work in separate branches and pull requests when possible
-- use small, module-based commits instead of mixed commits
-- mention the matching documented workflow in each PR
-- rely on CI to show PHP linting and test results automatically
-
-See [CONTRIBUTING.md](/C:/Users/CASH/Desktop/fsms%20-%20tharimpepe/CONTRIBUTING.md) for branch naming, commit format, and reviewer checklist.
-
 ## Documentation References
 
 - Requirements: `docs/academic/ST10345327_OLEBOGENG_Task_2_Requirements_Analysis.pdf`
 - System design: `docs/academic/ST10345327_OLEBOGENG_Task_2_System_Design.pdf`
 - Figma/prototype handoff: `docs/proposals/Figma_Prototype_Handoff.md`
 - Prototype screenshots: `docs/screenshots/`
+- Functionality audit: `docs/FUNCTIONALITY_AUDIT.md`
+- Testing guide: `TESTING_DOCUMENTATION.md`
