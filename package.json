@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Feeding Scheme Management System",
   "scripts": {
-    "mobile:sync": "npx cap sync"
+    "mobile:sync": "npx cap sync",
+    "mobile:serve": "npx cap serve"
   },
   "dependencies": {
     "@capacitor/android": "^5.0.0",
