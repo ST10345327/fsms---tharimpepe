@@ -1,0 +1,15 @@
+{
+	"appId": "com.tharimpepe.fsms",
+	"appName": "Tharimpepe FSMS",
+	"webDir": "mobile-shell",
+	"server": {
+		"cleartext": true,
+		"allowNavigation": [
+			"*"
+		]
+	},
+	"android": {
+		"allowMixedContent": true,
+		"captureInput": true
+	}
+}

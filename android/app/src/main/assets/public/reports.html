@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1b3a5c">
+    <title>Reports - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content">
+            <!-- Reports Statistics -->
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-reports-month">—</div>
+                    <div class="stat-label">Reports This Month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-avg-meals">—</div>
+                    <div class="stat-label">Avg Daily Meals</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:var(--warning);" id="stat-monthly-costs">—</div>
+                    <div class="stat-label">Monthly Costs (R)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" style="color:var(--success);" id="stat-ytd-meals">—</div>
+                    <div class="stat-label">YTD Meals Served</div>
+                </div>
+            </div>
+
+            <!-- Generate Reports -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-file-export" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Generate Reports</h2>
+                </div>
+                <div id="report-buttons">
+                    <div class="report-btn" data-report="beneficiaries" onclick="generateReport('beneficiaries')">
+                        <div class="report-icon" style="background:var(--mobile-primary-light);color:var(--mobile-primary);"><i class="fas fa-users"></i></div>
+                        <div><div class="report-label">Beneficiary Report</div><div class="report-desc">Active beneficiaries, categories, demographics</div></div>
+                        <i class="fas fa-chevron-right" style="color:var(--mobile-muted);margin-left:auto;"></i>
+                    </div>
+                    <div class="report-btn" data-report="attendance" onclick="generateReport('attendance')">
+                        <div class="report-icon" style="background:rgba(37,99,255,0.2);color:#93c5fd;"><i class="fas fa-clipboard-check"></i></div>
+                        <div><div class="report-label">Attendance Report</div><div class="report-desc">Daily attendance rates, trends, history</div></div>
+                        <i class="fas fa-chevron-right" style="color:var(--mobile-muted);margin-left:auto;"></i>
+                    </div>
+                    <div class="report-btn" data-report="stock" onclick="generateReport('stock')">
+                        <div class="report-icon" style="background:rgba(186,117,23,0.2);color:#F5B041;"><i class="fas fa-boxes-stacked"></i></div>
+                        <div><div class="report-label">Stock Report</div><div class="report-desc">Current inventory, low stock alerts, usage</div></div>
+                        <i class="fas fa-chevron-right" style="color:var(--mobile-muted);margin-left:auto;"></i>
+                    </div>
+                    <div class="report-btn" data-report="volunteers" onclick="generateReport('volunteers')">
+                        <div class="report-icon" style="background:rgba(173,61,245,0.2);color:#c084fc;"><i class="fas fa-handshake-angle"></i></div>
+                        <div><div class="report-label">Volunteer Report</div><div class="report-desc">Active volunteers, schedules, hours contributed</div></div>
+                        <i class="fas fa-chevron-right" style="color:var(--mobile-muted);margin-left:auto;"></i>
+                    </div>
+                    <div class="report-btn" data-report="donations" onclick="generateReport('donations')">
+                        <div class="report-icon" style="background:rgba(29,158,117,0.2);color:#5DCAA5;"><i class="fas fa-hand-holding-heart"></i></div>
+                        <div><div class="report-label">Donations Report</div><div class="report-desc">Donation history, top donors, monthly totals</div></div>
+                        <i class="fas fa-chevron-right" style="color:var(--mobile-muted);margin-left:auto;"></i>
+                    </div>
+                    <div class="report-btn" data-report="financial" onclick="generateReport('financial')">
+                        <div class="report-icon" style="background:rgba(245,176,65,0.2);color:#F5B041;"><i class="fas fa-coins"></i></div>
+                        <div><div class="report-label">Financial Summary</div><div class="report-desc">Revenue, expenses, donation trends</div></div>
+                        <i class="fas fa-chevron-right" style="color:var(--mobile-muted);margin-left:auto;"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-chart-simple" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Quick Stats</h2>
+                </div>
+                <div id="quick-stats">
+                    <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading statistics...</p></div>
+                </div>
+            </div>
+
+            <!-- Recent Reports -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-clock-rotate-left" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Recent Reports</h2>
+                </div>
+                <div id="recent-reports-list">
+                    <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading...</p></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Report Preview Modal -->
+    <div class="modal-overlay" id="report-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="report-modal-title">Report</div>
+                <button class="modal-close" onclick="closeReportModal()" aria-label="Close modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body" id="report-modal-content">
+                <!-- Populated by JS -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReportModal()">Close</button>
+                <button class="btn btn-primary" onclick="exportCurrentReport()"><i class="fas fa-download"></i> Export PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/server-discovery.js"></script>
+    <script src="assets/api.js"></script>
+    <script src="assets/notifications.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Reports', 'reports');
+        let currentReportType = null;
+
+        // Load report statistics
+        (async function loadReportStats() {
+            try {
+                const statsData = await API.get('/api/reports/summary.php');
+                if (statsData.success && statsData.data) {
+                    const d = statsData.data;
+                    document.getElementById('stat-reports-month').textContent = (d.reports_30d || 0).toLocaleString();
+                    document.getElementById('stat-avg-meals').textContent = (d.avg_daily || 0).toLocaleString();
+                    document.getElementById('stat-monthly-costs').textContent = (d.monthly_costs || 0).toLocaleString();
+                    document.getElementById('stat-ytd-meals').textContent = (d.ytd_meals || 0).toLocaleString();
+                }
+            } catch (e) {
+                console.warn('Report stats unavailable:', e.message);
+            }
+        })();
+
+        // Load quick stats
+        (async function loadQuickStats() {
+            const container = document.getElementById('quick-stats');
+            try {
+                const stats = await API.get('/api/reports/summary.php');
+                if (stats.success && stats.data) {
+                    const d = stats.data;
+                    container.innerHTML = `
+                        <div style="display:grid;gap:var(--space-sm);">
+                            <div style="display:flex;justify-content:between;padding:var(--space-sm) 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);flex:1;">Total meals served (30 days)</span>
+                                <span style="font-weight:600;">${d.meals_30d || '—'}</span>
+                            </div>
+                            <div style="display:flex;justify-content:between;padding:var(--space-sm) 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);flex:1;">Average daily attendance</span>
+                                <span style="font-weight:600;">${d.avg_daily || '—'}%</span>
+                            </div>
+                            <div style="display:flex;justify-content:between;padding:var(--space-sm) 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);flex:1;">Most active volunteer</span>
+                                <span style="font-weight:600;">${d.top_volunteer || '—'}</span>
+                            </div>
+                            <div style="display:flex;justify-content:between;padding:var(--space-sm) 0;border-bottom:1px solid var(--mobile-border);">
+                                <span style="color:var(--mobile-muted);flex:1;">Top donor this month</span>
+                                <span style="font-weight:600;">${d.top_donor || '—'}</span>
+                            </div>
+                            <div style="display:flex;justify-content:between;padding:var(--space-sm) 0;">
+                                <span style="color:var(--mobile-muted);flex:1;">Stock health score</span>
+                                <span style="font-weight:600;color:${d.stock_score > 70 ? 'var(--success)' : d.stock_score > 40 ? 'var(--warning)' : 'var(--danger)'};">${d.stock_score || '—'}%</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Statistics unavailable</p></div>';
+            }
+        })();
+
+        // Load recent reports
+        (async function loadRecentReports() {
+            const container = document.getElementById('recent-reports-list');
+            try {
+                const data = await API.get('/api/reports/history.php?limit=5');
+                if (data.success && data.data && data.data.length > 0) {
+                    container.innerHTML = data.data.map(r => `
+                        <div class="sched-slot">
+                            <div style="display:flex;align-items:center;gap:10px;flex:1;">
+                                <i class="fas fa-file-pdf" style="color:var(--danger);width:20px;text-align:center;"></i>
+                                <div style="flex:1;min-width:0;">
+                                    <div style="font-weight:600;font-size:13px;">${r.title || r.type || 'Report'}</div>
+                                    <div style="font-size:11px;color:var(--mobile-muted);">${r.date || r.created_at || 'Recent'}</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="downloadReport('${r.id || r.report_id}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i><h3>No recent reports</h3></div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Unable to load reports</p></div>';
+            }
+        })();
+
+        async function generateReport(type) {
+            const btn = event.currentTarget;
+            const originalOpacity = btn.style.opacity;
+            btn.style.opacity = '0.6';
+
+            currentReportType = type;
+            const modal = document.getElementById('report-modal');
+            const content = document.getElementById('report-modal-content');
+            const title = document.getElementById('report-modal-title');
+
+            const typeLabels = {
+                beneficiaries: 'Beneficiary Report',
+                attendance: 'Attendance Report',
+                stock: 'Stock Report',
+                volunteers: 'Volunteer Report',
+                donations: 'Donations Report',
+                financial: 'Financial Summary'
+            };
+
+            title.textContent = typeLabels[type] || 'Report';
+            content.innerHTML = '<div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Generating report...</p></div>';
+            modal.classList.add('open');
+
+            try {
+                const result = await API.get(`/api/reports/generate.php?type=${type}`);
+                if (result.success && result.summary) {
+                    renderReportPreview(content, result.summary, type);
+                } else if (result.success && result.data) {
+                    renderReportPreview(content, { total: result.count || result.data.length }, type);
+                } else if (result.success && result.url) {
+                    window.open(result.url, '_blank');
+                    closeReportModal();
+                } else {
+                    content.innerHTML = '<div class="empty-state"><i class="fas fa-file"></i><h3>Report generated</h3><p>Use the export button below</p></div>';
+                }
+            } catch (err) {
+                content.innerHTML = `<div class="error-state"><i class="fas fa-exclamation-circle"></i><h3>Failed to generate</h3><p>${err.message}</p></div>`;
+            } finally {
+                btn.style.opacity = originalOpacity;
+            }
+        }
+
+        function renderReportPreview(container, data, type) {
+            let html = '<div style="display:grid;gap:12px;">';
+            
+            if (type === 'beneficiaries') {
+                html += `
+                    <div class="stat-grid">
+                        <div class="stat-card"><div class="stat-value">${data.total || 0}</div><div class="stat-label">Total Beneficiaries</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--success);">${data.active || 0}</div><div class="stat-label">Active</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--warning);">${data.inactive || 0}</div><div class="stat-label">Inactive</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--danger);">${data.suspended || 0}</div><div class="stat-label">Suspended</div></div>
+                    </div>
+                `;
+            } else if (type === 'attendance') {
+                html += `
+                    <div class="stat-grid">
+                        <div class="stat-card"><div class="stat-value">${data.total_days || 0}</div><div class="stat-label">Days Recorded</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--success);">${data.avg_attendance || 0}%</div><div class="stat-label">Avg Attendance</div></div>
+                        <div class="stat-card"><div class="stat-value">${data.total_present || 0}</div><div class="stat-label">Total Present</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--danger);">${data.total_absent || 0}</div><div class="stat-label">Total Absent</div></div>
+                    </div>
+                `;
+            } else if (type === 'stock') {
+                html += `
+                    <div class="stat-grid">
+                        <div class="stat-card"><div class="stat-value">${data.total_items || 0}</div><div class="stat-label">Total Items</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--danger);">${data.low_stock || 0}</div><div class="stat-label">Low Stock</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--warning);">${data.expiring_soon || 0}</div><div class="stat-label">Expiring Soon</div></div>
+                        <div class="stat-card"><div class="stat-value">R ${(data.total_value || 0).toLocaleString()}</div><div class="stat-label">Total Value</div></div>
+                    </div>
+                `;
+            } else if (type === 'donations' || type === 'financial') {
+                html += `
+                    <div class="stat-grid">
+                        <div class="stat-card"><div class="stat-value">${data.total_donations || 0}</div><div class="stat-label">Total Donations</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--success);">R ${(data.total_value || 0).toLocaleString()}</div><div class="stat-label">Total Value</div></div>
+                        <div class="stat-card"><div class="stat-value">${data.unique_donors || 0}</div><div class="stat-label">Unique Donors</div></div>
+                        <div class="stat-card"><div class="stat-value" style="color:var(--info);">${data.avg_donation || 0}</div><div class="stat-label">Avg Donation</div></div>
+                    </div>
+                `;
+            } else {
+                html += `<p style="color:var(--mobile-muted);">Report data loaded. Use Export button to download.</p>`;
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function closeReportModal() {
+            document.getElementById('report-modal').classList.remove('open');
+            currentReportType = null;
+        }
+
+        async function exportCurrentReport() {
+            if (!currentReportType) return;
+            
+            const btn = event.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+
+            try {
+                const downloadInfo = await API.get(`/api/reports/download.php?id=${encodeURIComponent(currentReportType)}&format=json`);
+                if (downloadInfo.success && downloadInfo.url) {
+                    await downloadAuthenticatedFile(downloadInfo.url, `${currentReportType}-report.json`);
+                    showToast('Report exported successfully!', 'success');
+                } else {
+                    showToast('Export failed. Please try again.', 'error');
+                }
+            } catch (err) {
+                showToast('Export failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-download"></i> Export PDF';
+            }
+        }
+
+        async function downloadAuthenticatedFile(endpoint, filename) {
+            const baseURL = (typeof RuntimeConfig !== 'undefined') ? RuntimeConfig.getAPIBase() : '';
+            const { accessToken } = API.getTokens();
+            const response = await fetch(baseURL + endpoint, {
+                headers: accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}
+            });
+            if (!response.ok) {
+                throw new Error('Download request failed');
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
+        async function downloadReport(reportId) {
+            try {
+                const result = await API.get(`/api/reports/download.php?id=${encodeURIComponent(reportId)}&format=json`);
+                if (result.success && result.url) {
+                    const safeName = String(reportId).replace(/[^a-z0-9_-]+/gi, '-') + '-report.json';
+                    await downloadAuthenticatedFile(result.url, safeName);
+                    showToast('Report downloaded', 'success');
+                } else {
+                    showToast('Download failed', 'error');
+                }
+            } catch (err) {
+                showToast('Download failed: ' + err.message, 'error');
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} toast-icon"></i>
+                <div class="toast-message">${escapeHtml(message)}</div>
+            `;
+            
+            const container = document.createElement('div');
+            container.className = 'toast-container';
+            container.appendChild(toast);
+            document.body.appendChild(container);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => container.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Close modal on overlay click
+        document.getElementById('report-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeReportModal();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,67 @@
+/**
+ * FSMS Design Tokens
+ * Shared design system for web (fsms-ui.css) and mobile (mobile-shell/assets/shared.css)
+ * Source of truth: website fsms-ui.css branding
+ */
+:root {
+  /* Brand */
+  --fsms-navy: #1b3a5c;
+  --fsms-navy-2: #2e4a6c;
+  --fsms-green: #1d9e75;
+  --fsms-green-dark: #0f6e56;
+  --fsms-teal: #19a7a8;
+  --fsms-orange: #f97316;
+  --fsms-red: #dc2626;
+  --fsms-purple: #6d5dfc;
+  --fsms-blue: #2563eb;
+  --fsms-amber: #ba7517;
+
+  /* Surfaces */
+  --fsms-bg: #f0f2f5;
+  --fsms-surface: #ffffff;
+  --fsms-border: #e2e5ea;
+  --fsms-text: #1a1d23;
+  --fsms-muted: #6b7280;
+
+  /* Status */
+  --fsms-success: #1d9e75;
+  --fsms-warning: #f59e0b;
+  --fsms-danger: #dc2626;
+  --fsms-info: #2563eb;
+
+  /* Effects */
+  --fsms-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --fsms-radius: 12px;
+  --fsms-radius-sm: 8px;
+
+  /* Layout */
+  --fsms-sidebar-w: 240px;
+  --fsms-topbar-h: 60px;
+
+  /* Spacing */
+  --fsms-space-1: 8px;
+  --fsms-space-2: 16px;
+  --fsms-space-3: 24px;
+  --fsms-space-4: 32px;
+
+  /* Typography */
+  --fsms-font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+  --fsms-text-xs: 11px;
+  --fsms-text-sm: 13px;
+  --fsms-text-base: 14px;
+  --fsms-text-md: 16px;
+  --fsms-text-lg: 18px;
+  --fsms-text-xl: 22px;
+  --fsms-text-2xl: 26px;
+  --fsms-weight-normal: 400;
+  --fsms-weight-medium: 500;
+  --fsms-weight-semibold: 600;
+  --fsms-weight-bold: 700;
+
+  /* Badge backgrounds (Figma handoff) */
+  --fsms-badge-green-bg: #e1f5ee;
+  --fsms-badge-red-bg: #fcebeb;
+  --fsms-badge-amber-bg: #faeeda;
+  --fsms-badge-blue-bg: #e6f1fb;
+  --fsms-badge-purple-bg: #ede9fe;
+}

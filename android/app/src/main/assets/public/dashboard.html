@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1b3a5c">
+    <title>Dashboard - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content" role="main">
+            <!-- Today's Operations -->
+            <section class="section-header" aria-labelledby="ops-title">
+                <h3 id="ops-title">Today's Operations</h3>
+            </section>
+            <div class="kpi-grid" id="kpi-container">
+                <div class="kpi-card" onclick="window.location.href='beneficiaries.html'" role="button" tabindex="0" aria-label="View beneficiaries served today">
+                    <div>
+                        <div class="kpi-label">Beneficiaries Served</div>
+                        <div class="kpi-value" data-kpi="served_today" aria-live="polite">—</div>
+                        <div class="kpi-meta" data-kpi="served_meta">Today</div>
+                    </div>
+                    <span class="kpi-icon green"><i class="fas fa-users" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card" onclick="window.location.href='attendance.html'" role="button" tabindex="0" aria-label="View attendance recorded today">
+                    <div>
+                        <div class="kpi-label">Attendance Recorded</div>
+                        <div class="kpi-value" data-kpi="attendance_today" aria-live="polite">—</div>
+                        <div class="kpi-meta" data-kpi="attendance_rate">—% rate</div>
+                    </div>
+                    <span class="kpi-icon blue"><i class="fas fa-clipboard-check" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card" onclick="window.location.href='volunteers.html'" role="button" tabindex="0" aria-label="View volunteers present today">
+                    <div>
+                        <div class="kpi-label">Volunteers Present</div>
+                        <div class="kpi-value" data-kpi="volunteers_today" aria-live="polite">—</div>
+                        <div class="kpi-meta" data-kpi="volunteers_scheduled">Scheduled</div>
+                    </div>
+                    <span class="kpi-icon purple"><i class="fas fa-user-check" aria-hidden="true"></i></span>
+                </div>
+                <div class="kpi-card" onclick="window.location.href='reports.html'" role="button" tabindex="0" aria-label="View meals distributed today">
+                    <div>
+                        <div class="kpi-label">Meals Distributed</div>
+                        <div class="kpi-value" data-kpi="meals_today" aria-live="polite">—</div>
+                        <div class="kpi-meta" data-kpi="meals_meta">Today</div>
+                    </div>
+                    <span class="kpi-icon orange"><i class="fas fa-utensils" aria-hidden="true"></i></span>
+                </div>
+            </div>
+
+            <!-- Inventory Overview -->
+            <div class="proto-card" aria-labelledby="inv-title">
+                <div class="section-header">
+                    <h2 id="inv-title"><i class="fas fa-boxes-stacked" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Inventory Overview</h2>
+                    <button class="btn btn-sm btn-secondary" onclick="window.location.href='stock.html'" aria-label="View all inventory items">View All</button>
+                </div>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" data-kpi="total_stock_items">—</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color:var(--danger);" data-kpi="low_stock_count">—</div>
+                        <div class="stat-label">Low Stock</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" style="color:var(--warning);" data-kpi="expiring_soon">—</div>
+                        <div class="stat-label">Expiring Soon</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" data-kpi="stock_value">—</div>
+                        <div class="stat-label">Est. Value (R)</div>
+                    </div>
+                </div>
+                <div id="inventory-summary-list">
+                    <div class="skeleton-list">
+                        <div class="skeleton skeleton-line" style="width:100%; height:40px;"></div>
+                        <div class="skeleton skeleton-line" style="width:100%; height:40px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Donation Overview -->
+            <div class="proto-card" aria-labelledby="don-title">
+                <h2 id="don-title"><i class="fas fa-hand-holding-heart" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Donation Overview</h2>
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" data-kpi="donations_month">—</div>
+                        <div class="stat-label">Donations This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" data-kpi="donors_count">—</div>
+                        <div class="stat-label">Unique Donors</div>
+                    </div>
+                </div>
+                <div id="donation-summary-list">
+                    <div class="skeleton-list">
+                        <div class="skeleton skeleton-line" style="width:100%; height:40px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="proto-card">
+                <h2><i class="fas fa-bolt" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Quick Actions</h2>
+                <div class="quick-actions">
+                    <a href="beneficiaries.html" class="quick-action green" aria-label="Add new beneficiary"><i class="fas fa-user-plus" aria-hidden="true"></i><span>Add Beneficiary</span></a>
+                    <a href="attendance.html" class="quick-action navy" aria-label="Record attendance for today"><i class="fas fa-clipboard-user" aria-hidden="true"></i><span>Record Attendance</span></a>
+                    <a href="stock.html" class="quick-action orange" aria-label="Add food stock"><i class="fas fa-box-open" aria-hidden="true"></i><span>Add Stock</span></a>
+                    <a href="donations.html" class="quick-action purple" aria-label="Record a donation"><i class="fas fa-hand-holding-heart" aria-hidden="true"></i><span>Record Donation</span></a>
+                    <a href="reports.html" class="quick-action navy" aria-label="View reports"><i class="fas fa-chart-line" aria-hidden="true"></i><span>View Reports</span></a>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="proto-card">
+                <h2><i class="fas fa-clock-rotate-left" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Recent Activity</h2>
+                <div id="recent-activity-list">
+                    <div class="skeleton-list">
+                        <div class="skeleton skeleton-line" style="width:100%; height:30px;"></div>
+                        <div class="skeleton skeleton-line" style="width:100%; height:30px;"></div>
+                        <div class="skeleton skeleton-line" style="width:100%; height:30px;"></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/server-discovery.js"></script>
+    <script src="assets/api.js"></script>
+    <script src="assets/notifications.js"></script>
+    <script src="assets/offline-queue.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Dashboard', 'dashboard', { loadData: true, dataType: 'kpi' });
+
+        // Additional dashboard data loading
+        (async function loadDashboardData() {
+            // Load inventory summary
+            try {
+                const invData = await API.get('/api/dashboard/inventory-summary.php');
+                const invContainer = document.getElementById('inventory-summary-list');
+                if (invData.success && invData.data && invData.data.length > 0) {
+                    invContainer.innerHTML = invData.data.slice(0, 3).map(item => {
+                        const pct = item.StockLevel || item.stock_level || 0;
+                        const barColor = pct > 50 ? 'var(--mobile-primary)' : pct > 25 ? 'var(--warning)' : '#dc2626';
+                        const textColor = pct > 50 ? 'var(--success)' : pct > 25 ? 'var(--warning)' : 'var(--danger)';
+                        return `
+                            <div class="stock-item">
+                                <div>
+                                    <div class="stock-item-name">${item.ItemName || item.name || item.item_name}</div>
+                                    <div class="stock-item-qty">${item.Quantity || item.quantity || '0'} ${item.Unit || item.unit || ''} remaining</div>
+                                </div>
+                                <div class="stock-item-pct" style="color:${textColor};">${pct}%</div>
+                            </div>
+                            <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${barColor};"></div></div>
+                        `;
+                    }).join('');
+                } else {
+                    invContainer.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><h3>No inventory data</h3><p>Start by adding stock items</p></div>';
+                }
+            } catch (e) {
+                document.getElementById('inventory-summary-list').innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><h3>Unable to load</h3><p>Inventory data unavailable</p></div>';
+            }
+
+            // Load donation summary
+            try {
+                const donData = await API.get('/api/dashboard/donations-summary.php');
+                const donContainer = document.getElementById('donation-summary-list');
+                if (donData.success && donData.data && donData.data.length > 0) {
+                    donContainer.innerHTML = donData.data.slice(0, 3).map(d => `
+                        <div class="donation-log-item">
+                            <div class="donation-log-left">
+                                <div class="donation-log-item-name">${d.ItemName || d.item || d.item_name}</div>
+                                <div class="donation-log-item-meta">${d.DonorName || d.donor || 'Anonymous'} · ${d.Date || d.date || 'Recent'}</div>
+                            </div>
+                            <div class="donation-log-right">
+                                <div class="donation-log-qty">+${d.Quantity || d.quantity} ${d.Unit || d.unit || ''}</div>
+                                <div class="donation-log-source">${d.Source || d.source || 'Donation'}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    donContainer.innerHTML = '<div class="empty-state"><i class="fas fa-hand-holding-heart"></i><h3>No donations yet</h3><p>Record your first donation</p></div>';
+                }
+            } catch (e) {
+                document.getElementById('donation-summary-list').innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><h3>Unable to load</h3><p>Donation data unavailable</p></div>';
+            }
+
+            // Load recent activity feed
+            try {
+                const actData = await API.get('/api/dashboard/activity.php');
+                const actContainer = document.getElementById('recent-activity-list');
+                if (actData.success && actData.data && actData.data.length > 0) {
+                    actContainer.innerHTML = actData.data.slice(0, 5).map(renderActivityItem).join('');
+                } else {
+                    setEmpty('recent-activity-list', 'fa-inbox', 'No recent activity');
+                }
+            } catch (e) {
+                setError('recent-activity-list');
+            }
+
+        })();
+
+        function formatTimeAgo(timestamp) {
+            if (!timestamp) return '';
+            try {
+                const date = new Date(timestamp);
+                const now = new Date();
+                const diffMins = Math.floor((now - date) / 60000);
+                if (diffMins < 1) return 'Just now';
+                if (diffMins < 60) return `${diffMins}m ago`;
+                const diffHours = Math.floor(diffMins / 60);
+                if (diffHours < 24) return `${diffHours}h ago`;
+                const diffDays = Math.floor(diffHours / 24);
+                if (diffDays < 7) return `${diffDays}d ago`;
+                return date.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' });
+            } catch {
+                return '';
+            }
+        }
+    </script>
+</body>
+</html>

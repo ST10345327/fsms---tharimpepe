@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1b3a5c">
+    <title>Attendance - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content" role="main">
+            <!-- Daily Statistics -->
+            <div class="stat-grid" aria-label="Daily attendance summary">
+                <div class="stat-card" aria-label="Beneficiaries present today">
+                    <div class="stat-value" id="stat-present">—</div>
+                    <div class="stat-label">Present Today</div>
+                </div>
+                <div class="stat-card" aria-label="Beneficiaries absent today">
+                    <div class="stat-value" style="color:var(--danger);" id="stat-absent">—</div>
+                    <div class="stat-label">Absent</div>
+                </div>
+                <div class="stat-card" aria-label="Beneficiaries late today">
+                    <div class="stat-value" style="color:var(--warning);" id="stat-late">—</div>
+                    <div class="stat-label">Late</div>
+                </div>
+                <div class="stat-card" aria-label="Overall attendance rate">
+                    <div class="stat-value" style="color:var(--success);" id="stat-rate">—</div>
+                    <div class="stat-label">Attendance Rate</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-bolt" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Quick Actions</h2>
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-sm" onclick="markAll('present')" style="flex:1;min-width:100px;" aria-label="Mark all beneficiaries as present">
+                        <i class="fas fa-check" style="color:var(--success);" aria-hidden="true"></i> Present All
+                    </button>
+                    <button class="btn btn-sm" onclick="markAll('absent')" style="flex:1;min-width:100px;" aria-label="Mark all beneficiaries as absent">
+                        <i class="fas fa-xmark" style="color:var(--danger);" aria-hidden="true"></i> Absent All
+                    </button>
+                    <button class="btn btn-sm" onclick="markAll('late')" style="flex:1;min-width:100px;" aria-label="Mark all beneficiaries as late">
+                        <i class="fas fa-clock" style="color:var(--warning);" aria-hidden="true"></i> Late All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mark Attendance -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-pen-to-square" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Mark Attendance</h2>
+                    <input type="date" id="attendance-date" class="date-input" aria-label="Attendance date">
+                </div>
+                <p style="font-size:12px;color:var(--mobile-muted);margin-bottom:var(--space-sm);">Tap a tile to cycle through: Present → Late → Absent</p>
+                <div class="attendance-grid" id="attendance-grid" aria-live="polite">
+                    <div class="skeleton-list">
+                        <div class="skeleton-card skeleton" style="height:80px;"></div>
+                        <div class="skeleton-card skeleton" style="height:80px;"></div>
+                        <div class="skeleton-card skeleton" style="height:80px;"></div>
+                        <div class="skeleton-card skeleton" style="height:80px;"></div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-block" id="save-attendance-btn" aria-label="Save current attendance records">Save Attendance</button>
+                </div>
+            </div>
+
+            <!-- Attendance History -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-history" style="color:var(--mobile-primary);margin-right:8px;"></i>Attendance History</h2>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Date</th><th>Registered</th><th>Present</th><th>Rate</th></tr>
+                        </thead>
+                        <tbody id="attendance-history-body">
+                            <tr><td colspan="4" style="text-align:center;color:var(--mobile-muted);">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/server-discovery.js"></script>
+    <script src="assets/api.js"></script>
+    <script src="assets/notifications.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Attendance', 'attendance');
+
+        let attendanceData = [];
+        const statusCycle = ['present', 'late', 'absent'];
+
+        // Set default date to today
+        document.getElementById('attendance-date').valueAsDate = new Date();
+
+        // Load daily statistics
+        window.loadStats = async function loadStats() {
+            try {
+                const statsData = await API.get('/api/attendance/stats.php');
+                if (statsData.success && statsData.data) {
+                    const d = statsData.data;
+                    document.getElementById('stat-present').textContent = (d.present || 0).toLocaleString();
+                    document.getElementById('stat-absent').textContent = (d.absent || 0).toLocaleString();
+                    document.getElementById('stat-late').textContent = (d.late || 0).toLocaleString();
+                    const rate = d.total ? Math.round((d.present / d.total) * 100) : 0;
+                    document.getElementById('stat-rate').textContent = rate + '%';
+                }
+            } catch (e) {
+                console.warn('Stats unavailable:', e.message);
+            }
+        };
+        loadStats();
+
+        // Load attendance data
+        (async function loadAttendanceData() {
+            const grid = document.getElementById('attendance-grid');
+            
+            try {
+                const attData = await API.get('/api/attendance/today.php');
+                if (attData.success && attData.data && attData.data.length > 0) {
+                    attendanceData = attData.data;
+                    renderAttendanceGrid();
+                } else {
+                    grid.innerHTML = '<div class="empty-state"><i class="fas fa-clipboard-check"></i><h3>No attendance data</h3><p>No beneficiaries found for today</p></div>';
+                }
+            } catch (e) {
+                grid.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><h3>Unable to load</h3><p>Attendance data unavailable</p></div>';
+            }
+
+            // Load attendance history
+            try {
+                const histData = await API.get('/api/attendance/history.php');
+                const histBody = document.getElementById('attendance-history-body');
+                if (histData.success && histData.data && histData.data.length > 0) {
+                    histBody.innerHTML = histData.data.map(h => {
+                        const pctClass = h.rate > 90 ? 'badge-green' : h.rate > 75 ? 'badge-amber' : 'badge-red';
+                        return `
+                            <tr>
+                                <td>${h.Date || h.date}</td>
+                                <td>${h.Registered || h.registered || '—'}</td>
+                                <td>${h.Present || h.present || '—'}</td>
+                                <td><span class="badge ${pctClass}">${h.rate || h.percentage || 0}%</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    histBody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--mobile-muted);">No history available</td></tr>';
+                }
+            } catch (e) {
+                document.getElementById('attendance-history-body').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--danger);">Unable to load history</td></tr>';
+            }
+        })();
+
+        function renderAttendanceGrid() {
+            const grid = document.getElementById('attendance-grid');
+            if (!grid || attendanceData.length === 0) return;
+
+            grid.innerHTML = attendanceData.map((b, index) => {
+                const status = b.status === 'Present' || b.status === 'present' ? 'present' :
+                              b.status === 'Late' || b.status === 'late' ? 'late' : '';
+                const statusLabel = status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Pending';
+                return `
+                    <div class="beneficiary-tile ${status}" data-index="${index}" data-id="${b.BeneficiaryID || b.id}">
+                        <div class="tile-avatar" style="background:${getAvatarColor(b.FullName || b.name)};">${getInitials(b.FullName || b.name)}</div>
+                        <div class="tile-name">${b.FullName || b.name}</div>
+                        <div class="tile-status">${statusLabel}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Add click handlers for tiles
+            grid.querySelectorAll('.beneficiary-tile').forEach(function(tile) {
+                tile.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    const currentStatus = this.classList.contains('present') ? 'present' :
+                                         this.classList.contains('late') ? 'late' : '';
+                    const currentIdx = statusCycle.indexOf(currentStatus);
+                    const nextIdx = (currentIdx + 1) % statusCycle.length;
+                    const nextStatus = statusCycle[nextIdx];
+                    
+                    // Update visual state
+                    this.classList.remove('present', 'late', 'absent');
+                    this.classList.add(nextStatus);
+                    
+                    const statusLabel = nextStatus === 'present' ? 'Present' :
+                                       nextStatus === 'late' ? 'Late' : 'Absent';
+                    const statusEl = this.querySelector('.tile-status');
+                    statusEl.textContent = statusLabel;
+                    statusEl.style.color = nextStatus === 'present' ? 'var(--success)' :
+                                          nextStatus === 'late' ? 'var(--warning)' : 'var(--danger)';
+                    
+                    // Update data
+                    attendanceData[index].status = nextStatus;
+                });
+            });
+        }
+
+        function markAll(status) {
+            attendanceData.forEach((b, index) => {
+                b.status = status;
+            });
+            renderAttendanceGrid();
+            showToast(`All marked as ${status}`, 'info');
+        }
+
+        // Save attendance button
+        document.getElementById('save-attendance-btn').addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.textContent;
+            
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const attendance = attendanceData.map(b => ({
+                    id: b.BeneficiaryID || b.id,
+                    status: b.status || 'absent'
+                }));
+
+                const result = await API.post('/api/attendance/save.php', {
+                    date: document.getElementById('attendance-date').value,
+                    attendance: attendance
+                });
+
+                if (result.success) {
+                    showToast('Attendance saved successfully!', 'success');
+                    loadStats(); // Refresh statistics
+                } else {
+                    showToast('Failed to save: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('Failed to save: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        // Simple toast notification (can be moved to shared.js later)
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} toast-icon"></i>
+                <div class="toast-message">${escapeHtml(message)}</div>
+            `;
+            
+            const container = document.createElement('div');
+            container.className = 'toast-container';
+            container.appendChild(toast);
+            document.body.appendChild(container);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => container.remove(), 300);
+            }, 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>

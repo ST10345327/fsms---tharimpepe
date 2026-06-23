@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#1b3a5c">
+    <title>Food Stock - Tharimpepe FSMS</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="assets/shared.css" rel="stylesheet">
+</head>
+<body>
+    <div class="mobile-safe">
+        <main class="mobile-content" role="main">
+            <!-- Inventory Statistics -->
+            <div class="stat-grid" aria-label="Inventory statistics">
+                <div class="stat-card" aria-label="Total inventory items">
+                    <div class="stat-value" id="stat-total-items">—</div>
+                    <div class="stat-label">Total Items</div>
+                </div>
+                <div class="stat-card" aria-label="Items with low stock">
+                    <div class="stat-value" style="color:var(--danger);" id="stat-low-stock">—</div>
+                    <div class="stat-label">Low Stock</div>
+                </div>
+                <div class="stat-card" aria-label="Items expiring soon">
+                    <div class="stat-value" style="color:var(--warning);" id="stat-expiring">—</div>
+                    <div class="stat-label">Expiring Soon</div>
+                </div>
+                <div class="stat-card" aria-label="Estimated inventory value">
+                    <div class="stat-value" id="stat-stock-value">—</div>
+                    <div class="stat-label">Est. Value (R)</div>
+                </div>
+            </div>
+
+            <!-- Low Stock Alerts -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-triangle-exclamation" style="color:var(--warning);margin-right:var(--space-sm);" aria-hidden="true"></i>Low Stock Alerts</h2>
+                    <span class="chip" style="background:rgba(220,38,38,0.2);color:var(--danger);" id="low-stock-count" aria-live="polite">0</span>
+                </div>
+                <div id="low-stock-list">
+                    <div class="skeleton-list">
+                        <div class="skeleton skeleton-line" style="width:100%;height:40px;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Stock Item -->
+            <div class="proto-card" aria-labelledby="add-stock-title">
+                <h2 id="add-stock-title"><i class="fas fa-plus-circle" style="color:var(--mobile-primary);margin-right:var(--space-sm);" aria-hidden="true"></i>Add Stock Item</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="new-item-name">Item name *</label>
+                        <input type="text" id="new-item-name" placeholder="e.g. Maize meal" required aria-label="Item name">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-item-qty">Quantity *</label>
+                        <input type="number" id="new-item-qty" min="0" step="1" placeholder="e.g. 50" required aria-label="Quantity">
+                    </div>
+                    <div class="form-group">
+                        <label for="new-item-unit">Unit</label>
+                        <select id="new-item-unit" aria-label="Unit of measure">
+                            <option value="kg">kg</option>
+                            <option value="litres">litres</option>
+                            <option value="units">units</option>
+                            <option value="bags">bags</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-item-expiry">Expiry date</label>
+                        <input type="date" id="new-item-expiry" aria-label="Expiry date">
+                    </div>
+                    <div class="form-group" style="grid-column:1/-1;">
+                        <label for="new-item-notes">Notes</label>
+                        <input type="text" id="new-item-notes" placeholder="Optional notes" aria-label="Notes">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn btn-primary btn-block" id="add-stock-btn" aria-label="Add stock item">Add Stock Item</button>
+                </div>
+            </div>
+
+            <!-- Current Stock Levels -->
+            <div class="proto-card">
+                <div class="section-header">
+                    <h2><i class="fas fa-boxes-stacked" style="color:var(--mobile-primary);margin-right:var(--space-sm);"></i>Current Stock</h2>
+                    <input type="text" id="stock-search" placeholder="Search stock..." class="search-input" oninput="filterStock(this.value)">
+                </div>
+                <div id="stock-list">
+                    <div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Loading stock data...</p></div>
+                </div>
+                <div style="margin-top:14px;">
+                    <button class="btn btn-primary btn-block" onclick="openStockUpdateModal()">Update Stock</button>
+                </div>
+            </div>
+
+            <!-- Stock Update Modal -->
+            <div class="modal-overlay" id="stock-update-modal">
+                <div class="modal">
+                    <div class="modal-header">
+                        <div class="modal-title">Update Stock Item</div>
+                        <button class="modal-close" onclick="closeStockUpdateModal()" aria-label="Close modal">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="stock-update-item">Stock item</label>
+                            <select id="stock-update-item" aria-label="Select stock item"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock-update-qty">Quantity</label>
+                            <input type="number" id="stock-update-qty" min="0" step="1" aria-label="Updated quantity">
+                        </div>
+                        <div class="form-group">
+                            <label for="stock-update-unit">Unit</label>
+                            <input type="text" id="stock-update-unit" aria-label="Unit of measure">
+                        </div>
+                        <div class="form-group">
+                            <label for="stock-update-expiry">Expiry date</label>
+                            <input type="date" id="stock-update-expiry" aria-label="Expiry date">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeStockUpdateModal()">Cancel</button>
+                        <button class="btn btn-primary" id="stock-update-save-btn" onclick="saveStockUpdate()">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/runtime-config.js"></script>
+    <script src="assets/server-discovery.js"></script>
+    <script src="assets/api.js"></script>
+    <script src="assets/notifications.js"></script>
+    <script src="assets/shared.js"></script>
+    <script>
+        initPage('Food Stock', 'stock');
+
+        let allStockItems = [];
+
+        document.getElementById('add-stock-btn').addEventListener('click', async function() {
+            const btn = this;
+            const itemName = document.getElementById('new-item-name').value.trim();
+            const quantity = document.getElementById('new-item-qty').value;
+            const unit = document.getElementById('new-item-unit').value;
+            const expiry = document.getElementById('new-item-expiry').value;
+            const notes = document.getElementById('new-item-notes').value.trim();
+
+            if (!itemName || quantity === '') {
+                showToast('Item name and quantity are required', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+
+            try {
+                const payload = {
+                    item_name: itemName,
+                    quantity: parseInt(quantity, 10),
+                    unit: unit,
+                    notes: notes
+                };
+                if (expiry) payload.expiry_date = expiry;
+
+                const result = await API.post('/api/stock/add.php', payload);
+                if (result.success) {
+                    showToast('Stock item added successfully', 'success');
+                    document.getElementById('new-item-name').value = '';
+                    document.getElementById('new-item-qty').value = '';
+                    document.getElementById('new-item-expiry').value = '';
+                    document.getElementById('new-item-notes').value = '';
+                    API.invalidateCache('/api/stock/list.php');
+                    API.invalidateCache('/api/stock/stats.php');
+                    const [listData, statsData] = await Promise.all([
+                        API.get('/api/stock/list.php', false, false),
+                        API.get('/api/stock/stats.php', false, false)
+                    ]);
+                    if (listData.success && listData.data) {
+                        allStockItems = listData.data;
+                        renderStock(allStockItems);
+                    }
+                    if (statsData.success && statsData.data) {
+                        const d = statsData.data;
+                        document.getElementById('stat-total-items').textContent = (d.total_items || 0).toLocaleString();
+                        document.getElementById('stat-low-stock').textContent = (d.low_stock || 0).toLocaleString();
+                        document.getElementById('stat-expiring').textContent = (d.expiring_soon || 0).toLocaleString();
+                        document.getElementById('stat-stock-value').textContent = (d.total_value || 0).toLocaleString();
+                    }
+                    loadLowStockAlerts();
+                } else {
+                    showToast('Add failed: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('Add failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Add Stock Item';
+            }
+        });
+
+        // Load inventory statistics
+        (async function loadInventoryStats() {
+            try {
+                const statsData = await API.get('/api/stock/stats.php');
+                if (statsData.success && statsData.data) {
+                    const d = statsData.data;
+                    document.getElementById('stat-total-items').textContent = (d.total_items || 0).toLocaleString();
+                    document.getElementById('stat-low-stock').textContent = (d.low_stock || 0).toLocaleString();
+                    document.getElementById('stat-expiring').textContent = (d.expiring_soon || 0).toLocaleString();
+                    document.getElementById('stat-stock-value').textContent = (d.total_value || 0).toLocaleString();
+                }
+            } catch (e) {
+                console.warn('Inventory stats unavailable:', e.message);
+            }
+        })();
+
+        // Load low stock alerts
+        async function loadLowStockAlerts() {
+            try {
+                const data = await API.get('/api/stock/alerts.php?type=low');
+                const container = document.getElementById('low-stock-list');
+                const countBadge = document.getElementById('low-stock-count');
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    countBadge.textContent = data.data.length;
+                    container.innerHTML = data.data.map(item => {
+                        const pct = item.StockLevel || item.stock_level || 0;
+                        return `
+                            <div class="stock-item">
+                                <div>
+                                    <div class="stock-item-name">${item.ItemName || item.name}</div>
+                                    <div class="stock-item-qty">${item.Quantity || item.quantity || 0} ${item.Unit || item.unit || ''} remaining</div>
+                                </div>
+                                <div class="stock-item-pct" style="color:var(--danger);">${pct}%</div>
+                            </div>
+                            <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:#dc2626;"></div></div>
+                        `;
+                    }).join('');
+                } else {
+                    countBadge.textContent = '0';
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i><h3>All stocked up</h3></div>';
+                }
+            } catch (e) {
+                document.getElementById('low-stock-list').innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Unable to load alerts</p></div>';
+            }
+        }
+
+        loadLowStockAlerts();
+
+        // Load expiry alerts
+        let currentExpiryFilter = null;
+
+        async function filterExpiry(days) {
+            currentExpiryFilter = days;
+            
+            // Update button states
+            document.querySelectorAll('[id^="expiry-"]').forEach(btn => {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+            });
+            const activeBtn = document.getElementById(`expiry-${days}d`);
+            if (activeBtn) {
+                activeBtn.classList.remove('btn-secondary');
+                activeBtn.classList.add('btn-primary');
+            }
+
+            const container = document.getElementById('expiry-list');
+            container.innerHTML = '<div class="placeholder"><i class="fas fa-spinner fa-pulse"></i><p>Checking...</p></div>';
+
+            try {
+                const data = await API.get(`/api/stock/alerts.php?type=expiry&days=${days}`);
+                if (data.success && data.data && data.data.length > 0) {
+                    container.innerHTML = data.data.map(item => {
+                        const daysLeft = item.days_until_expiry || item.daysRemaining || 0;
+                        return `
+                            <div class="stock-item">
+                                <div>
+                                    <div class="stock-item-name">${item.ItemName || item.name}</div>
+                                    <div class="stock-item-qty">Expires: ${item.ExpiryDate || item.expiry_date || 'Unknown'}</div>
+                                </div>
+                                <div class="stock-item-pct" style="color:${daysLeft <= 7 ? 'var(--danger)' : 'var(--warning)'};">${daysLeft}d</div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-check"></i><h3>No items expiring</h3></div>';
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Unable to load expiry data</p></div>';
+            }
+        }
+
+        // Load stock items
+        (async function loadStock() {
+            const container = document.getElementById('stock-list');
+            
+            try {
+                const data = await API.get('/api/stock/list.php');
+                if (data.success && data.data) {
+                    allStockItems = data.data;
+                    renderStock(allStockItems);
+                }
+            } catch (e) {
+                container.innerHTML = '<div class="error-state"><i class="fas fa-exclamation-circle"></i><p>Stock data unavailable</p></div>';
+            }
+        })();
+
+        function renderStock(items) {
+            const container = document.getElementById('stock-list');
+            if (!container || items.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><h3>No stock items</h3></div>';
+                return;
+            }
+
+            container.innerHTML = items.map(item => {
+                const pct = item.StockLevel || item.stock_level || item.quantity_pct || 0;
+                const barColor = pct > 50 ? 'var(--mobile-primary)' : pct > 25 ? 'var(--warning)' : '#dc2626';
+                const textColor = pct > 50 ? 'var(--success)' : pct > 25 ? 'var(--warning)' : 'var(--danger)';
+                return `
+                    <div class="stock-item">
+                        <div>
+                            <div class="stock-item-name">${item.ItemName || item.name || item.item_name}</div>
+                            <div class="stock-item-qty">${item.Quantity || item.quantity || '0'} ${item.Unit || item.unit || ''} remaining</div>
+                        </div>
+                        <div class="stock-item-pct" style="color:${textColor};">${pct}%</div>
+                    </div>
+                    <div class="stock-bar"><div class="stock-fill" style="width:${pct}%;background:${barColor};"></div></div>
+                `;
+            }).join('');
+        }
+
+        function filterStock(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderStock(allStockItems);
+                return;
+            }
+            const filtered = allStockItems.filter(item => {
+                const name = (item.ItemName || item.name || item.item_name || '').toLowerCase();
+                return name.includes(q);
+            });
+            renderStock(filtered);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function openStockUpdateModal() {
+            const select = document.getElementById('stock-update-item');
+            if (!allStockItems.length) {
+                showToast('No stock items available to update', 'warning');
+                return;
+            }
+
+            select.innerHTML = allStockItems.map(item => {
+                const id = item.FoodStockID || item.stock_id || item.id;
+                const name = item.ItemName || item.name || item.item_name || 'Item';
+                return `<option value="${id}">${escapeHtml(name)}</option>`;
+            }).join('');
+
+            populateStockUpdateFields();
+            select.onchange = populateStockUpdateFields;
+            document.getElementById('stock-update-modal').classList.add('open');
+        }
+
+        function populateStockUpdateFields() {
+            const select = document.getElementById('stock-update-item');
+            const selected = allStockItems.find(item => String(item.FoodStockID || item.stock_id || item.id) === select.value);
+            if (!selected) return;
+            document.getElementById('stock-update-qty').value = selected.Quantity || selected.quantity || 0;
+            document.getElementById('stock-update-unit').value = selected.Unit || selected.unit || '';
+            document.getElementById('stock-update-expiry').value = (selected.ExpiryDate || selected.expiry_date || '').substring(0, 10);
+        }
+
+        function closeStockUpdateModal() {
+            document.getElementById('stock-update-modal').classList.remove('open');
+        }
+
+        async function saveStockUpdate() {
+            const btn = document.getElementById('stock-update-save-btn');
+            const stockId = document.getElementById('stock-update-item').value;
+            const quantity = document.getElementById('stock-update-qty').value;
+            const unit = document.getElementById('stock-update-unit').value.trim();
+            const expiry = document.getElementById('stock-update-expiry').value;
+
+            if (!stockId) {
+                showToast('Select a stock item', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const payload = {
+                    stock_id: parseInt(stockId, 10),
+                    quantity: parseInt(quantity, 10),
+                    unit: unit
+                };
+                if (expiry) {
+                    payload.expiry_date = expiry;
+                }
+
+                const result = await API.post('/api/stock/update.php', payload);
+                if (result.success) {
+                    showToast('Stock updated successfully', 'success');
+                    closeStockUpdateModal();
+                    API.invalidateCache('/api/stock/list.php');
+                    const data = await API.get('/api/stock/list.php', false, false);
+                    if (data.success && data.data) {
+                        allStockItems = data.data;
+                        renderStock(allStockItems);
+                    }
+                } else {
+                    showToast('Update failed: ' + (result.message || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showToast('Update failed: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        }
+
+        document.getElementById('stock-update-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeStockUpdateModal();
+            }
+        });
+    </script>
+</body>
+</html>
