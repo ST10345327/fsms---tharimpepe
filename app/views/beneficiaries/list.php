@@ -64,9 +64,11 @@
                     <h1><i class="fas fa-users"></i> Beneficiary Management</h1>
                     <p class="mb-0 mt-2">Manage meal recipients and registration records</p>
                 </div>
+                <?php if (function_exists('rbacCan') && rbacCan('beneficiaries')): ?>
                 <a href="BeneficiaryController.php?action=create" class="btn btn-light">
                     <i class="fas fa-plus"></i> Register Beneficiary
                 </a>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -217,10 +219,12 @@
                                    class="btn btn-sm btn-outline-primary flex-grow-1">
                                     <i class="fas fa-eye"></i> View
                                 </a>
+                                <?php if (function_exists('rbacCan') && rbacCan('beneficiaries')): ?>
                                 <a href="BeneficiaryController.php?action=edit&id=<?php echo $beneficiary['BeneficiaryID']; ?>"
                                    class="btn btn-sm btn-outline-warning flex-grow-1">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

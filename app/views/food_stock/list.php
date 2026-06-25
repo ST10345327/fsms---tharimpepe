@@ -172,9 +172,11 @@ function fsmsStockCategory(string $itemName): string
         <?php endif; ?>
 
         <div class="stock-toolbar">
+            <?php if (function_exists('rbacCan') && rbacCan('food_stock')): ?>
             <a href="FoodStockController.php?action=create" class="btn">
                 <i class="fas fa-plus me-2" aria-hidden="true"></i>Add Stock Item
             </a>
+            <?php endif; ?>
         </div>
 
         <section class="stock-card">
@@ -217,9 +219,11 @@ function fsmsStockCategory(string $itemName): string
                                         <a class="edit" href="FoodStockController.php?action=edit&id=<?php echo (int)$item['FoodStockID']; ?>" aria-label="Edit <?php echo htmlspecialchars($item['ItemName']); ?>">
                                             <i class="far fa-pen-to-square" aria-hidden="true"></i>
                                         </a>
+                                        <?php if (function_exists('rbacCan') && rbacCan('food_stock.delete')): ?>
                                         <a class="delete" href="FoodStockController.php?action=delete&id=<?php echo (int)$item['FoodStockID']; ?>" aria-label="Delete <?php echo htmlspecialchars($item['ItemName']); ?>">
                                             <i class="far fa-trash-can" aria-hidden="true"></i>
                                         </a>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

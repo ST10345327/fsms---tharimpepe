@@ -142,6 +142,7 @@
                         <strong>IMPORTANT:</strong> If this donation was allocated to food stock, you will need to update the food stock records manually after deletion.
                     </p>
 
+                    <?php if (function_exists('rbacCan') && rbacCan('donations.delete')): ?>
                     <!-- Action Buttons -->
                     <div class="action-buttons">
                         <a href="DonationController.php?action=list" class="btn btn-outline-secondary">
@@ -156,6 +157,10 @@
                             </button>
                         </form>
                     </div>
+                    <?php else: ?>
+                    <div class="alert alert-warning">You do not have permission to delete donations.</div>
+                    <a href="DonationController.php?action=list" class="btn btn-secondary">Back to Donations</a>
+                    <?php endif; ?>
 
                     <!-- Additional Info -->
                     <hr class="my-4">

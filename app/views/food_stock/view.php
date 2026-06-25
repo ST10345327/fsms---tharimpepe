@@ -203,9 +203,11 @@
                         <a href="FoodStockController.php?action=distribute&id=<?php echo (int)$stockItem['FoodStockID']; ?>" class="btn btn-success">
                             <i class="fas fa-handshake"></i> Distribute
                         </a>
+                        <?php if (function_exists('rbacCan') && rbacCan('food_stock.delete')): ?>
                         <a href="FoodStockController.php?action=delete&id=<?php echo (int)$stockItem['FoodStockID']; ?>" class="btn btn-outline-danger">
                             <i class="fas fa-trash"></i> Delete
                         </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

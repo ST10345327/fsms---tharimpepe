@@ -176,9 +176,11 @@
                         <a href="DonationController.php?action=edit&id=<?php echo (int)$donation['DonationID']; ?>" class="btn btn-primary">
                             <i class="fas fa-edit"></i> Edit Donation
                         </a>
+                        <?php if (function_exists('rbacCan') && rbacCan('donations.delete')): ?>
                         <a href="DonationController.php?action=delete&id=<?php echo (int)$donation['DonationID']; ?>" class="btn btn-outline-danger">
                             <i class="fas fa-trash"></i> Delete
                         </a>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

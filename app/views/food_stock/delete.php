@@ -103,6 +103,7 @@
                 <strong>Warning:</strong> Deleting this item will permanently remove it from your inventory system. Consider archiving or marking as disposed instead of deleting if you need to keep records.
             </div>
 
+            <?php if (function_exists('rbacCan') && rbacCan('food_stock.delete')): ?>
             <form method="POST" action="FoodStockController.php?action=delete&id=<?php echo (int)$stockItem['FoodStockID']; ?>">
                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
 
@@ -115,6 +116,10 @@
                     </button>
                 </div>
             </form>
+            <?php else: ?>
+            <div class="alert alert-warning">You do not have permission to delete stock items.</div>
+            <a href="FoodStockController.php?action=view&id=<?php echo (int)$stockItem['FoodStockID']; ?>" class="btn btn-secondary">Back to Item</a>
+            <?php endif; ?>
         </div>
     </div>
 

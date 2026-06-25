@@ -193,6 +193,7 @@
                                    class="btn btn-sm btn-outline-primary flex-grow-1">
                                     <i class="fas fa-eye"></i> View
                                 </a>
+                                <?php if (function_exists('rbacCan') && rbacCan('volunteers')): ?>
                                 <a href="VolunteerController.php?action=edit&id=<?php echo $volunteer['VolunteerID']; ?>" 
                                    class="btn btn-sm btn-outline-warning flex-grow-1">
                                     <i class="fas fa-edit"></i> Edit
@@ -204,6 +205,7 @@
                                         <i class="fas fa-trash"></i> Deactivate
                                     </button>
                                 </form>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

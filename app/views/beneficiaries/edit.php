@@ -203,9 +203,11 @@
                                 <a href="BeneficiaryController.php?action=list" class="btn btn-secondary me-2">
                                     <i class="fas fa-times"></i> Cancel
                                 </a>
+                                <?php if (function_exists('rbacCan') && rbacCan('beneficiaries')): ?>
                                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                                     <i class="fas fa-trash"></i> Delete
                                 </button>
+                                <?php endif; ?>
                             </div>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save"></i> Update Beneficiary

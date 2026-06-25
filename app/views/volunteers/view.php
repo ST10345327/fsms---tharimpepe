@@ -83,6 +83,7 @@
                 </div>
 
                 <div class="action-buttons d-flex gap-2">
+                    <?php if (function_exists('rbacCan') && rbacCan('volunteers')): ?>
                     <a href="VolunteerController.php?action=edit&id=<?php echo $volunteer['VolunteerID']; ?>" class="btn btn-warning flex-grow-1">
                         <i class="fas fa-edit"></i> Edit
                     </a>
@@ -93,6 +94,7 @@
                             <i class="fas fa-trash"></i> Deactivate
                         </button>
                     </form>
+                    <?php endif; ?>
                     <a href="VolunteerController.php?action=list" class="btn btn-secondary flex-grow-1">
                         <i class="fas fa-arrow-left"></i> Back
                     </a>

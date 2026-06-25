@@ -16,6 +16,7 @@ require_once __DIR__ . "/../../config/database.php";
 
 // Require login
 requireLogin();
+rbacRequirePermission('profile');
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'profile';
 $currentUser = getCurrentUser();

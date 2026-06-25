@@ -123,12 +123,16 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <div class="d-flex justify-content-center gap-3">
+                <?php if (function_exists('rbacCan') && rbacCan('beneficiaries')): ?>
                 <a href="BeneficiaryController.php?action=edit&id=<?php echo $beneficiary['BeneficiaryID']; ?>" class="btn btn-warning">
                     <i class="fas fa-edit"></i> Edit Beneficiary
                 </a>
+                <?php endif; ?>
+                <?php if (function_exists('rbacCan') && rbacCan('beneficiaries')): ?>
                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                     <i class="fas fa-trash"></i> Delete Beneficiary
                 </button>
+                <?php endif; ?>
                 <button type="button" class="btn btn-primary" onclick="window.print()">
                     <i class="fas fa-print"></i> Print Details
                 </button>
