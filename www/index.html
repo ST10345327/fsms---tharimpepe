@@ -1,17 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tharimpepe FSMS</title>
-    <style>
-        body { background: #1b3a5c; color: #fff; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; font-family: Arial, sans-serif; text-align: center; }
-        .loader { border: 4px solid rgba(255,255,255,0.2); border-top: 4px solid #fff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    </style>
-    <script>window.location.href = "http://10.0.2.2/";</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tharimpepe FSMS</title>
+  <style>
+    :root {
+      --font-sans: "Segoe UI", "Aptos", "Helvetica Neue", Arial, sans-serif;
+      --color-text-primary: #1f2937;
+      --color-text-secondary: #667085;
+      --color-background-primary: #ffffff;
+      --color-background-secondary: #f8fafc;
+      --color-background-tertiary: #f3f6f8;
+      --color-border-secondary: #cfd8e3;
+      --color-border-tertiary: #dde5ec;
+      --border-radius-md: 10px;
+      --border-radius-lg: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background:
+        radial-gradient(circle at top left, rgba(29, 158, 117, 0.08), transparent 24%),
+        linear-gradient(180deg, #f7faf8 0%, #eef3f6 100%);
+      padding: 10px;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--border-radius-lg);
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(31, 41, 55, 0.08);
+      background: var(--color-background-tertiary);
+    }
+
+    .sidebar { display: none; background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); flex-direction: column; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; }
+    .sidebar.active { display: flex; }
+    .sidebar-logo { padding: 18px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); background: linear-gradient(180deg, #ffffff 0%, #f7faf9 100%); display: flex; justify-content: space-between; align-items: center; }
+    .sidebar-logo .org { font-size: 16px; font-weight: 700; color: #0f6e56; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 15px 16px; font-size: 14px; cursor: pointer; border-left: 3px solid transparent; color: var(--color-text-secondary); transition: 0.2s ease; }
+    .nav-item:hover { background: var(--color-background-tertiary); color: var(--color-text-primary); }
+    .nav-item.active { border-left: 3px solid #1D9E75; color: #0F6E56; background: #E1F5EE; font-weight: 600; }
+    .nav-icon { width: 20px; height: 20px; }
+
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .topbar { background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+    .topbar-title { font-size: 16px; font-weight: 600; }
+    .menu-btn { cursor: pointer; padding: 5px; }
+
+    .content { padding: 15px; flex: 1; }
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; }
+    .metric-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px; }
+    .metric-label { font-size: 10px; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .metric-value { font-size: 18px; font-weight: 700; }
+    .metric-value.green { color: #1D9E75; }
+    .metric-value.blue { color: #378ADD; }
+    .metric-value.amber { color: #BA7517; }
+
+    .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 15px; margin-bottom: 12px; }
+    .card-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { text-align: left; padding: 8px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-secondary); }
+    td { padding: 10px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+
+    .badge { padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+    .badge-green { background: #E1F5EE; color: #0F6E56; }
+    .badge-amber { background: #FAEEDA; color: #854F0B; }
+    .badge-red { background: #FCEBEB; color: #A32D2D; }
+
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; font-weight: 600; }
+    input, select { width: 100%; padding: 10px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; }
+    .btn { width: 100%; padding: 12px; border-radius: var(--border-radius-md); border: none; font-weight: 600; font-size: 14px; cursor: pointer; margin-top: 5px; }
+    .btn-primary { background: #1D9E75; color: white; }
+
+    .attendance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .beneficiary-tile { background: white; border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px; text-align: center; }
+    .beneficiary-tile.present { background: #E1F5EE; border-color: #1D9E75; }
+    .beneficiary-tile.absent { background: #FCEBEB; border-color: #E24B4A; }
+    .avatar { width: 35px; height: 35px; border-radius: 50%; background: #eee; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+
+    .stock-bar { height: 6px; background: #eee; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+    .stock-fill { height: 100%; }
+
+    .report-btn { display: flex; align-items: center; gap: 12px; padding: 15px; background: white; border-radius: 12px; margin-bottom: 10px; border: 0.5px solid var(--color-border-tertiary); }
+    .report-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  </style>
 </head>
 <body>
-    <div><h2>Tharimpepe FSMS</h2><p>Loading...</p><div class="loader"></div></div>
+  <div class="app">
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="org">Tharimpepe FSMS</div>
+        <div class="menu-btn" onclick="toggleMenu()">✕</div>
+      </div>
+      <nav style="flex: 1; overflow-y: auto;">
+        <div class="nav-item active" onclick="showScreen('dashboard', this)">Dashboard</div>
+        <div class="nav-item" onclick="showScreen('beneficiaries', this)">Beneficiaries</div>
+        <div class="nav-item" onclick="showScreen('attendance', this)">Attendance</div>
+        <div class="nav-item" onclick="showScreen('stock', this)">Stock</div>
+        <div class="nav-item" onclick="showScreen('volunteers', this)">Volunteers</div>
+        <div class="nav-item" onclick="showScreen('reports', this)">Reports</div>
+      </nav>
+      <div style="padding: 15px; border-top: 0.5px solid var(--color-border-tertiary); font-size: 12px;">
+        Logged in: <b>O. Phawe</b>
+      </div>
+    </div>
+
+    <div class="main">
+      <div class="topbar">
+        <div class="menu-btn" onclick="toggleMenu()">☰</div>
+        <div class="topbar-title" id="screen-title">Dashboard</div>
+        <div style="width: 24px;"></div>
+      </div>
+
+      <div class="content">
+        <!-- Dashboard -->
+        <div class="screen active" id="screen-dashboard">
+          <div class="metrics">
+            <div class="metric-card"><div class="metric-label">Total beneficiaries</div><div class="metric-value green">148</div></div>
+            <div class="metric-card"><div class="metric-label">Meals served</div><div class="metric-value blue">132</div></div>
+            <div class="metric-card"><div class="metric-label">Stock low</div><div class="metric-value amber">3</div></div>
+            <div class="metric-card"><div class="metric-label">Volunteers</div><div class="metric-value">12</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Recent Attendance</div>
+            <table>
+              <thead><tr><th>Name</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Kabo Sithole</td><td><span class="badge badge-green">Present</span></td></tr>
+                <tr><td>Lerato M.</td><td><span class="badge badge-green">Present</span></td></tr>
+                <tr><td>Tiro Nkosi</td><td><span class="badge badge-red">Absent</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Beneficiaries -->
+        <div class="screen" id="screen-beneficiaries">
+          <div class="card">
+            <div class="card-title">Add Beneficiary</div>
+            <div class="form-group"><label>First Name</label><input type="text"></div>
+            <div class="form-group"><label>Last Name</label><input type="text"></div>
+            <div class="form-group"><label>Category</label><select><option>Child</option><option>Elderly</option></select></div>
+            <button class="btn btn-primary">Save</button>
+          </div>
+        </div>
+
+        <!-- Attendance -->
+        <div class="screen" id="screen-attendance">
+          <div class="card">
+            <div class="card-title">Today's Attendance</div>
+            <div class="attendance-grid">
+              <div class="beneficiary-tile present"><div class="avatar" style="background:#E1F5EE; color:#0F6E56">KS</div><div>Kabo S.</div></div>
+              <div class="beneficiary-tile present"><div class="avatar" style="background:#E1F5EE; color:#0F6E56">LM</div><div>Lerato M.</div></div>
+              <div class="beneficiary-tile absent"><div class="avatar" style="background:#FCEBEB; color:#A32D2D">TN</div><div>Tiro N.</div></div>
+              <div class="beneficiary-tile"><div class="avatar">MD</div><div>Mpho D.</div></div>
+            </div>
+            <button class="btn btn-primary" style="margin-top: 15px;">Submit Attendance</button>
+          </div>
+        </div>
+
+        <!-- Stock -->
+        <div class="screen" id="screen-stock">
+          <div class="card">
+            <div class="card-title">Stock Levels</div>
+            <div style="margin-bottom: 15px;">
+              <div style="display:flex; justify-content:space-between; font-size:12px;"><span>Maize Meal</span><span>78%</span></div>
+              <div class="stock-bar"><div class="stock-fill" style="width:78%; background:#1D9E75"></div></div>
+            </div>
+            <div style="margin-bottom: 15px;">
+              <div style="display:flex; justify-content:space-between; font-size:12px;"><span>Cooking Oil</span><span>18%</span></div>
+              <div class="stock-bar"><div class="stock-fill" style="width:18%; background:#E24B4A"></div></div>
+            </div>
+            <button class="btn btn-primary">Add Inventory</button>
+          </div>
+        </div>
+
+        <!-- Volunteers -->
+        <div class="screen" id="screen-volunteers">
+          <div class="card">
+            <div class="card-title">Active Volunteers</div>
+            <div style="padding: 10px 0; border-bottom: 0.5px solid #eee;"><b>Nomsa M.</b> - Preparation</div>
+            <div style="padding: 10px 0; border-bottom: 0.5px solid #eee;"><b>Thabo K.</b> - Preparation</div>
+            <div style="padding: 10px 0;"><b>Lebo D.</b> - Distribution</div>
+          </div>
+        </div>
+
+        <!-- Reports -->
+        <div class="screen" id="screen-reports">
+          <div class="report-btn">
+            <div class="report-icon" style="background:#E1F5EE; color:#0F6E56">A</div>
+            <div><b>Attendance Report</b><div style="font-size:10px; color:#666">Daily/Weekly stats</div></div>
+          </div>
+          <div class="report-btn">
+            <div class="report-icon" style="background:#E6F1FB; color:#185FA5">S</div>
+            <div><b>Stock Report</b><div style="font-size:10px; color:#666">Usage & Inventory</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleMenu() {
+      document.getElementById('sidebar').classList.toggle('active');
+    }
+
+    function showScreen(id, el) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('screen-' + id).classList.add('active');
+      el.classList.add('active');
+      document.getElementById('screen-title').textContent = el.textContent;
+      if (window.innerWidth < 768) toggleMenu();
+    }
+  </script>
 </body>
 </html>

@@ -551,6 +551,347 @@ body:has(.fsms-sidebar) .page-header p {
 }
 
 /* ============================================
+   Mobile-first responsive overrides
+   ============================================ */
+
+/* Below 576px — compact phone layout */
+@media (max-width: 576px) {
+    .fsms-grid-4, .fsms-grid-2 {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .fsms-topbar {
+        flex-wrap: wrap;
+        gap: 8px;
+        min-height: 56px;
+        padding: 10px 12px;
+    }
+
+    .fsms-topbar .fsms-page-title {
+        font-size: 16px;
+    }
+
+    .fsms-topbar .fsms-page-subtitle {
+        font-size: 11px;
+    }
+
+    .fsms-user-meta {
+        display: none;
+    }
+
+    .fsms-avatar {
+        height: 32px;
+        width: 32px;
+        font-size: 11px;
+    }
+
+    body:has(.fsms-sidebar) .page-header {
+        padding: 16px 12px 0;
+    }
+
+    body:has(.fsms-sidebar) .page-header h1 {
+        font-size: 20px;
+    }
+
+    body:has(.fsms-sidebar) .container-fluid {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    /* Tables: horizontal scroll on mobile */
+    .table-responsive-sm {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table:not(.table-responsive-sm table) {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+    }
+
+    /* Cards: full width, tighter padding */
+    .table-card, .fsms-card, .card, .content-card,
+    .form-card, .stats-card, .welcome-card {
+        padding: 12px;
+    }
+
+    /* Buttons: stack vertically in button groups */
+    .btn-group-sm.d-flex.gap-2,
+    .d-flex.gap-2.justify-content-center,
+    .d-flex.gap-2.justify-content-between,
+    .d-flex.gap-2.align-items-center,
+    .action-buttons .d-flex {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .action-buttons .btn,
+    .btn-group-sm .btn,
+    .d-flex.gap-2 .btn,
+    .flex-grow-1,
+    .report-btn {
+        width: 100% !important;
+        flex: none !important;
+    }
+
+    .stock-toolbar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .stock-toolbar .btn {
+        width: 100%;
+    }
+
+    /* Filter/search sections: stack vertically */
+    .filter-card .d-flex,
+    .filter-form .row,
+    .report-control .d-flex {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .filter-card .col-md-3,
+    .filter-card .col-md-4,
+    .filter-card .col-md-6,
+    .filter-form .col-md-3,
+    .filter-form .col-md-4,
+    .filter-form .col-md-6 {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Forms: full width */
+    .form-control, .form-select {
+        font-size: 16px;
+    }
+
+    .page-header .d-flex {
+        flex-direction: column !important;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .page-header .d-flex .btn {
+        width: 100% !important;
+    }
+
+    /* Stat cards: compact */
+    .stat-card, .fsms-stat {
+        padding: 14px;
+    }
+
+    .fsms-stat-value {
+        font-size: 22px;
+    }
+
+    /* Sidebar-specific content offset */
+    body:has(.fsms-sidebar) .container-fluid,
+    body:has(.fsms-sidebar) .dashboard-container,
+    body:has(.fsms-sidebar) .page-header,
+    body:has(.fsms-sidebar) footer {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .fsms-stat-icon {
+        height: 36px;
+        width: 36px;
+    }
+
+    .fsms-stat-icon i {
+        font-size: 15px;
+    }
+
+    .row-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .preview-head .d-flex {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .report-card-body .d-flex {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .report-card-body .report-btn {
+        width: 100%;
+    }
+
+    /* Metric boxes */
+    .report-metric {
+        width: 100% !important;
+    }
+
+    /* KPI grid */
+    .kpi-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 8px;
+    }
+
+    .kpi-card {
+        padding: 12px;
+    }
+
+    .kpi-value {
+        font-size: 20px;
+    }
+
+    /* Sidebar on donor dashboard */
+    .row .col-lg-4,
+    .row .col-lg-8 {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    .row.justify-content-center .col-lg-6,
+    .row.justify-content-center .col-lg-10,
+    .row.justify-content-center .col-md-8 {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Modal: larger on mobile */
+    .modal-dialog {
+        margin: 8px;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .stock-item {
+        padding: 12px;
+    }
+
+    .stock-alert {
+        flex-direction: column;
+        text-align: center;
+        padding: 12px;
+    }
+
+    .stock-alert i {
+        font-size: 24px;
+    }
+
+    .fsms-hamburger {
+        display: inline-flex;
+    }
+
+    .offcanvas {
+        max-width: 280px;
+    }
+
+    .offcanvas-nav .fsms-nav-link {
+        color: var(--fsms-text);
+        padding: 12px 8px;
+        border-radius: 6px;
+    }
+
+    .offcanvas-nav .fsms-nav-link i {
+        width: 20px;
+    }
+
+    .attendance-table td,
+    .attendance-table th {
+        font-size: 13px;
+        padding: 6px 4px;
+    }
+
+    .card-body .row .col-sm-6,
+    .card-body .row .col-md-4 {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* Login page: single column */
+    .login-shell {
+        grid-template-columns: 1fr !important;
+    }
+
+    .login-mission {
+        display: none !important;
+    }
+
+    .login-form-shell {
+        padding: 24px 16px !important;
+    }
+
+    .login-form-inner {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+
+    .login-logo-img {
+        height: 48px !important;
+    }
+
+    .login-form h2 {
+        font-size: 22px !important;
+    }
+
+    /* Register page */
+    .register-form {
+        padding: 24px 16px !important;
+    }
+
+    .register-form-inner {
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+
+    /* Beneficiary view: stacked sidebar */
+    .beneficiary-content .row .col-lg-8,
+    .beneficiary-content .row .col-lg-4 {
+        width: 100%;
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+
+/* Between 577px and 768px — small tablet */
+@media (min-width: 577px) and (max-width: 768px) {
+    .fsms-grid-4 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    body:has(.fsms-sidebar) .container-fluid {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .fsms-topbar {
+        padding: 0 16px 0 18px;
+    }
+
+    .table-responsive-md {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .filter-card .row > div {
+        margin-bottom: 8px;
+    }
+
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================
    Print styles for reports
    ============================================ */
 @media print {
