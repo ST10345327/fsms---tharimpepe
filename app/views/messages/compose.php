@@ -77,6 +77,7 @@
                     <?php endif; ?>
 
                     <form method="POST" action="MessageController.php?action=send">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <div class="mb-4">
                             <label for="recipient_id" class="form-label">
                                 <i class="fas fa-user me-2"></i>Recipient
@@ -84,7 +85,7 @@
                             <select name="recipient_id" id="recipient_id" class="form-select" required>
                                 <option value="">Select recipient...</option>
                                 <?php foreach ($recipients as $recipient): ?>
-                                    <?php if ($recipient['UserID'] != $currentUser['id']): ?>
+                                    <?php if ($recipient['UserID'] != $currentUser['user_id']): ?>
                                         <option value="<?php echo $recipient['UserID']; ?>"
                                                 <?php echo (isset($replyMessage) && $replyMessage['SenderID'] == $recipient['UserID']) ? 'selected' : ''; ?>>
                                             <?php echo htmlspecialchars($recipient['Username']); ?>

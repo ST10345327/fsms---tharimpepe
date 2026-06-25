@@ -81,53 +81,44 @@
                     </div>
 
                     <form method="POST" action="VolunteerScheduleController.php" id="availability_form">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="action" value="save_availability">
                         <input type="hidden" name="volunteer_id" value="<?php echo (int)$volunteer['VolunteerID']; ?>">
 
-                        <?php
-                            $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-                            $dayAbbrev = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        ?>
+                        <?php $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']; ?>
 
-                        <?php foreach ($days as $index => $day): ?>
+                        <?php foreach ($days as $day): ?>
                             <?php
-                                $isAvailable = false;
-                                $notes = '';
-                                if (!empty($availability)) {
-                                    $dayData = array_filter($availability, fn($a) => $a['DayOfWeek'] === $index);
-                                    if (!empty($dayData)) {
-                                        $dayData = reset($dayData);
-                                        $isAvailable = (bool)$dayData['IsAvailable'];
-                                        $notes = $dayData['Notes'] ?? '';
-                                    }
-                                }
+                                $dayData = $availability[$day] ?? ['DayOfWeek' => $day, 'IsAvailable' => 0, 'Notes' => ''];
+                                $isAvailable = (bool)($dayData['IsAvailable'] ?? 0);
+                                $notes = $dayData['Notes'] ?? '';
                             ?>
                             <div class="availability-row">
                                 <div class="day-label"><?php echo $day; ?></div>
                                 
                                 <div>
-                                    <input type="hidden" name="availability[<?php echo $index; ?>][day_of_week]" value="<?php echo $index; ?>">
+                                    <input type="hidden" name="availability[<?php echo $day; ?>][day_of_week]" value="<?php echo $day; ?>">
                                     <div class="availability-toggle">
                                         <button type="button" class="toggle-btn available-toggle" 
-                                                data-day="<?php echo $index; ?>"
+                                                data-day="<?php echo $day; ?>"
                                                 data-available="1"
                                                 <?php echo $isAvailable ? 'style="display: none;"' : ''; ?>>
                                             <i class="fas fa-check"></i> Available
                                         </button>
                                         <button type="button" class="toggle-btn unavailable-toggle"
-                                                data-day="<?php echo $index; ?>"
+                                                data-day="<?php echo $day; ?>"
                                                 data-available="0"
                                                 <?php echo !$isAvailable ? 'style="display: none;"' : ''; ?>>
                                             <i class="fas fa-times"></i> Unavailable
                                         </button>
                                     </div>
-                                    <input type="hidden" class="availability-value" name="availability[<?php echo $index; ?>][is_available]" 
+                                    <input type="hidden" class="availability-value" name="availability[<?php echo $day; ?>][is_available]" 
                                            value="<?php echo $isAvailable ? '1' : '0'; ?>">
                                 </div>
 
                                 <div>
                                     <input type="text" class="form-control form-control-sm" 
-                                           name="availability[<?php echo $index; ?>][notes]"
+                                           name="availability[<?php echo $day; ?>][notes]"
                                            placeholder="Optional notes"
                                            value="<?php echo htmlspecialchars($notes); ?>">
                                 </div>

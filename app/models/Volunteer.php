@@ -24,17 +24,24 @@ class Volunteer
      * Returns: Array of volunteer records
      * Pagination: Supports LIMIT and OFFSET
      */
-    public function getAllVolunteers($limit = 10, $offset = 0, $status = null)
+    public function getAllVolunteers($limit = 10, $offset = 0, $status = null, $searchTerm = null)
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, v.FirstName, v.LastName, 
-                         v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.FullName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', 1) AS FirstName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', -1) AS LastName,
+                         u.Phone, v.Skills, v.Address, v.Notes, v.AvailabilityStatus,
+                         v.Status AS VolunteerStatus, u.Status AS UserStatus, v.CreatedAt
                   FROM " . $this->table . " v
                   INNER JOIN Users u ON v.UserID = u.UserID
-                  WHERE u.IsActive = TRUE";
+                   WHERE u.Status = 'active' AND v.Status = 'approved'";
 
         // Filter by availability status if provided
         if ($status && in_array($status, ['available', 'unavailable', 'on_leave'])) {
             $query .= " AND v.AvailabilityStatus = :status";
+        }
+
+        if (!empty($searchTerm)) {
+            $query .= " AND (u.FullName LIKE :search1 OR u.Phone LIKE :search2 OR u.Email LIKE :search3 OR v.Skills LIKE :search4 OR v.Address LIKE :search5)";
         }
 
         $query .= " ORDER BY v.CreatedAt DESC LIMIT :limit OFFSET :offset";
@@ -45,8 +52,103 @@ class Volunteer
             $stmt->bindParam(":status", $status);
         }
 
+        if (!empty($searchTerm)) {
+            $search = "%{$searchTerm}%";
+            $stmt->bindParam(":search1", $search);
+            $stmt->bindParam(":search2", $search);
+            $stmt->bindParam(":search3", $search);
+            $stmt->bindParam(":search4", $search);
+            $stmt->bindParam(":search5", $search);
+        }
+
         $stmt->bindParam(":limit", $limit, PDO::PARAM_INT);
         $stmt->bindParam(":offset", $offset, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        return [];
+    }
+
+    /**
+     * HZ-VOL-001A
+     * Purpose: Get volunteer count for pagination/filtering
+     */
+    public function getVolunteerCount($status = null, $searchTerm = null)
+    {
+        $query = "SELECT COUNT(*) AS total
+                  FROM " . $this->table . " v
+                  INNER JOIN Users u ON v.UserID = u.UserID
+                  WHERE u.Status = 'active' AND v.Status = 'approved'";
+
+        if ($status && in_array($status, ['available', 'unavailable', 'on_leave'])) {
+            $query .= " AND v.AvailabilityStatus = :status";
+        }
+
+        if (!empty($searchTerm)) {
+            $query .= " AND (u.FullName LIKE :search1 OR u.Phone LIKE :search2 OR u.Email LIKE :search3 OR v.Skills LIKE :search4 OR v.Address LIKE :search5)";
+        }
+
+        $stmt = $this->conn->prepare($query);
+
+        if ($status && in_array($status, ['available', 'unavailable', 'on_leave'])) {
+            $stmt->bindParam(":status", $status);
+        }
+
+        if (!empty($searchTerm)) {
+            $search = "%{$searchTerm}%";
+            $stmt->bindParam(":search1", $search);
+            $stmt->bindParam(":search2", $search);
+            $stmt->bindParam(":search3", $search);
+            $stmt->bindParam(":search4", $search);
+            $stmt->bindParam(":search5", $search);
+        }
+
+        if ($stmt->execute()) {
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int)($result['total'] ?? 0);
+        }
+
+        return 0;
+    }
+
+    /**
+     * HZ-VOL-001B
+     * Purpose: Get all matching volunteers for export
+     */
+    public function getVolunteersForExport($status = null, $searchTerm = null)
+    {
+        $query = "SELECT v.VolunteerID, u.Username, u.Email, u.FullName,
+                         u.Phone, v.Skills, v.Address, v.Notes, v.AvailabilityStatus, v.Status AS VolunteerStatus, v.CreatedAt
+                  FROM " . $this->table . " v
+                  INNER JOIN Users u ON v.UserID = u.UserID
+                  WHERE u.Status = 'active' AND v.Status = 'approved'";
+
+        if ($status && in_array($status, ['available', 'unavailable', 'on_leave'])) {
+            $query .= " AND v.AvailabilityStatus = :status";
+        }
+
+        if (!empty($searchTerm)) {
+            $query .= " AND (u.FullName LIKE :search1 OR u.Phone LIKE :search2 OR u.Email LIKE :search3 OR v.Skills LIKE :search4 OR v.Address LIKE :search5)";
+        }
+
+        $query .= " ORDER BY v.CreatedAt DESC";
+
+        $stmt = $this->conn->prepare($query);
+
+        if ($status && in_array($status, ['available', 'unavailable', 'on_leave'])) {
+            $stmt->bindParam(":status", $status);
+        }
+
+        if (!empty($searchTerm)) {
+            $search = "%{$searchTerm}%";
+            $stmt->bindParam(":search1", $search);
+            $stmt->bindParam(":search2", $search);
+            $stmt->bindParam(":search3", $search);
+            $stmt->bindParam(":search4", $search);
+            $stmt->bindParam(":search5", $search);
+        }
 
         if ($stmt->execute()) {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -63,8 +165,11 @@ class Volunteer
      */
     public function getVolunteerById($volunteerId)
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.Role, 
-                         v.FirstName, v.LastName, v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.Role, u.FullName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', 1) AS FirstName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', -1) AS LastName,
+                         u.Phone, v.Skills, v.Address, v.Notes, v.AvailabilityStatus,
+                         v.Status AS VolunteerStatus, u.Status AS UserStatus, v.CreatedAt
                   FROM " . $this->table . " v
                   INNER JOIN Users u ON v.UserID = u.UserID
                   WHERE v.VolunteerID = :volunteer_id
@@ -89,8 +194,11 @@ class Volunteer
      */
     public function getVolunteerByUserId($userId)
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, 
-                         v.FirstName, v.LastName, v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.FullName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', 1) AS FirstName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', -1) AS LastName,
+                         u.Phone, v.Skills, v.Address, v.Notes, v.AvailabilityStatus,
+                         v.Status AS VolunteerStatus, u.Status AS UserStatus, v.CreatedAt
                   FROM " . $this->table . " v
                   INNER JOIN Users u ON v.UserID = u.UserID
                   WHERE v.UserID = :user_id
@@ -111,42 +219,69 @@ class Volunteer
      * Purpose: Create new volunteer profile linked to user account
      * Table: Volunteers
      * Returns: VolunteerID on success, false on failure
-     * Validation: FirstName, LastName, Phone required
      */
-    public function createVolunteer($userId, $firstName, $lastName, $phone, $address = null)
+    public function createVolunteer($userId, $firstName, $lastName, $phone, $address = null, $profileStatus = 'pending', $availabilityStatus = 'unavailable')
     {
+        $fullName = trim($firstName . ' ' . $lastName);
+
         // Validation: Check if volunteer already exists for this user
         if ($this->getVolunteerByUserId($userId)) {
             throw new Exception("Volunteer profile already exists for this user");
         }
 
-        // Validation: Required fields
-        if (empty($firstName) || empty($lastName) || empty($phone)) {
-            throw new Exception("First name, last name, and phone are required");
+        if (empty($fullName)) {
+            throw new Exception("Full name is required");
         }
 
         // Validation: Phone format (basic)
-        if (!preg_match('/^[0-9\s\-\+\(\)]{10,}$/', $phone)) {
+        if (!empty($phone) && !preg_match('/^[0-9\s\-\+\(\)]{10,}$/', $phone)) {
             throw new Exception("Invalid phone number format");
         }
 
-        $query = "INSERT INTO " . $this->table . " 
-                  (UserID, FirstName, LastName, Phone, Address, AvailabilityStatus) 
-                  VALUES (:user_id, :first_name, :last_name, :phone, :address, 'available')";
-
-        $stmt = $this->conn->prepare($query);
-
-        $stmt->bindParam(":user_id", $userId);
-        $stmt->bindParam(":first_name", $firstName);
-        $stmt->bindParam(":last_name", $lastName);
-        $stmt->bindParam(":phone", $phone);
-        $stmt->bindParam(":address", $address);
-
-        if ($stmt->execute()) {
-            return $this->conn->lastInsertId();
+        $ownTransaction = !$this->conn->inTransaction();
+        if ($ownTransaction) {
+            $this->conn->beginTransaction();
         }
 
-        return false;
+        try {
+            $userUpdate = "UPDATE Users SET FullName = :full_name, Phone = :phone WHERE UserID = :user_id";
+            $userStmt = $this->conn->prepare($userUpdate);
+            $userStmt->bindParam(":full_name", $fullName);
+            $userStmt->bindParam(":phone", $phone);
+            $userStmt->bindParam(":user_id", $userId);
+            $userStmt->execute();
+
+            $query = "INSERT INTO " . $this->table . " 
+                      (UserID, Skills, Address, Notes, AvailabilityStatus, Status) 
+                      VALUES (:user_id, :skills, :address, :notes, :availability_status, :profile_status)";
+
+            $stmt = $this->conn->prepare($query);
+            $skills = null;
+            $notes = null;
+            $stmt->bindParam(":user_id", $userId);
+            $stmt->bindParam(":skills", $skills);
+            $stmt->bindParam(":address", $address);
+            $stmt->bindParam(":notes", $notes);
+            $stmt->bindParam(":availability_status", $availabilityStatus);
+            $stmt->bindParam(":profile_status", $profileStatus);
+
+            if ($stmt->execute()) {
+                if ($ownTransaction) {
+                    $this->conn->commit();
+                }
+                return $this->conn->lastInsertId();
+            }
+
+            if ($ownTransaction) {
+                $this->conn->rollBack();
+            }
+            return false;
+        } catch (Exception $e) {
+            if ($ownTransaction && $this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -158,6 +293,8 @@ class Volunteer
      */
     public function updateVolunteer($volunteerId, $firstName, $lastName, $phone, $address, $status)
     {
+        $fullName = trim($firstName . ' ' . $lastName);
+
         // Validation: Phone format
         if (!empty($phone) && !preg_match('/^[0-9\s\-\+\(\)]{10,}$/', $phone)) {
             throw new Exception("Invalid phone number format");
@@ -168,24 +305,51 @@ class Volunteer
             throw new Exception("Invalid availability status");
         }
 
-        $query = "UPDATE " . $this->table . " 
-                  SET FirstName = :first_name, 
-                      LastName = :last_name, 
-                      Phone = :phone, 
-                      Address = :address, 
-                      AvailabilityStatus = :status 
-                  WHERE VolunteerID = :volunteer_id";
+        $volunteer = $this->getVolunteerById($volunteerId);
+        if (!$volunteer) {
+            throw new Exception("Volunteer not found");
+        }
 
-        $stmt = $this->conn->prepare($query);
+        $ownTransaction = !$this->conn->inTransaction();
+        if ($ownTransaction) {
+            $this->conn->beginTransaction();
+        }
 
-        $stmt->bindParam(":first_name", $firstName);
-        $stmt->bindParam(":last_name", $lastName);
-        $stmt->bindParam(":phone", $phone);
-        $stmt->bindParam(":address", $address);
-        $stmt->bindParam(":status", $status);
-        $stmt->bindParam(":volunteer_id", $volunteerId);
+        try {
+            $userQuery = "UPDATE Users SET FullName = :full_name, Phone = :phone WHERE UserID = :user_id";
+            $userStmt = $this->conn->prepare($userQuery);
+            $userStmt->bindParam(":full_name", $fullName);
+            $userStmt->bindParam(":phone", $phone);
+            $userStmt->bindParam(":user_id", $volunteer['UserID']);
+            $userStmt->execute();
 
-        return $stmt->execute();
+            $query = "UPDATE " . $this->table . " 
+                      SET Address = :address, 
+                          AvailabilityStatus = :status 
+                      WHERE VolunteerID = :volunteer_id";
+
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":address", $address);
+            $stmt->bindParam(":status", $status);
+            $stmt->bindParam(":volunteer_id", $volunteerId);
+
+            $result = $stmt->execute();
+            if ($result) {
+                if ($ownTransaction) {
+                    $this->conn->commit();
+                }
+            } else {
+                if ($ownTransaction) {
+                    $this->conn->rollBack();
+                }
+            }
+            return $result;
+        } catch (Exception $e) {
+            if ($ownTransaction && $this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -248,12 +412,14 @@ class Volunteer
      */
     public function getAvailableVolunteers()
     {
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, v.FirstName, v.LastName, v.Phone
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.FullName,
+                         u.Phone
                   FROM " . $this->table . " v
                   INNER JOIN Users u ON v.UserID = u.UserID
-                  WHERE v.AvailabilityStatus = 'available'
-                  AND u.IsActive = TRUE
-                  ORDER BY v.FirstName ASC";
+                   WHERE v.AvailabilityStatus = 'available'
+                   AND u.Status = 'active'
+                   AND v.Status = 'approved'
+                   ORDER BY u.FullName ASC";
 
         $stmt = $this->conn->prepare($query);
 
@@ -274,16 +440,23 @@ class Volunteer
     {
         $searchTerm = "%{$searchTerm}%";
 
-        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, 
-                         v.FirstName, v.LastName, v.Phone, v.Address, v.AvailabilityStatus, v.CreatedAt
+        $query = "SELECT v.VolunteerID, v.UserID, u.Username, u.Email, u.FullName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', 1) AS FirstName,
+                         SUBSTRING_INDEX(COALESCE(u.FullName, ''), ' ', -1) AS LastName,
+                         u.Phone, v.Skills, v.Address, v.Notes, v.AvailabilityStatus, v.Status AS VolunteerStatus, v.CreatedAt
                   FROM " . $this->table . " v
                   INNER JOIN Users u ON v.UserID = u.UserID
-                  WHERE (v.FirstName LIKE :search OR v.LastName LIKE :search OR v.Phone LIKE :search)
-                  AND u.IsActive = TRUE
-                  ORDER BY v.FirstName ASC";
+                   WHERE (u.FullName LIKE :search1 OR u.Phone LIKE :search2 OR u.Email LIKE :search3 OR v.Skills LIKE :search4 OR v.Address LIKE :search5)
+                   AND u.Status = 'active'
+                   AND v.Status = 'approved'
+                   ORDER BY u.FullName ASC";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":search", $searchTerm);
+        $stmt->bindParam(":search1", $searchTerm);
+        $stmt->bindParam(":search2", $searchTerm);
+        $stmt->bindParam(":search3", $searchTerm);
+        $stmt->bindParam(":search4", $searchTerm);
+        $stmt->bindParam(":search5", $searchTerm);
 
         if ($stmt->execute()) {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -308,12 +481,39 @@ class Volunteer
             throw new Exception("Volunteer not found");
         }
 
-        // Soft delete: deactivate the user account
-        $query = "UPDATE Users SET IsActive = FALSE WHERE UserID = :user_id";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":user_id", $volunteer['UserID']);
+        $ownTransaction = !$this->conn->inTransaction();
+        if ($ownTransaction) {
+            $this->conn->beginTransaction();
+        }
 
-        return $stmt->execute();
+        try {
+            $query = "UPDATE Users SET Status = 'inactive' WHERE UserID = :user_id";
+            $stmt = $this->conn->prepare($query);
+            $stmt->bindParam(":user_id", $volunteer['UserID']);
+            $stmt->execute();
+
+            $volunteerQuery = "UPDATE " . $this->table . " SET Status = 'inactive', AvailabilityStatus = 'unavailable' WHERE VolunteerID = :volunteer_id";
+            $volunteerStmt = $this->conn->prepare($volunteerQuery);
+            $volunteerStmt->bindParam(":volunteer_id", $volunteerId);
+            $result = $volunteerStmt->execute();
+
+            if ($result) {
+                if ($ownTransaction) {
+                    $this->conn->commit();
+                }
+            } else {
+                if ($ownTransaction) {
+                    $this->conn->rollBack();
+                }
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            if ($ownTransaction && $this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -328,7 +528,8 @@ class Volunteer
                   FROM " . $this->table . " v
                   INNER JOIN Users u ON v.UserID = u.UserID
                   WHERE v.AvailabilityStatus = 'available'
-                  AND u.IsActive = TRUE";
+                   AND u.Status = 'active'
+                   AND v.Status = 'approved'";
 
         $stmt = $this->conn->prepare($query);
 
@@ -350,9 +551,10 @@ class Volunteer
     {
         $today = date('l'); // Get day name (Monday, Tuesday, etc.)
 
-        $query = "SELECT vs.TimeSlot, vs.Role, GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers, vs.Status
+        $query = "SELECT vs.TimeSlot, vs.Role, GROUP_CONCAT(u.FullName SEPARATOR ', ') as volunteers, vs.Status
                   FROM VolunteerSchedule vs
-                  LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+                  LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID
+                  LEFT JOIN Users u ON v.UserID = u.UserID
                   WHERE vs.DayOfWeek = :day
                   GROUP BY vs.ScheduleID, vs.TimeSlot, vs.Role, vs.Status
                   ORDER BY vs.TimeSlot ASC";
@@ -376,9 +578,10 @@ class Volunteer
     public function getWeeklySchedule()
     {
         $query = "SELECT vs.DayOfWeek, vs.TimeSlot, vs.Role,
-                         GROUP_CONCAT(CONCAT(v.FirstName, ' ', v.LastName) SEPARATOR ', ') as volunteers
+                         GROUP_CONCAT(u.FullName SEPARATOR ', ') as volunteers
                   FROM VolunteerSchedule vs
-                  LEFT JOIN Volunteers v ON FIND_IN_SET(v.VolunteerID, vs.VolunteerIDs)
+                  LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID
+                  LEFT JOIN Users u ON v.UserID = u.UserID
                   GROUP BY vs.DayOfWeek, vs.TimeSlot, vs.Role
                   ORDER BY FIELD(vs.DayOfWeek, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                            vs.TimeSlot ASC";

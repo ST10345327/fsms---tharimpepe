@@ -197,10 +197,10 @@
                             <?php foreach ($recentSchedules as $schedule): ?>
                                 <tr>
                                     <td><?php echo date('M d, Y', strtotime($schedule['ScheduleDate'])); ?></td>
-                                    <td><?php echo htmlspecialchars($schedule['FullName']); ?></td>
-                                    <td><?php echo htmlspecialchars($schedule['Role']); ?></td>
-                                    <td><?php echo htmlspecialchars($schedule['Location']); ?></td>
-                                    <td><?php echo substr($schedule['StartTime'], 0, 5) . ' - ' . substr($schedule['EndTime'], 0, 5); ?></td>
+                                    <td><?php echo htmlspecialchars($schedule['FullName'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($schedule['Role'] ?? ''); ?></td>
+                                    <td><?php echo htmlspecialchars($schedule['Location'] ?? ''); ?></td>
+                                    <td><?php echo substr((string)($schedule['StartTime'] ?? ''), 0, 5) . ' - ' . substr((string)($schedule['EndTime'] ?? ''), 0, 5); ?></td>
                                     <td>
                                         <span class="status-badge status-<?php echo strtolower($schedule['Status']); ?>">
                                             <?php echo ucfirst($schedule['Status']); ?>

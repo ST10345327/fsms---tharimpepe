@@ -60,7 +60,7 @@ class Beneficiary
      */
     public function getBeneficiaryById($beneficiaryId)
     {
-        $query = "SELECT BeneficiaryID, FirstName, LastName, Age, RegistrationDate, Status, Notes, CreatedAt
+        $query = "SELECT BeneficiaryID, FirstName, LastName, Age, Gender, Phone, Email, Address, RegistrationDate, Status, Notes, CreatedAt, UpdatedAt
                   FROM " . $this->table . "
                   WHERE BeneficiaryID = :beneficiary_id
                   LIMIT 1";
@@ -82,7 +82,7 @@ class Beneficiary
      * Returns: BeneficiaryID on success, false on failure
      * Validation: FirstName, LastName, RegistrationDate required
      */
-    public function createBeneficiary($firstName, $lastName, $age = null, $gender = null, $phone = null, $email = null, $address = null, $registrationDate, $notes = null)
+    public function createBeneficiary($firstName, $lastName, $registrationDate, $age = null, $gender = null, $phone = null, $email = null, $address = null, $notes = null)
     {
         // Validation: Required fields
         if (empty($firstName) || empty($lastName) || empty($registrationDate)) {
@@ -141,6 +141,10 @@ class Beneficiary
      */
     public function updateBeneficiary($beneficiaryId, $firstName, $lastName, $age, $gender, $phone, $email, $address, $registrationDate, $status, $notes)
     {
+        if (!$this->beneficiaryExists($beneficiaryId)) {
+            return false;
+        }
+
         // Validation: Required fields
         if (empty($firstName) || empty($lastName) || empty($registrationDate)) {
             throw new Exception("First name, last name, and registration date are required");
@@ -210,6 +214,10 @@ class Beneficiary
      */
     public function updateStatus($beneficiaryId, $status)
     {
+        if (!$this->beneficiaryExists($beneficiaryId)) {
+            return false;
+        }
+
         if (!in_array($status, ['active', 'inactive', 'suspended'])) {
             throw new Exception("Invalid status");
         }
@@ -265,13 +273,15 @@ class Beneficiary
 
         $query = "SELECT BeneficiaryID, FirstName, LastName, Age, RegistrationDate, Status, Notes, CreatedAt
                   FROM " . $this->table . "
-                  WHERE FirstName LIKE :search
-                     OR LastName LIKE :search
-                     OR Notes LIKE :search
+                  WHERE FirstName LIKE :search_first
+                     OR LastName LIKE :search_last
+                     OR Notes LIKE :search_notes
                   ORDER BY FirstName ASC";
 
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":search", $searchTerm);
+        $stmt->bindParam(":search_first", $searchTerm);
+        $stmt->bindParam(":search_last", $searchTerm);
+        $stmt->bindParam(":search_notes", $searchTerm);
 
         if ($stmt->execute()) {
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -338,6 +348,10 @@ class Beneficiary
      */
     public function deleteBeneficiary($beneficiaryId)
     {
+        if (!$this->beneficiaryExists($beneficiaryId)) {
+            return false;
+        }
+
         $query = "DELETE FROM " . $this->table . "
                   WHERE BeneficiaryID = :beneficiary_id";
 
@@ -353,18 +367,39 @@ class Beneficiary
      * Table: Beneficiaries
      * Returns: Total count as integer
      */
-    public function getTotalCount()
+    public function getTotalCount($status = null)
     {
         $query = "SELECT COUNT(*) as total FROM " . $this->table;
+        $params = [];
 
-        $stmt = $this->conn->prepare($query);
-
-        if ($stmt->execute()) {
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            return (int)$result['total'];
+        if ($status && in_array($status, ['active', 'inactive', 'suspended'])) {
+            $query .= " WHERE Status = :status";
+            $params[':status'] = $status;
         }
 
-        return 0;
+        $stmt = $this->conn->prepare($query);
+        if (!empty($params)) {
+            $stmt->execute($params);
+        } else {
+            $stmt->execute();
+        }
+
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['total'] ?? 0);
+    }
+
+    /**
+     * Purpose: Check whether a beneficiary exists
+     * Table: Beneficiaries
+     */
+    private function beneficiaryExists($beneficiaryId)
+    {
+        $query = "SELECT BeneficiaryID FROM " . $this->table . " WHERE BeneficiaryID = :beneficiary_id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":beneficiary_id", $beneficiaryId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (bool)$stmt->fetchColumn();
     }
 }
 ?>

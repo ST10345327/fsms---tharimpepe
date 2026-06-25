@@ -51,6 +51,7 @@
             <div class="col-lg-8">
                 <div class="form-card">
                     <form method="POST" action="UserController.php" class="needs-validation">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="action" value="update">
                         <input type="hidden" name="id" value="<?php echo (int)$user['UserID']; ?>">
 

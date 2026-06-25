@@ -2,8 +2,11 @@
 $pageTitle = 'Users';
 $adminCount = 0;
 $volunteerCount = 0;
+$staffCount = 0;
+$donorCount = 0;
 $activeCount = 0;
 $inactiveCount = 0;
+$pendingCount = 0;
 foreach (($users ?? []) as $listedUser) {
     $role = strtolower($listedUser['Role'] ?? '');
     $status = strtolower($listedUser['Status'] ?? 'active');
@@ -11,8 +14,14 @@ foreach (($users ?? []) as $listedUser) {
         $adminCount++;
     } elseif ($role === 'volunteer') {
         $volunteerCount++;
+    } elseif ($role === 'staff') {
+        $staffCount++;
+    } elseif ($role === 'donor') {
+        $donorCount++;
     }
-    if ($status === 'inactive') {
+    if ($status === 'pending') {
+        $pendingCount++;
+    } elseif ($status === 'inactive') {
         $inactiveCount++;
     } else {
         $activeCount++;
@@ -150,6 +159,13 @@ foreach (($users ?? []) as $listedUser) {
             </a>
         </section>
 
+        <?php if ($pendingCount > 0): ?>
+        <div class="alert alert-warning d-flex align-items-center justify-content-between mb-3" role="alert">
+            <span><i class="fas fa-clock me-2"></i><strong><?php echo $pendingCount; ?> user(s)</strong> pending approval</span>
+            <a href="UserController.php?action=list&status=pending" class="btn btn-sm btn-warning">Review Now</a>
+        </div>
+        <?php endif; ?>
+
         <section class="table-card">
             <table class="table prototype-table">
                 <thead>
@@ -180,6 +196,10 @@ foreach (($users ?? []) as $listedUser) {
                                 <td><span class="status-pill <?php echo htmlspecialchars($status); ?>"><i class="far fa-circle-check me-1"></i><?php echo ucfirst($status); ?></span></td>
                                 <td>
                                     <div class="row-actions">
+                                        <?php if ($status === 'pending'): ?>
+                                            <a class="approve" href="UserController.php?action=approve&id=<?php echo (int)$user['UserID']; ?>" title="Approve User" style="color: #28a745;"><i class="fas fa-check-circle"></i></a>
+                                            <a class="reject" href="UserController.php?action=reject&id=<?php echo (int)$user['UserID']; ?>" title="Reject User" style="color: #dc3545;"><i class="fas fa-times-circle"></i></a>
+                                        <?php endif; ?>
                                         <a class="edit" href="UserController.php?action=edit&id=<?php echo (int)$user['UserID']; ?>"><i class="far fa-pen-to-square"></i></a>
                                         <a class="delete" href="UserController.php?action=delete&id=<?php echo (int)$user['UserID']; ?>"><i class="far fa-trash-can"></i></a>
                                     </div>
@@ -214,13 +234,16 @@ foreach (($users ?? []) as $listedUser) {
         <section class="summary-grid">
             <div class="summary-card">
                 <h3>Role Distribution</h3>
-                <div class="summary-row purple"><span>Administrators</span><span class="purple-text"><?php echo $adminCount ?: 1; ?></span></div>
-                <div class="summary-row blue"><span>Volunteers</span><span class="blue-text"><?php echo $volunteerCount ?: 3; ?></span></div>
+                <div class="summary-row purple"><span>Administrators</span><span class="purple-text"><?php echo $adminCount; ?></span></div>
+                <div class="summary-row blue"><span>Volunteers</span><span class="blue-text"><?php echo $volunteerCount; ?></span></div>
+                <div class="summary-row" style="background:#f0f4ff;"><span>Staff</span><span style="color:#005cff;"><?php echo $staffCount; ?></span></div>
+                <div class="summary-row" style="background:#f0fdf4;"><span>Donors</span><span style="color:#00a33a;"><?php echo $donorCount; ?></span></div>
             </div>
             <div class="summary-card">
                 <h3>Status Overview</h3>
-                <div class="summary-row green"><span>Active Users</span><span class="green-text"><?php echo $activeCount ?: 3; ?></span></div>
-                <div class="summary-row gray"><span>Inactive Users</span><span><?php echo $inactiveCount ?: 1; ?></span></div>
+                <div class="summary-row green"><span>Active Users</span><span class="green-text"><?php echo $activeCount; ?></span></div>
+                <div class="summary-row" style="background:#fffbe6;"><span>Pending Approval</span><span style="color:#cc7a00;font-weight:700;"><?php echo $pendingCount; ?></span></div>
+                <div class="summary-row gray"><span>Inactive Users</span><span><?php echo $inactiveCount; ?></span></div>
             </div>
         </section>
     </main>

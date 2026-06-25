@@ -116,7 +116,8 @@
                         <div class="user-email"><?php echo htmlspecialchars($user['Email']); ?></div>
                     </div>
                     
-                    <form method="POST" action="UserController.php" class="role-selector" style="display: flex; gap: 10px;">
+                    <form method="POST" action="../controllers/UserController.php" class="role-selector" style="display: flex; gap: 10px;">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="action" value="update_role">
                         <input type="hidden" name="user_id" value="<?php echo (int)$user['UserID']; ?>">
                         <select class="form-select" name="role" onchange="this.form.submit()">

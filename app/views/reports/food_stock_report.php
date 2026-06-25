@@ -59,7 +59,7 @@
             <div class="col-md-4">
                 <div style="background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                     <div style="color: #fd7e14; font-size: 2.5rem; font-weight: 700;">
-                        <?php echo count(array_filter($foodStockData ?? [], fn($s) => (int)$s['QuantityRemaining'] <= (int)$s['ReorderLevel'])); ?>
+                        <?php echo count(array_filter($foodStockData ?? [], fn($s) => ($s['Status'] ?? 'ok') === 'low_stock')); ?>
                     </div>
                     <div class="text-muted">Low Stock Items</div>
                 </div>
@@ -67,7 +67,7 @@
             <div class="col-md-4">
                 <div style="background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                     <div style="color: #dc3545; font-size: 2.5rem; font-weight: 700;">
-                        <?php echo count(array_filter($foodStockData ?? [], fn($s) => strtotime($s['ExpiryDate']) < time())); ?>
+                        <?php echo count(array_filter($foodStockData ?? [], fn($s) => ($s['Status'] ?? '') === 'expired')); ?>
                     </div>
                     <div class="text-muted">Expired Items</div>
                 </div>
@@ -83,11 +83,9 @@
                         <tr>
                             <th>Food Item</th>
                             <th>Quantity</th>
-                            <th>Remaining</th>
                             <th>Unit</th>
-                            <th>Reorder Level</th>
                             <th>Expiry Date</th>
-                            <th>Unit Cost</th>
+                            <th>Days Until Expiry</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -95,32 +93,37 @@
                         <?php if (!empty($foodStockData)): ?>
                             <?php foreach ($foodStockData as $item): ?>
                                 <?php
-                                    $remaining = (int)$item['QuantityRemaining'];
-                                    $reorderLevel = (int)$item['ReorderLevel'];
-                                    $expiry = strtotime($item['ExpiryDate']);
-                                    
-                                    if ($expiry < time()) {
-                                        $status = '<span class="alert-badge alert-expired">Expired</span>';
-                                    } elseif ($remaining <= $reorderLevel) {
-                                        $status = '<span class="alert-badge alert-low">Low Stock</span>';
-                                    } else {
-                                        $status = '<span class="alert-badge alert-ok">OK</span>';
-                                    }
+                                    $status = match ($item['Status'] ?? 'ok') {
+                                        'expired' => '<span class="alert-badge alert-expired">Expired</span>',
+                                        'low_stock' => '<span class="alert-badge alert-low">Low Stock</span>',
+                                        default => '<span class="alert-badge alert-ok">OK</span>',
+                                    };
+                                    $daysUntilExpiry = isset($item['days_until_expiry']) ? (int)$item['days_until_expiry'] : null;
                                 ?>
                                 <tr>
-                                    <td><strong><?php echo htmlspecialchars($item['FoodItem']); ?></strong></td>
+                                    <td><strong><?php echo htmlspecialchars($item['ItemName']); ?></strong></td>
                                     <td><?php echo (int)$item['Quantity']; ?></td>
-                                    <td><?php echo (int)$item['QuantityRemaining']; ?></td>
-                                    <td><?php echo htmlspecialchars($item['UnitOfMeasure']); ?></td>
-                                    <td><?php echo (int)$item['ReorderLevel']; ?></td>
-                                    <td><?php echo date('M d, Y', strtotime($item['ExpiryDate'])); ?></td>
-                                    <td>ZWL<?php echo number_format((float)$item['UnitCost'], 2); ?></td>
+                                    <td><?php echo htmlspecialchars($item['Unit'] ?? '-'); ?></td>
+                                    <td><?php echo $item['ExpiryDate'] ? date('M d, Y', strtotime($item['ExpiryDate'])) : '-'; ?></td>
+                                    <td>
+                                        <?php if ($daysUntilExpiry !== null): ?>
+                                            <?php if ($daysUntilExpiry < 0): ?>
+                                                <span class="text-danger">Expired</span>
+                                            <?php elseif ($daysUntilExpiry <= 7): ?>
+                                                <span class="text-warning"><?php echo $daysUntilExpiry; ?> days</span>
+                                            <?php else: ?>
+                                                <?php echo $daysUntilExpiry; ?> days
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            -
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo $status; ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-4">No stock data found</td>
+                                <td colspan="6" class="text-center text-muted py-4">No stock data found</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -130,9 +133,17 @@
 
         <!-- Export & Back -->
         <div class="d-flex gap-2 justify-content-between">
-            <button onclick="window.print()" class="btn btn-outline-secondary">
-                <i class="fas fa-print"></i> Print Report
-            </button>
+            <div class="d-flex gap-2">
+                <a href="ReportsController.php?action=export&report=food_stock" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="ReportsController.php?action=export_xls&report=food_stock" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> XLS
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
             <a href="ReportsController.php?action=dashboard" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Reports
             </a>

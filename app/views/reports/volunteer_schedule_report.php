@@ -61,15 +61,11 @@
                     <label class="form-label">Status</label>
                     <select class="form-control" name="status">
                         <option value="">All Status</option>
-                        <option value="Scheduled" <?php echo ($_GET['status'] ?? '') === 'Scheduled' ? 'selected' : ''; ?>>Scheduled</option>
-                        <option value="Completed" <?php echo ($_GET['status'] ?? '') === 'Completed' ? 'selected' : ''; ?>>Completed</option>
-                        <option value="Cancelled" <?php echo ($_GET['status'] ?? '') === 'Cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                        <option value="No-Show" <?php echo ($_GET['status'] ?? '') === 'No-Show' ? 'selected' : ''; ?>>No-Show</option>
+                        <option value="scheduled" <?php echo ($_GET['status'] ?? '') === 'scheduled' ? 'selected' : ''; ?>>Scheduled</option>
+                        <option value="completed" <?php echo ($_GET['status'] ?? '') === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                        <option value="cancelled" <?php echo ($_GET['status'] ?? '') === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                        <option value="no-show" <?php echo ($_GET['status'] ?? '') === 'no-show' ? 'selected' : ''; ?>>No-Show</option>
                     </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label">Volunteer</label>
-                    <input type="text" class="form-control" name="volunteer" value="<?php echo htmlspecialchars($_GET['volunteer'] ?? ''); ?>" placeholder="Name">
                 </div>
                 <div class="col-12 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
@@ -95,7 +91,7 @@
                             <th>Volunteer</th>
                             <th>Shift Date</th>
                             <th>Shift Time</th>
-                            <th>Duration (hrs)</th>
+                            <th>Role</th>
                             <th>Location</th>
                             <th>Status</th>
                             <th>Notes</th>
@@ -105,19 +101,19 @@
                         <?php if (!empty($scheduleData)): ?>
                             <?php foreach ($scheduleData as $entry): ?>
                                 <?php
-                                    $status = $entry['Status'] ?? 'Scheduled';
+                                    $status = $entry['Status'] ?? 'scheduled';
                                     $statusBg = match($status) {
-                                        'Completed' => 'success',
-                                        'Cancelled' => 'danger',
-                                        'No-Show' => 'warning',
+                                        'completed' => 'success',
+                                        'cancelled' => 'danger',
+                                        'no-show' => 'warning',
                                         default => 'info'
                                     };
                                 ?>
                                 <tr>
-                                    <td><strong><?php echo htmlspecialchars($entry['VolunteerName'] ?? ''); ?></strong></td>
-                                    <td><?php echo date('M d, Y', strtotime($entry['ScheduledDate'] ?? '')); ?></td>
+                                    <td><strong><?php echo htmlspecialchars($entry['FullName'] ?? ''); ?></strong></td>
+                                    <td><?php echo date('M d, Y', strtotime($entry['ScheduleDate'] ?? '')); ?></td>
                                     <td><?php echo htmlspecialchars($entry['StartTime'] ?? '-'); ?> - <?php echo htmlspecialchars($entry['EndTime'] ?? '-'); ?></td>
-                                    <td><?php echo number_format((float)($entry['Duration'] ?? 0), 1); ?></td>
+                                    <td><?php echo htmlspecialchars($entry['Role'] ?? '-'); ?></td>
                                     <td><?php echo htmlspecialchars($entry['Location'] ?? '-'); ?></td>
                                     <td><span class="badge bg-<?php echo $statusBg; ?>"><?php echo htmlspecialchars($status); ?></span></td>
                                     <td><small><?php echo htmlspecialchars($entry['Notes'] ?? '-'); ?></small></td>
@@ -135,9 +131,17 @@
 
         <!-- Export & Back -->
         <div class="d-flex gap-2 justify-content-between">
-            <button onclick="window.print()" class="btn btn-outline-secondary">
-                <i class="fas fa-print"></i> Print Report
-            </button>
+            <div class="d-flex gap-2">
+                <a href="ReportsController.php?action=export&report=volunteer_schedule&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>&status=<?php echo urlencode($_GET['status'] ?? ''); ?>" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="ReportsController.php?action=export_xls&report=volunteer_schedule&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>&status=<?php echo urlencode($_GET['status'] ?? ''); ?>" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> XLS
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
             <a href="ReportsController.php?action=dashboard" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Reports
             </a>

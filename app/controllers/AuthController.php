@@ -9,6 +9,8 @@
 // Initialize application with error handling and validation
 require_once __DIR__ . "/../helpers/bootstrap.php";
 require_once __DIR__ . "/../models/User.php";
+require_once __DIR__ . "/../models/Volunteer.php";
+require_once __DIR__ . "/../models/ActivityLog.php";
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'login';
 $error = "";
@@ -42,26 +44,32 @@ try {
                 $user = $userModel->authenticate($username, $password);
 
                 if ($user) {
-                    // HZ-AUTH-002: Create secure session
-                    $_SESSION["user_id"] = $user["UserID"];
-                    $_SESSION["username"] = $user["Username"];
-                    $_SESSION["email"] = $user["Email"];
-                    $_SESSION["role"] = $user["Role"];
-                    $_SESSION["login_time"] = time();
+                    // Check if user is pending approval
+                    if ($user['Status'] === 'pending') {
+                        $error = "Your account is pending approval. Please wait for an administrator to approve your registration.";
+                    } else {
+                        // HZ-AUTH-002: Create secure session with session regeneration
+                        session_regenerate_id(true);
+                        $_SESSION["user_id"] = $user["UserID"];
+                        $_SESSION["username"] = $user["Username"];
+                        $_SESSION["email"] = $user["Email"];
+                        $_SESSION["role"] = $user["Role"];
+                        $_SESSION["login_time"] = time();
 
-                    // Log login activity
-                    ActivityLog::log($user['UserID'], 'login', 'Users', $user['UserID'], 'User logged in');
+                        // Log login activity
+                        ActivityLog::log($user['UserID'], 'login', 'Users', $user['UserID'], 'User logged in');
 
-                    // Redirect to dashboard
-                    header("Location: ../views/dashboard.php");
-                    exit();
+                        // Redirect to index which serves dashboard for authenticated users
+                        header("Location: index.php");
+                        exit();
+                    }
                 } else {
                     $error = "Invalid username or password";
                 }
             } catch (AuthenticationException $e) {
                 $error = $e->getUserMessage();
-            } catch (Exception $e) {
-                $error = "An error occurred during login. Please try again.";
+            } catch (\Throwable $e) {
+                $error = "Login error: " . $e->getMessage();
                 logMessage("Login error: " . $e->getMessage(), 'ERROR');
             }
         }
@@ -80,10 +88,18 @@ try {
         
         try {
             // Get and validate input
+            $fullName = FormValidator::getRequired('full_name', 'Full Name');
             $username = FormValidator::getRequired('username', 'Username');
             $email = FormValidator::getRequired('email', 'Email');
+            $phone = FormValidator::getOptional('phone', '');
+            $role = FormValidator::getOptional('role', 'volunteer');
             $password = FormValidator::getRequired('password', 'Password');
             $password_confirm = FormValidator::getOptional('password_confirm', '');
+
+            // Validate allowed roles
+            if (!in_array($role, ['volunteer', 'donor', 'staff'])) {
+                $role = 'volunteer';
+            }
 
             // Validate formats
             FormValidator::validateUsername($username);
@@ -92,23 +108,37 @@ try {
             
             // Check password match
             if ($password !== $password_confirm) {
-                FormValidator::$errors[] = "Passwords do not match";
+                $error = "Passwords do not match";
             }
 
             if (FormValidator::hasErrors()) {
-                throw new ValidationException(FormValidator::getErrors());
+                throw new ValidationException("Validation failed", FormValidator::getErrors());
             }
 
             // Attempt registration in User model
-            $userId = $userModel->register($username, $email, $password, 'volunteer');
+            $userId = $userModel->register($username, $email, $password, $role, $fullName, $phone);
 
             if ($userId) {
+                // Create Volunteers record if role is volunteer
+                if (strtolower((string)$role) === 'volunteer') {
+                    try {
+                        $db = getDBConnection();
+                        $volunteerModel = new Volunteer($db);
+                        $parts = explode(' ', (string)$fullName, 2);
+                        $firstName = $parts[0];
+                        $lastName = $parts[1] ?? '';
+                        $volunteerModel->createVolunteer($userId, $firstName, $lastName, $phone, null, 'pending', 'unavailable');
+                    } catch (Exception $e) {
+                        logMessage("Failed to create volunteer profile during registration: " . $e->getMessage(), 'ERROR');
+                    }
+                }
+
                 // Log registration
-                ActivityLog::log($userId, 'register', 'Users', $userId, 'New user registered');
+                ActivityLog::log($userId, 'register', 'Users', $userId, 'New user registered as ' . $role);
                 
-                $success = "Account created successfully! Redirecting to login...";
-                // Redirect after 2 seconds
-                header("Refresh: 2; URL=../views/login.php?registered=success");
+                $success = "Account created successfully! Your account is pending admin approval. Redirecting to login...";
+                // Redirect after 3 seconds
+                header("Refresh: 3; URL=index.php?registered=success");
             } else {
                 throw new Exception("Registration failed. Please try again.");
             }
@@ -145,8 +175,8 @@ try {
         }
         session_destroy();
 
-        // Redirect to login page
-        header("Location: ../views/login.php?logout=success");
+        // Redirect to index
+        header("Location: index.php?logout=success");
         exit();
     }
 

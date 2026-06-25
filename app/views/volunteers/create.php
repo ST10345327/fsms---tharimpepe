@@ -66,6 +66,7 @@
             <?php endif; ?>
 
             <form method="POST" action="VolunteerController.php?action=create">
+                <?php echo csrfTokenInput(); ?>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="first_name" class="form-label">First Name *</label>

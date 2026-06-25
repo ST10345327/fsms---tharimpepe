@@ -49,28 +49,15 @@
             <h6 class="mb-3">Filter Beneficiaries</h6>
             <form method="GET" class="row g-3">
                 <input type="hidden" name="action" value="beneficiaries">
-                <div class="col-md-4">
-                    <label class="form-label">Role</label>
-                    <select class="form-control" name="role_filter">
-                        <option value="">All Roles</option>
-                        <option value="Student" <?php echo ($_GET['role_filter'] ?? '') === 'Student' ? 'selected' : ''; ?>>Student</option>
-                        <option value="Elderly" <?php echo ($_GET['role_filter'] ?? '') === 'Elderly' ? 'selected' : ''; ?>>Elderly</option>
-                        <option value="Disabled" <?php echo ($_GET['role_filter'] ?? '') === 'Disabled' ? 'selected' : ''; ?>>Disabled</option>
-                        <option value="Family" <?php echo ($_GET['role_filter'] ?? '') === 'Family' ? 'selected' : ''; ?>>Family</option>
-                    </select>
-                </div>
+
                 <div class="col-md-4">
                     <label class="form-label">Status</label>
                     <select class="form-control" name="status_filter">
                         <option value="">All Status</option>
-                        <option value="Active" <?php echo ($_GET['status_filter'] ?? '') === 'Active' ? 'selected' : ''; ?>>Active</option>
-                        <option value="Inactive" <?php echo ($_GET['status_filter'] ?? '') === 'Inactive' ? 'selected' : ''; ?>>Inactive</option>
-                        <option value="Suspended" <?php echo ($_GET['status_filter'] ?? '') === 'Suspended' ? 'selected' : ''; ?>>Suspended</option>
+                        <option value="active" <?php echo ($_GET['status_filter'] ?? '') === 'active' ? 'selected' : ''; ?>>Active</option>
+                        <option value="inactive" <?php echo ($_GET['status_filter'] ?? '') === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
+                        <option value="suspended" <?php echo ($_GET['status_filter'] ?? '') === 'suspended' ? 'selected' : ''; ?>>Suspended</option>
                     </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Search</label>
-                    <input type="text" class="form-control" name="search" value="<?php echo htmlspecialchars($_GET['search'] ?? ''); ?>" placeholder="Name or ID">
                 </div>
                 <div class="col-12 d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
@@ -93,11 +80,12 @@
                 <table class="table table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>Beneficiary ID</th>
+                            <th>ID</th>
                             <th>Full Name</th>
                             <th>Contact</th>
-                            <th>Role</th>
                             <th>Status</th>
+                            <th>Age</th>
+                            <th>Gender</th>
                             <th>Registration Date</th>
                             <th>Address</th>
                         </tr>
@@ -105,25 +93,24 @@
                     <tbody>
                         <?php if (!empty($beneficiaryData)): ?>
                             <?php foreach ($beneficiaryData as $beneficiary): ?>
+                                <?php
+                                    $bStatus = $beneficiary['Status'] ?? 'Unknown';
+                                    $statusBg = $bStatus === 'Active' ? 'success' : ($bStatus === 'Inactive' ? 'secondary' : 'danger');
+                                ?>
                                 <tr>
                                     <td><code><?php echo htmlspecialchars($beneficiary['BeneficiaryID'] ?? ''); ?></code></td>
                                     <td><strong><?php echo htmlspecialchars($beneficiary['FullName'] ?? ''); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($beneficiary['ContactNumber'] ?? '-'); ?></td>
-                                    <td><span class="badge bg-info"><?php echo htmlspecialchars($beneficiary['Role'] ?? ''); ?></span></td>
-                                    <td>
-                                        <?php 
-                                            $status = $beneficiary['Status'] ?? 'Unknown';
-                                            $statusBg = $status === 'Active' ? 'success' : ($status === 'Inactive' ? 'secondary' : 'danger');
-                                        ?>
-                                        <span class="badge bg-<?php echo $statusBg; ?>"><?php echo htmlspecialchars($status); ?></span>
-                                    </td>
+                                    <td><?php echo htmlspecialchars($beneficiary['Phone'] ?? ($beneficiary['Email'] ?? '-')); ?></td>
+                                    <td><span class="badge bg-<?php echo $statusBg; ?>"><?php echo htmlspecialchars($bStatus); ?></span></td>
+                                    <td><?php echo htmlspecialchars($beneficiary['Age'] ?? '-'); ?></td>
+                                    <td><?php echo htmlspecialchars($beneficiary['Gender'] ?? '-'); ?></td>
                                     <td><?php echo date('M d, Y', strtotime($beneficiary['RegistrationDate'] ?? '')); ?></td>
                                     <td><?php echo htmlspecialchars($beneficiary['Address'] ?? '-'); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-4">No beneficiary records found</td>
+                                <td colspan="8" class="text-center text-muted py-4">No beneficiary records found</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>
@@ -133,9 +120,17 @@
 
         <!-- Export & Back -->
         <div class="d-flex gap-2 justify-content-between">
-            <button onclick="window.print()" class="btn btn-outline-secondary">
-                <i class="fas fa-print"></i> Print Report
-            </button>
+            <div class="d-flex gap-2">
+                <a href="ReportsController.php?action=export&report=beneficiaries&status_filter=<?php echo urlencode($_GET['status_filter'] ?? ''); ?>" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="ReportsController.php?action=export_xls&report=beneficiaries&status_filter=<?php echo urlencode($_GET['status_filter'] ?? ''); ?>" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> XLS
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
             <a href="ReportsController.php?action=dashboard" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Reports
             </a>

@@ -66,6 +66,7 @@
 
             <?php if ($volunteer): ?>
                 <form method="POST" action="VolunteerController.php?action=edit">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                     <input type="hidden" name="volunteer_id" value="<?php echo htmlspecialchars($volunteer['VolunteerID']); ?>">
 
                     <div class="row mb-3">

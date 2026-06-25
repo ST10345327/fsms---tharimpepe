@@ -80,7 +80,7 @@
                     <div class="detail-info">
                         <div class="info-row">
                             <span class="info-label">Volunteer:</span>
-                            <span><?php echo htmlspecialchars($schedule['FullName']); ?></span>
+                            <span><?php echo htmlspecialchars($schedule['FullName'] ?? ''); ?></span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Date:</span>
@@ -88,22 +88,23 @@
                         </div>
                         <div class="info-row">
                             <span class="info-label">Time:</span>
-                            <span><?php echo substr($schedule['StartTime'], 0, 5) . ' - ' . substr($schedule['EndTime'], 0, 5); ?></span>
+                            <span><?php echo substr((string)($schedule['StartTime'] ?? ''), 0, 5) . ' - ' . substr((string)($schedule['EndTime'] ?? ''), 0, 5); ?></span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Location:</span>
-                            <span><?php echo htmlspecialchars($schedule['Location']); ?></span>
+                            <span><?php echo htmlspecialchars($schedule['Location'] ?? ''); ?></span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Status:</span>
-                            <span class="badge bg-warning"><?php echo htmlspecialchars($schedule['Status']); ?></span>
+                            <span class="badge bg-warning"><?php echo htmlspecialchars($schedule['Status'] ?? ''); ?></span>
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
                     <form method="POST" action="VolunteerScheduleController.php" class="d-grid gap-2">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="action" value="destroy">
-                        <input type="hidden" name="schedule_id" value="<?php echo (int)$schedule['ScheduleID']; ?>">
+                        <input type="hidden" name="id" value="<?php echo (int)$schedule['ScheduleID']; ?>">
 
                         <button type="submit" class="btn btn-danger btn-lg">
                             <i class="fas fa-trash"></i> Yes, Delete Schedule

@@ -250,7 +250,7 @@
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="../controllers/AuthController.php?action=login">
+                <form method="POST" action="index.php?action=login">
                     <div class="form-group">
                         <label for="username">Username</label>
                         <div class="input-wrapper">
@@ -287,7 +287,7 @@
                 </form>
 
                 <div class="form-footer">
-                    <a href="#forgot-password">Forgot password?</a>
+                    <a href="../controllers/AuthController.php?action=register">Don't have an account? Register here</a>
                 </div>
             </div>
 

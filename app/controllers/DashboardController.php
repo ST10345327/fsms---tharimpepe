@@ -6,13 +6,20 @@
  * Hazard ID: HZ-DASH-CTRL-*
  */
 
-require_once __DIR__ . "/../../helpers/SessionHandler.php";
+require_once dirname(__DIR__) . "/helpers/SessionHandler.php";
+require_once dirname(__DIR__) . "/helpers/Rbac.php";
+require_once dirname(__DIR__) . "/helpers/bootstrap.php";
 require_once __DIR__ . "/../models/Dashboard.php";
 
 // HZ-DASH-CTRL-001: Require authentication
 requireLogin();
 
-$dashboard = new Dashboard();
+// HZ-DASH-CTRL-RBAC: Enforce dashboard access (admin, staff, volunteer)
+rbacRequirePermission('dashboard.operational');
+
+// Initialize database connection
+$db = getDBConnection();
+$dashboard = new Dashboard($db);
 $action = $_GET['action'] ?? 'overview';
 
 try {
@@ -29,7 +36,7 @@ try {
             $topDonors = $dashboard->getTopDonors(5);
             $volunteerPerformance = $dashboard->getVolunteerPerformance(5);
             $beneficiaryTrend = $dashboard->getBeneficiaryTrend();
-            $attendanceByRole = $dashboard->getAttendanceByRole();
+            $attendanceByRole = $dashboard->getAttendanceByStatus();
             $donationSources = $dashboard->getDonationSources();
             
             require __DIR__ . "/../views/dashboard/overview.php";
@@ -39,7 +46,7 @@ try {
         case 'feeding':
             $feedingStats = $dashboard->getFeedingStats();
             $beneficiaryTrend = $dashboard->getBeneficiaryTrend();
-            $attendanceByRole = $dashboard->getAttendanceByRole();
+            $attendanceByRole = $dashboard->getAttendanceByStatus();
             $systemStats = $dashboard->getSystemStats();
             
             require __DIR__ . "/../views/dashboard/feeding_analytics.php";
@@ -93,7 +100,7 @@ try {
             $topDonors = $dashboard->getTopDonors(5);
             $volunteerPerformance = $dashboard->getVolunteerPerformance(5);
             $beneficiaryTrend = $dashboard->getBeneficiaryTrend();
-            $attendanceByRole = $dashboard->getAttendanceByRole();
+            $attendanceByRole = $dashboard->getAttendanceByStatus();
             $donationSources = $dashboard->getDonationSources();
             
             require __DIR__ . "/../views/dashboard/overview.php";

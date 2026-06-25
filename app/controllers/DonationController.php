@@ -12,17 +12,24 @@
  * [3] Web Security Best Practices (OWASP, 2025)
  */
 
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
+
 require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
 require_once __DIR__ . "/../models/Donation.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../config/database.php";
 
 // HZ-DON-CTRL-001: Require user authentication and authorization
 requireLogin();
 $currentUser = getCurrentUser();
 
+// HZ-DON-CTRL-RBAC: Enforce donation management (admin, staff)
+rbacRequirePermission('donations.manage');
+
 // Initialize database connection and model
-$pdo = getDBConnection();
+$pdo = getConnection();
 $donationModel = new Donation($pdo);
 
 // Get action from request
@@ -122,7 +129,7 @@ function handleCreateAction() {
                 // Create donation
                 $result = $donationModel->createDonation($_POST);
                 if ($result['success']) {
-                    $donationId = $result['data']['DonationID'] ?? null;
+                    $donationId = $result['id'] ?? null;
                     if ($donationId) {
                         ActivityLog::log($GLOBALS['currentUser']['user_id'], 'create_donation', 'Donation', $donationId, "Created donation: {$_POST['DonorName']} ({$_POST['DonationType']})" . (!empty($_POST['Amount']) ? " - Amount: {$_POST['Amount']}" : ''));
                     }
@@ -224,7 +231,7 @@ function handleDeleteAction() {
     global $donationModel, $error, $success;
 
     // HZ-DON-CTRL-006a: Check admin authorization
-    if ($GLOBALS['currentUser']['role'] !== 'admin') {
+    if (!rbacCan('donations.delete')) {
         $error = 'You do not have permission to delete donations.';
         handleListAction();
         return;

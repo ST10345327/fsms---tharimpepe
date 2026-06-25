@@ -48,8 +48,9 @@
             <div class="col-lg-8">
                 <div class="form-card">
                     <form method="POST" action="VolunteerScheduleController.php" class="needs-validation">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="action" value="update">
-                        <input type="hidden" name="schedule_id" value="<?php echo (int)$schedule['ScheduleID']; ?>">
+                        <input type="hidden" name="id" value="<?php echo (int)$schedule['ScheduleID']; ?>">
 
                         <!-- Volunteer Information -->
                         <div class="form-section mb-4">
@@ -57,7 +58,7 @@
                             
                             <div class="mb-3">
                                 <label class="form-label">Volunteer</label>
-                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($schedule['FullName']); ?>" disabled>
+                                <input type="text" class="form-control" value="<?php echo htmlspecialchars($schedule['FullName'] ?? ''); ?>" disabled>
                                 <small class="text-muted">Volunteer cannot be changed. Delete and create new schedule to change volunteer.</small>
                             </div>
                         </div>
@@ -69,27 +70,27 @@
                             <div class="mb-3">
                                 <label class="form-label">Date <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="schedule_date" 
-                                       value="<?php echo htmlspecialchars($schedule['ScheduleDate']); ?>" required>
+                                       value="<?php echo htmlspecialchars($schedule['ScheduleDate'] ?? ''); ?>" required>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Start Time <span class="text-danger">*</span></label>
                                     <input type="time" class="form-control" name="start_time" 
-                                           value="<?php echo substr($schedule['StartTime'], 0, 5); ?>" required>
+                                           value="<?php echo substr((string)($schedule['StartTime'] ?? ''), 0, 5); ?>" required>
                                 </div>
 
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">End Time <span class="text-danger">*</span></label>
                                     <input type="time" class="form-control" name="end_time" 
-                                           value="<?php echo substr($schedule['EndTime'], 0, 5); ?>" required>
+                                           value="<?php echo substr((string)($schedule['EndTime'] ?? ''), 0, 5); ?>" required>
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Location <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" name="location" 
-                                       value="<?php echo htmlspecialchars($schedule['Location']); ?>" required>
+                                       value="<?php echo htmlspecialchars($schedule['Location'] ?? ''); ?>" required>
                             </div>
 
                             <div class="mb-3">

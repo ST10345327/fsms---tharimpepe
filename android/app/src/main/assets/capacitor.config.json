@@ -1,6 +1,5 @@
 {
 	"appId": "com.tharimpepe.fsms",
 	"appName": "Tharimpepe FSMS",
-	"webDir": "www",
-	"bundledWebRuntime": false
+	"webDir": "www"
 }

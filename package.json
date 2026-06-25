@@ -4,11 +4,14 @@
   "description": "Feeding Scheme Management System",
   "scripts": {
     "mobile:sync": "npx cap sync",
-    "mobile:serve": "npx cap serve"
+    "mobile:serve": "npx serve www -l 3000"
   },
   "dependencies": {
     "@capacitor/android": "^5.0.0",
     "@capacitor/cli": "^5.0.0",
     "@capacitor/core": "^5.0.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.6"
   }
 }

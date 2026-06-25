@@ -179,7 +179,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const roleData = <?php echo json_encode($attendanceByRole); ?>;
-        const roleLabels = roleData.map(r => r.Role);
+        const roleLabels = roleData.map(r => r.Status);
         const roleCounts = roleData.map(r => r.count);
 
         const roleCtx = document.getElementById('roleChart').getContext('2d');

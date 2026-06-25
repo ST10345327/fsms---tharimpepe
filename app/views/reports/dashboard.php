@@ -52,13 +52,42 @@
             font-weight: 700;
             min-height: 50px;
             width: 100%;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            line-height: 50px;
         }
+        .report-btn:hover { opacity: 0.9; color: #fff; }
         .report-btn.navy { background: #1b3a5c; }
         .report-btn.red { background: #f00013; }
         .report-btn.green { background: #00b341; }
-        .report-btn.gray { background: #4b5563; }
         .export-card { margin-top: 30px; }
         .export-card .report-btn { margin-top: 14px; }
+        .nav-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .nav-item {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: #1f2a44;
+            display: block;
+        }
+        .nav-item:hover {
+            background: #1b3a5c;
+            border-color: #1b3a5c;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(27, 58, 92, 0.2);
+        }
+        .nav-item i { font-size: 28px; margin-bottom: 8px; display: block; }
+        .nav-item span { font-size: 14px; font-weight: 600; }
         .preview-head {
             align-items: center;
             border-bottom: 1px solid #dfe3e8;
@@ -66,31 +95,9 @@
             justify-content: space-between;
             padding: 24px 20px;
         }
-        .preview-head h2 { margin: 0; }
-        .preview-body { padding: 48px 40px; }
-        .preview-title { text-align: center; }
-        .preview-title h1 { font-size: 30px; font-weight: 700; margin-bottom: 12px; }
-        .preview-title p { color: #475569; font-size: 20px; margin-bottom: 12px; }
-        .preview-rule { border-top: 1px solid #dfe3e8; margin: 30px 0 40px; }
-        .report-metrics {
-            display: grid;
-            gap: 20px;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            margin-bottom: 34px;
-        }
-        .report-metric {
-            border-radius: 10px;
-            padding: 22px;
-            text-align: center;
-        }
-        .report-metric.blue { background: #eff6ff; color: #005cff; }
-        .report-metric.green { background: #f0fdf4; color: #00a33a; }
-        .report-metric.purple { background: #faf5ff; color: #8f00ff; }
-        .report-metric span { color: #334155; display: block; font-size: 16px; margin-bottom: 8px; }
-        .report-metric strong { font-size: 30px; font-weight: 400; }
-        .preview-table th { background: #f8fafc; }
-        .preview-table th, .preview-table td { border-color: #e5e7eb; font-size: 18px; padding: 12px 20px; }
-        @media (max-width: 1100px) { .reports-layout, .report-metrics { grid-template-columns: 1fr; } }
+        .preview-head h2 { margin: 0; font-size: 20px; }
+        .preview-body { padding: 30px; }
+        @media (max-width: 1100px) { .reports-layout { grid-template-columns: 1fr; } .nav-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -102,75 +109,109 @@
                 <section class="report-card">
                     <div class="report-card-body">
                         <h2>Report Generator</h2>
-                        <div class="report-control">
-                            <label for="reportType">Report Type</label>
-                            <select id="reportType" class="form-select">
-                                <option>Attendance Report</option>
-                                <option>Donation Report</option>
-                                <option>Stock Report</option>
-                                <option>Impact Report</option>
-                            </select>
-                        </div>
-                        <div class="report-control">
-                            <label for="startDate">Start Date</label>
-                            <input id="startDate" class="form-control" type="date">
-                        </div>
-                        <div class="report-control">
-                            <label for="endDate">End Date</label>
-                            <input id="endDate" class="form-control" type="date">
-                        </div>
-                        <button class="report-btn navy" type="button">Generate Report</button>
+                        <form id="reportGenerator">
+                            <div class="report-control">
+                                <label for="reportType">Report Type</label>
+                                <select id="reportType" class="form-select">
+                                    <option value="attendance">Attendance Report</option>
+                                    <option value="donations">Donation Report</option>
+                                    <option value="food_stock">Stock Report</option>
+                                    <option value="program_summary">Impact Report</option>
+                                </select>
+                            </div>
+                            <div class="report-control">
+                                <label for="startDate">Start Date</label>
+                                <input id="startDate" class="form-control" type="date">
+                            </div>
+                            <div class="report-control">
+                                <label for="endDate">End Date</label>
+                                <input id="endDate" class="form-control" type="date">
+                            </div>
+                            <button class="report-btn navy" type="submit">Generate Report</button>
+                        </form>
                     </div>
                 </section>
 
                 <section class="report-card export-card">
                     <div class="report-card-body">
                         <h2>Export Options</h2>
-                        <button class="report-btn red" type="button"><i class="far fa-file-pdf me-2"></i>Export PDF</button>
-                        <button class="report-btn green" type="button"><i class="far fa-file-excel me-2"></i>Export Excel</button>
-                        <button class="report-btn gray" type="button"><i class="fas fa-print me-2"></i>Print</button>
+                        <a href="ReportsController.php?action=export&report=attendance" class="report-btn red">
+                            <i class="fas fa-file-csv me-2"></i>CSV
+                        </a>
+                        <a href="ReportsController.php?action=export_xls&report=attendance" class="report-btn navy">
+                            <i class="fas fa-file-excel me-2"></i>XLS
+                        </a>
+                        <button class="report-btn green" type="button" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Print
+                        </button>
                     </div>
                 </section>
             </aside>
 
             <section class="report-card">
                 <div class="preview-head">
-                    <h2>Report Preview</h2>
-                    <i class="fas fa-download" aria-hidden="true"></i>
+                    <h2>Available Reports</h2>
                 </div>
                 <div class="preview-body">
-                    <div class="preview-title">
-                        <h1>Tharimpepe Feeding Scheme</h1>
-                        <p>Attendance Report</p>
-                        <p class="fs-6">Generated on: <?php echo date('Y/m/d'); ?></p>
+                    <div class="nav-grid">
+                        <a href="ReportsController.php?action=attendance" class="nav-item">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>Attendance Report</span>
+                        </a>
+                        <a href="ReportsController.php?action=donations" class="nav-item">
+                            <i class="fas fa-gift"></i>
+                            <span>Donation Report</span>
+                        </a>
+                        <a href="ReportsController.php?action=volunteer_performance" class="nav-item">
+                            <i class="fas fa-star"></i>
+                            <span>Volunteer Performance</span>
+                        </a>
+                        <a href="ReportsController.php?action=volunteer_schedule" class="nav-item">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Volunteer Schedule</span>
+                        </a>
+                        <a href="ReportsController.php?action=food_stock" class="nav-item">
+                            <i class="fas fa-boxes"></i>
+                            <span>Food Stock Report</span>
+                        </a>
+                        <a href="ReportsController.php?action=food_distribution" class="nav-item">
+                            <i class="fas fa-box"></i>
+                            <span>Food Distribution</span>
+                        </a>
+                        <a href="ReportsController.php?action=beneficiaries" class="nav-item">
+                            <i class="fas fa-people-arrows"></i>
+                            <span>Beneficiary Report</span>
+                        </a>
+                        <a href="ReportsController.php?action=audit" class="nav-item">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Activity Audit</span>
+                        </a>
+                        <a href="ReportsController.php?action=program_summary" class="nav-item">
+                            <i class="fas fa-chart-pie"></i>
+                            <span>Program Summary</span>
+                        </a>
+                        <a href="ReportsController.php?action=financial_summary" class="nav-item">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Financial Summary</span>
+                        </a>
                     </div>
-                    <div class="preview-rule"></div>
-                    <div class="report-metrics">
-                        <div class="report-metric blue"><span>Total Days</span><strong>30</strong></div>
-                        <div class="report-metric green"><span>Total Meals</span><strong>3,845</strong></div>
-                        <div class="report-metric purple"><span>Avg Daily</span><strong>128</strong></div>
-                    </div>
-                    <h3 class="h4 fw-bold mb-3">Daily Breakdown</h3>
-                    <table class="table preview-table">
-                        <thead>
-                            <tr><th>Date</th><th>Present</th><th>Absent</th><th>Total</th></tr>
-                        </thead>
-                        <tbody>
-                            <?php for ($day = 1; $day <= 5; $day++): ?>
-                                <tr>
-                                    <td>2026-04-0<?php echo $day; ?></td>
-                                    <td>125</td>
-                                    <td>17</td>
-                                    <td>142</td>
-                                </tr>
-                            <?php endfor; ?>
-                        </tbody>
-                    </table>
                 </div>
             </section>
         </div>
     </main>
 
+    <script>
+        document.getElementById('reportGenerator').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var type = document.getElementById('reportType').value;
+            var startDate = document.getElementById('startDate').value;
+            var endDate = document.getElementById('endDate').value;
+            var url = 'ReportsController.php?action=' + encodeURIComponent(type);
+            if (startDate) url += '&from_date=' + encodeURIComponent(startDate);
+            if (endDate) url += '&to_date=' + encodeURIComponent(endDate);
+            window.location.href = url;
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

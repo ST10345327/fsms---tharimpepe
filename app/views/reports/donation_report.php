@@ -71,8 +71,19 @@
                     <label class="form-label">To Date</label>
                     <input type="date" class="form-control" name="to_date" value="<?php echo htmlspecialchars($_GET['to_date'] ?? ''); ?>">
                 </div>
+
+                <div class="col-md-2">
+                    <label class="form-label">Donation Type</label>
+                    <select class="form-control" name="donation_type">
+                        <option value="">All Types</option>
+                        <option value="cash" <?php echo ($_GET['donation_type'] ?? '') === 'cash' ? 'selected' : ''; ?>>Cash</option>
+                        <option value="food" <?php echo ($_GET['donation_type'] ?? '') === 'food' ? 'selected' : ''; ?>>Food</option>
+                        <option value="supplies" <?php echo ($_GET['donation_type'] ?? '') === 'supplies' ? 'selected' : ''; ?>>Supplies</option>
+                        <option value="other" <?php echo ($_GET['donation_type'] ?? '') === 'other' ? 'selected' : ''; ?>>Other</option>
+                    </select>
+                </div>
                 
-                <div class="col-md-6 d-flex align-items-end gap-2">
+                <div class="col-md-4 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-success flex-grow-1">
                         <i class="fas fa-filter"></i> Filter Report
                     </button>
@@ -181,9 +192,17 @@
 
         <!-- Export & Back -->
         <div class="d-flex gap-2 justify-content-between">
-            <button onclick="window.print()" class="btn btn-outline-secondary">
-                <i class="fas fa-print"></i> Print Report
-            </button>
+            <div class="d-flex gap-2">
+                <a href="ReportsController.php?action=export&report=donations&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>&donation_type=<?php echo urlencode($_GET['donation_type'] ?? ''); ?>" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="ReportsController.php?action=export_xls&report=donations&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>&donation_type=<?php echo urlencode($_GET['donation_type'] ?? ''); ?>" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> XLS
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
             <a href="ReportsController.php?action=dashboard" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Reports
             </a>

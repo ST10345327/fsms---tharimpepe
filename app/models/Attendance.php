@@ -24,7 +24,7 @@ class Attendance
      * Returns: Array of attendance records with beneficiary details
      * Pagination: Supports LIMIT and OFFSET
      */
-    public function getAllAttendance($limit = 50, $offset = 0, $dateFilter = null, $statusFilter = null, $beneficiaryId = null)
+    public function getAllAttendance($limit = 50, $offset = 0, $dateFilter = null, $statusFilter = null, $beneficiaryId = null, $searchTerm = null)
     {
         $query = "SELECT a.AttendanceID, a.BeneficiaryID, a.MealSessionID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
                          ms.SessionType, ms.Location,
@@ -49,6 +49,14 @@ class Attendance
         if ($beneficiaryId) {
             $conditions[] = "a.BeneficiaryID = :beneficiary_id";
             $params[':beneficiary_id'] = $beneficiaryId;
+        }
+
+        if (!empty($searchTerm)) {
+            $conditions[] = "(CONCAT(b.FirstName, ' ', b.LastName) LIKE :search_term
+                              OR a.Notes LIKE :search_term
+                              OR CAST(a.AttendanceID AS CHAR) LIKE :search_term
+                              OR CAST(a.BeneficiaryID AS CHAR) LIKE :search_term)";
+            $params[':search_term'] = '%' . $searchTerm . '%';
         }
 
         if (!empty($conditions)) {
@@ -94,7 +102,14 @@ class Attendance
         $stmt->bindParam(":attendance_id", $attendanceId);
 
         if ($stmt->execute()) {
-            return $stmt->fetch(PDO::FETCH_ASSOC);
+            $stats = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
+            return [
+                'total_sessions' => (int)($stats['total_sessions'] ?? 0),
+                'present_count' => (int)($stats['present_count'] ?? 0),
+                'absent_count' => (int)($stats['absent_count'] ?? 0),
+                'marked_count' => (int)($stats['marked_count'] ?? 0),
+                'unique_beneficiaries' => (int)($stats['unique_beneficiaries'] ?? 0)
+            ];
         }
 
         return false;
@@ -109,12 +124,10 @@ class Attendance
      */
     public function recordAttendance($beneficiaryId, $sessionDate, $status = 'present', $notes = null, $mealSessionId = null)
     {
+        $status = $this->normalizeStatus($status);
+
         if (!$this->beneficiaryExists($beneficiaryId)) {
             throw new Exception("Beneficiary does not exist");
-        }
-
-        if (!in_array($status, ['present', 'absent', 'marked'])) {
-            throw new Exception("Invalid attendance status");
         }
 
         if (!strtotime($sessionDate)) {
@@ -163,12 +176,10 @@ class Attendance
      */
     public function updateAttendance($attendanceId, $beneficiaryId, $sessionDate, $status, $notes, $mealSessionId = null)
     {
+        $status = $this->normalizeStatus($status);
+
         if (!$this->beneficiaryExists($beneficiaryId)) {
             throw new Exception("Beneficiary does not exist");
-        }
-
-        if (!in_array($status, ['present', 'absent', 'marked'])) {
-            throw new Exception("Invalid attendance status");
         }
 
         if (!strtotime($sessionDate)) {
@@ -184,6 +195,10 @@ class Attendance
             if ($mealSession['SessionDate'] !== $sessionDate) {
                 throw new Exception("Meal session date does not match attendance date");
             }
+        }
+
+        if ($this->attendanceExistsForOtherRecord($attendanceId, $beneficiaryId, $sessionDate)) {
+            throw new Exception("Attendance already recorded for this beneficiary on this date");
         }
 
         $query = "UPDATE " . $this->table . "
@@ -300,33 +315,41 @@ class Attendance
         try {
             foreach ($attendanceData as $data) {
                 $beneficiaryId = $data['beneficiary_id'];
-                $status = $data['status'] ?? 'present';
+                $status = $this->normalizeStatus($data['status'] ?? 'present');
                 $notes = $data['notes'] ?? null;
                 $mealSessionId = $data['meal_session_id'] ?? null;
 
-                if ($this->attendanceExists($beneficiaryId, $sessionDate)) {
+                try {
+                    if ($this->attendanceExists($beneficiaryId, $sessionDate)) {
+                        $results[] = [
+                            'beneficiary_id' => $beneficiaryId,
+                            'success' => false,
+                            'message' => 'Attendance already recorded'
+                        ];
+                        continue;
+                    }
+
+                    $attendanceId = $this->recordAttendance($beneficiaryId, $sessionDate, $status, $notes, $mealSessionId);
+
+                    if ($attendanceId) {
+                        $results[] = [
+                            'beneficiary_id' => $beneficiaryId,
+                            'attendance_id' => $attendanceId,
+                            'success' => true,
+                            'message' => 'Attendance recorded successfully'
+                        ];
+                    } else {
+                        $results[] = [
+                            'beneficiary_id' => $beneficiaryId,
+                            'success' => false,
+                            'message' => 'Failed to record attendance'
+                        ];
+                    }
+                } catch (Exception $rowException) {
                     $results[] = [
                         'beneficiary_id' => $beneficiaryId,
                         'success' => false,
-                        'message' => 'Attendance already recorded'
-                    ];
-                    continue;
-                }
-
-                $attendanceId = $this->recordAttendance($beneficiaryId, $sessionDate, $status, $notes, $mealSessionId);
-
-                if ($attendanceId) {
-                    $results[] = [
-                        'beneficiary_id' => $beneficiaryId,
-                        'attendance_id' => $attendanceId,
-                        'success' => true,
-                        'message' => 'Attendance recorded successfully'
-                    ];
-                } else {
-                    $results[] = [
-                        'beneficiary_id' => $beneficiaryId,
-                        'success' => false,
-                        'message' => 'Failed to record attendance'
+                        'message' => $rowException->getMessage()
                     ];
                 }
             }
@@ -373,7 +396,7 @@ class Attendance
      * Table: Attendance
      * Returns: Detailed attendance report
      */
-    public function getAttendanceReport($startDate, $endDate, $beneficiaryId = null, $mealSessionId = null, $statusFilter = null)
+    public function getAttendanceReport($startDate, $endDate, $beneficiaryId = null, $mealSessionId = null, $statusFilter = null, $searchTerm = null)
     {
         $query = "SELECT a.AttendanceID, a.MealSessionID, a.SessionDate, a.Status, a.Notes, a.CreatedAt,
                          ms.SessionType, ms.Location,
@@ -401,6 +424,14 @@ class Attendance
         if ($statusFilter && in_array($statusFilter, ['present', 'absent', 'marked'])) {
             $query .= " AND a.Status = :status";
             $params[':status'] = $statusFilter;
+        }
+
+        if (!empty($searchTerm)) {
+            $query .= " AND (CONCAT(b.FirstName, ' ', b.LastName) LIKE :search_term
+                          OR a.Notes LIKE :search_term
+                          OR CAST(a.AttendanceID AS CHAR) LIKE :search_term
+                          OR CAST(a.BeneficiaryID AS CHAR) LIKE :search_term)";
+            $params[':search_term'] = '%' . $searchTerm . '%';
         }
 
         $query .= " ORDER BY a.SessionDate DESC, b.LastName, b.FirstName";
@@ -626,6 +657,30 @@ class Attendance
     }
 
     /**
+     * HZ-ATT-019
+     * Purpose: Check whether another attendance record already exists for the same beneficiary/date
+     */
+    private function attendanceExistsForOtherRecord($attendanceId, $beneficiaryId, $sessionDate)
+    {
+        $query = "SELECT AttendanceID FROM " . $this->table . "
+                  WHERE BeneficiaryID = :beneficiary_id
+                    AND SessionDate = :session_date
+                    AND AttendanceID <> :attendance_id
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":beneficiary_id", $beneficiaryId);
+        $stmt->bindParam(":session_date", $sessionDate);
+        $stmt->bindParam(":attendance_id", $attendanceId, PDO::PARAM_INT);
+
+        if ($stmt->execute()) {
+            return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        }
+
+        return false;
+    }
+
+    /**
      * HZ-ATT-018
      * Purpose: Get meal session row by identifier
      */
@@ -640,6 +695,24 @@ class Attendance
         }
 
         return false;
+    }
+
+    /**
+     * Normalize status values from forms, reports, and JSON payloads.
+     */
+    private function normalizeStatus($status)
+    {
+        $normalized = strtolower(trim((string)$status));
+
+        if (in_array($normalized, ['present', 'absent', 'marked'], true)) {
+            return $normalized;
+        }
+
+        if (in_array($status, ['Present', 'Absent', 'Marked'], true)) {
+            return strtolower($status);
+        }
+
+        throw new Exception("Invalid attendance status");
     }
 }
 ?>

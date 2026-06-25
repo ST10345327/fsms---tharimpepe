@@ -7,18 +7,20 @@
  * Security: Requires authentication, admin/staff access only
  */
 
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
+
 require_once __DIR__ . "/../../config/database.php";
 require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
 require_once __DIR__ . "/../models/Message.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
 
-// Require login and appropriate role
+// Require login and messages permission (admin, staff, volunteer)
 requireLogin();
+rbacRequirePermission('messages');
+
 $currentUser = getCurrentUser();
-if (!in_array($currentUser['role'], ['admin', 'staff', 'volunteer'])) {
-    header("Location: ../../views/dashboard.php");
-    exit;
-}
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'inbox';
 
@@ -92,12 +94,11 @@ function showInbox()
     $limit = 20;
     $offset = ($page - 1) * $limit;
 
-    $messages = $message->getInboxMessages($currentUser['id'], $limit, $offset);
-    $unreadCount = $message->getUnreadCount($currentUser['id']);
+    $messages = $message->getInboxMessages($currentUser['user_id'], $limit, $offset);
+    $unreadCount = $message->getUnreadCount($currentUser['user_id']);
 
     // Log activity
-    global $activityLog;
-    $activityLog->logActivity($currentUser['id'], 'Viewed inbox', 'Messages');
+    ActivityLog::log($currentUser['user_id'], 'Viewed inbox', 'Messages', null);
 
     require_once __DIR__ . "/../views/messages/inbox.php";
 }
@@ -114,11 +115,10 @@ function showSent()
     $limit = 20;
     $offset = ($page - 1) * $limit;
 
-    $messages = $message->getSentMessages($currentUser['id'], $limit, $offset);
+    $messages = $message->getSentMessages($currentUser['user_id'], $limit, $offset);
 
     // Log activity
-    global $activityLog;
-    $activityLog->logActivity($currentUser['id'], 'Viewed sent messages', 'Messages');
+    ActivityLog::log($currentUser['user_id'], 'Viewed sent messages', 'Messages', null);
 
     require_once __DIR__ . "/../views/messages/sent.php";
 }
@@ -137,7 +137,7 @@ function showComposeForm()
 
     // If replying, get original message
     if ($replyTo) {
-        $replyMessage = $message->getMessageById($replyTo, $currentUser['id']);
+        $replyMessage = $message->getMessageById($replyTo, $currentUser['user_id']);
         if (!$replyMessage) {
             header("Location: MessageController.php?action=inbox");
             exit;
@@ -160,6 +160,12 @@ function sendMessage()
         exit;
     }
 
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: MessageController.php?action=compose");
+        exit;
+    }
+
     $recipientId = isset($_POST['recipient_id']) ? (int)$_POST['recipient_id'] : 0;
     $subject = isset($_POST['subject']) ? trim($_POST['subject']) : '';
     $content = isset($_POST['content']) ? trim($_POST['content']) : '';
@@ -172,12 +178,11 @@ function sendMessage()
     }
 
     // Send message
-    $messageId = $message->sendMessage($currentUser['id'], $recipientId, $subject, $content);
+    $messageId = $message->sendMessage($currentUser['user_id'], $recipientId, $subject, $content);
 
     if ($messageId) {
         // Log activity
-        global $activityLog;
-        $activityLog->logActivity($currentUser['id'], 'Sent message', 'Messages', $messageId);
+        ActivityLog::log($currentUser['user_id'], 'Sent message', 'Messages', $messageId);
 
         $_SESSION['success'] = "Message sent successfully.";
         header("Location: MessageController.php?action=sent");
@@ -203,7 +208,7 @@ function viewMessage()
         exit;
     }
 
-    $msg = $message->getMessageById($messageId, $currentUser['id']);
+    $msg = $message->getMessageById($messageId, $currentUser['user_id']);
 
     if (!$msg) {
         $_SESSION['error'] = "Message not found or access denied.";
@@ -212,13 +217,12 @@ function viewMessage()
     }
 
     // Mark as read if recipient is current user
-    if ($msg['RecipientID'] == $currentUser['id'] && !$msg['IsRead']) {
-        $message->markAsRead($messageId, $currentUser['id']);
+    if ($msg['RecipientID'] == $currentUser['user_id'] && !$msg['IsRead']) {
+        $message->markAsRead($messageId, $currentUser['user_id']);
     }
 
     // Log activity
-    global $activityLog;
-    $activityLog->logActivity($currentUser['id'], 'Viewed message', 'Messages', $messageId);
+    ActivityLog::log($currentUser['user_id'], 'Viewed message', 'Messages', $messageId);
 
     require_once __DIR__ . "/../views/messages/view.php";
 }
@@ -243,7 +247,7 @@ function markAsRead()
         exit;
     }
 
-    $result = $message->markAsRead($messageId, $currentUser['id']);
+    $result = $message->markAsRead($messageId, $currentUser['user_id']);
 
     if ($result) {
         echo json_encode(['success' => true]);
@@ -269,12 +273,11 @@ function deleteMessage()
         exit;
     }
 
-    $result = $message->deleteMessage($messageId, $currentUser['id']);
+    $result = $message->deleteMessage($messageId, $currentUser['user_id']);
 
     if ($result) {
         // Log activity
-        global $activityLog;
-        $activityLog->logActivity($currentUser['id'], 'Deleted message', 'Messages', $messageId);
+        ActivityLog::log($currentUser['user_id'], 'Deleted message', 'Messages', $messageId);
 
         $_SESSION['success'] = "Message deleted successfully.";
     } else {
@@ -302,11 +305,10 @@ function searchMessages()
         exit;
     }
 
-    $messages = $message->searchMessages($currentUser['id'], $searchTerm);
+    $messages = $message->searchMessages($currentUser['user_id'], $searchTerm);
 
     // Log activity
-    global $activityLog;
-    $activityLog->logActivity($currentUser['id'], 'Searched messages', 'Messages', null, "Search term: $searchTerm");
+    ActivityLog::log($currentUser['user_id'], 'Searched messages', 'Messages', null, "Search term: $searchTerm");
 
     require_once __DIR__ . "/../views/messages/search.php";
 }
@@ -319,7 +321,7 @@ function getUnreadCount()
 {
     global $message, $currentUser;
 
-    $count = $message->getUnreadCount($currentUser['id']);
+    $count = $message->getUnreadCount($currentUser['user_id']);
 
     header('Content-Type: application/json');
     echo json_encode(['unread_count' => $count]);

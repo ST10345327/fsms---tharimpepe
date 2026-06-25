@@ -48,7 +48,9 @@
             <div class="col-lg-8">
                 <div class="form-card">
                     <form method="POST" action="VolunteerScheduleController.php" class="needs-validation">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="action" value="store">
+                        <?php echo csrfTokenInput(); ?>
 
                         <!-- Volunteer Selection -->
                         <div class="form-section mb-4">

@@ -153,7 +153,7 @@
         <div class="mb-4">
             <ul class="nav nav-tabs">
                 <li class="nav-item">
-                    <a class="nav-link <?php echo !isset($_GET['status']) ? 'active' : ''; ?>"
+                    <a class="nav-link <?php echo (!isset($_GET['status']) || $_GET['status'] === '') ? 'active' : ''; ?>"
                        href="BeneficiaryController.php?action=list">
                         All Beneficiaries
                     </a>
@@ -225,6 +225,39 @@
                         </div>
                     </div>
                 <?php endforeach; ?>
+
+                <!-- Pagination -->
+                <?php if (isset($totalPages) && $totalPages > 1): ?>
+                    <div class="col-12 mt-4">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                <?php if ($page > 1): ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?action=list&page=<?php echo $page - 1; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?>">
+                                            <i class="fas fa-chevron-left"></i> Previous
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
+
+                                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                                    <li class="page-item <?php echo $i === $page ? 'active' : ''; ?>">
+                                        <a class="page-link" href="?action=list&page=<?php echo $i; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?>">
+                                            <?php echo $i; ?>
+                                        </a>
+                                    </li>
+                                <?php endfor; ?>
+
+                                <?php if ($page < $totalPages): ?>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?action=list&page=<?php echo $page + 1; ?><?php echo isset($_GET['status']) ? '&status=' . htmlspecialchars($_GET['status']) : ''; ?>">
+                                            Next <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
+                        </nav>
+                    </div>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="col-12">
                     <div class="alert alert-info" role="alert">

@@ -7,15 +7,25 @@
  * Controller: AttendanceController
  */
 
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
+
 require_once __DIR__ . "/../helpers/SessionHandler.php";
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
+require_once __DIR__ . "/../../config/database.php";
 require_once __DIR__ . "/../models/Attendance.php";
 require_once __DIR__ . "/../models/Beneficiary.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
 
+requireLogin();
+
+// HZ-ATT-CTRL-RBAC: Enforce attendance permission (admin, staff, volunteer)
+rbacRequirePermission('attendance');
+
 // Initialize database connection
 $database = new Database();
 $db = $database->getConnection();
+generateCSRFToken();
 
 // Initialize models
 $attendanceModel = new Attendance($db);
@@ -38,8 +48,10 @@ if ($action === 'list') {
     $dateFilter = $_GET['date'] ?? null;
     $statusFilter = $_GET['status'] ?? null;
     $beneficiaryId = isset($_GET['beneficiary_id']) ? (int)$_GET['beneficiary_id'] : null;
+    $searchTerm = trim($_GET['search'] ?? '');
 
-    $attendance = $attendanceModel->getAllAttendance($limit, $offset, $dateFilter, $statusFilter, $beneficiaryId);
+    $attendance = $attendanceModel->getAllAttendance($limit, $offset, $dateFilter, $statusFilter, $beneficiaryId, $searchTerm);
+    $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0);
 
     // Get statistics if date range is provided
     $stats = null;
@@ -58,6 +70,7 @@ if ($action === 'list') {
 if ($action === 'create') {
     // Get active beneficiaries for selection
     $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0, 'active');
+    $recentAttendance = $attendanceModel->getRecentAttendance(5);
 
     if ($_SERVER["REQUEST_METHOD"] === "GET") {
         include __DIR__ . "/../views/attendance/create.php";
@@ -69,6 +82,12 @@ if ($action === 'create') {
      * Flow: Validate input -> Record attendance -> Redirect
      */
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
+        if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+            $error = "Invalid request token";
+            include __DIR__ . "/../views/attendance/create.php";
+            exit();
+        }
+
         $beneficiaryId = isset($_POST['beneficiary_id']) ? (int)$_POST['beneficiary_id'] : 0;
         $sessionDate = $_POST['session_date'] ?? "";
         $status = $_POST['status'] ?? "present";
@@ -117,6 +136,7 @@ if ($action === 'view') {
         exit();
     }
 
+    $history = $attendanceModel->getBeneficiaryAttendance($attendance['BeneficiaryID'], 10);
     include __DIR__ . "/../views/attendance/view.php";
 }
 
@@ -126,6 +146,11 @@ if ($action === 'view') {
  * Flow: Get record -> Show edit form
  */
 if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "GET") {
+    if (!hasRole('admin') && !hasRole('staff')) {
+        header("Location: AttendanceController.php?action=list&error=You do not have permission to edit attendance records");
+        exit();
+    }
+
     $attendanceId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
     if ($attendanceId <= 0) {
@@ -135,6 +160,7 @@ if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "GET") {
 
     $attendance = $attendanceModel->getAttendanceById($attendanceId);
     $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0, 'active');
+    $recentAttendance = $attendanceModel->getRecentAttendance(5);
 
     if (!$attendance) {
         header("Location: AttendanceController.php?action=list&error=Attendance record not found");
@@ -150,6 +176,16 @@ if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "GET") {
  * Flow: Validate input -> Update record -> Redirect
  */
 if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "POST") {
+    if (!hasRole('admin') && !hasRole('staff')) {
+        header("Location: AttendanceController.php?action=list&error=You do not have permission to edit attendance records");
+        exit();
+    }
+
+    if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+        header("Location: AttendanceController.php?action=list&error=Invalid request token");
+        exit();
+    }
+
     $attendanceId = isset($_POST['attendance_id']) ? (int)$_POST['attendance_id'] : 0;
     $beneficiaryId = isset($_POST['beneficiary_id']) ? (int)$_POST['beneficiary_id'] : 0;
     $sessionDate = $_POST['session_date'] ?? "";
@@ -174,6 +210,7 @@ if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "POST") {
 
     $attendance = $attendanceModel->getAttendanceById($attendanceId);
     $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0, 'active');
+    $recentAttendance = $attendanceModel->getRecentAttendance(5);
     include __DIR__ . "/../views/attendance/edit.php";
 }
 
@@ -183,6 +220,11 @@ if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "POST") {
  * Flow: Confirm deletion -> Delete record -> Redirect
  */
 if ($action === 'delete') {
+    if (!hasRole('admin') && !hasRole('staff')) {
+        header("Location: AttendanceController.php?action=list&error=You do not have permission to delete attendance records");
+        exit();
+    }
+
     $attendanceId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     $csrfToken = $_GET['csrf_token'] ?? '';
 
@@ -247,6 +289,14 @@ if ($action === 'bulk-record') {
      * Flow: Validate data -> Bulk record -> Show results
      */
     if ($_SERVER["REQUEST_METHOD"] === "POST") {
+        if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+            $error = "Invalid request token";
+            $sessionDate = $_POST['session_date'] ?? date('Y-m-d');
+            $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0, 'active');
+            include __DIR__ . "/../views/attendance/bulk_record.php";
+            exit();
+        }
+
         $sessionDate = $_POST['session_date'] ?? "";
         $attendanceData = $_POST['attendance'] ?? [];
 
@@ -282,11 +332,69 @@ if ($action === 'report') {
     $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
     $endDate = $_GET['end_date'] ?? date('Y-m-d');
     $beneficiaryId = isset($_GET['beneficiary_id']) ? (int)$_GET['beneficiary_id'] : null;
+    $statusFilter = $_GET['status'] ?? null;
+    $searchTerm = trim($_GET['search'] ?? '');
 
-    $report = $attendanceModel->getAttendanceReport($startDate, $endDate, $beneficiaryId);
+    $reportData = $attendanceModel->getAttendanceReport($startDate, $endDate, $beneficiaryId, null, $statusFilter, $searchTerm);
+    $beneficiarySummary = $attendanceModel->getBeneficiaryAttendanceSummary($startDate, $endDate, $beneficiaryId, null, $statusFilter);
     $stats = $attendanceModel->getAttendanceStats($startDate, $endDate);
     $beneficiaries = $beneficiaryModel->getAllBeneficiaries(1000, 0);
+    $selectedStartDate = $startDate;
+    $selectedEndDate = $endDate;
+    $selectedStatus = $statusFilter;
+    $selectedBeneficiaryId = $beneficiaryId;
+    $selectedSearch = $searchTerm;
     include __DIR__ . "/../views/attendance/report.php";
+}
+
+/**
+ * HZ-ATT-CTRL-011A
+ * Purpose: Export attendance data as CSV
+ * Flow: Gather filtered records -> Stream CSV
+ */
+if ($action === 'export') {
+    $mode = $_GET['mode'] ?? 'list';
+    $startDate = $_GET['start_date'] ?? $_GET['date'] ?? date('Y-m-d', strtotime('-30 days'));
+    $endDate = $_GET['end_date'] ?? $_GET['date'] ?? date('Y-m-d');
+    $statusFilter = $_GET['status'] ?? null;
+    $beneficiaryId = isset($_GET['beneficiary_id']) ? (int)$_GET['beneficiary_id'] : null;
+    $searchTerm = trim($_GET['search'] ?? '');
+
+    if ($mode === 'report') {
+        $rows = $attendanceModel->getAttendanceReport($startDate, $endDate, $beneficiaryId, null, $statusFilter, $searchTerm);
+        $filename = 'attendance_report_' . date('Y-m-d_His') . '.csv';
+    } else {
+        $rows = $attendanceModel->getAllAttendance(10000, 0, $_GET['date'] ?? null, $statusFilter, $beneficiaryId, $searchTerm);
+        $filename = 'attendance_list_' . date('Y-m-d_His') . '.csv';
+    }
+
+    if (ob_get_length()) {
+        ob_clean();
+    }
+
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename=' . $filename);
+
+    $output = fopen('php://output', 'w');
+    fputcsv($output, ['AttendanceID', 'BeneficiaryID', 'BeneficiaryName', 'SessionDate', 'Status', 'Notes', 'RecordedAt', 'SessionType', 'Location']);
+
+    foreach ($rows as $row) {
+        $name = trim(($row['FirstName'] ?? '') . ' ' . ($row['LastName'] ?? ''));
+        fputcsv($output, [
+            $row['AttendanceID'] ?? '',
+            $row['BeneficiaryID'] ?? '',
+            $name,
+            $row['SessionDate'] ?? '',
+            $row['Status'] ?? ($row['AttendanceStatus'] ?? ''),
+            $row['Notes'] ?? '',
+            $row['CreatedAt'] ?? '',
+            $row['SessionType'] ?? '',
+            $row['Location'] ?? '',
+        ]);
+    }
+
+    fclose($output);
+    exit();
 }
 
 /**
@@ -326,11 +434,11 @@ if ($action === 'bulk_save') {
             }
 
             $beneficiaryId = (int)$record['beneficiary_id'];
-            $status = $record['status'];
+            $status = strtolower(trim((string)$record['status']));
             $sessionDate = $record['session_date'];
 
             // Validate status
-            if (!in_array($status, ['Present', 'Absent'])) {
+            if (!in_array($status, ['present', 'absent', 'marked'], true)) {
                 continue;
             }
 

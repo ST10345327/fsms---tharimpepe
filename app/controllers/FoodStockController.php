@@ -12,17 +12,24 @@
  * [3] Web Security Best Practices (OWASP, 2025)
  */
 
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
+
 require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
 require_once __DIR__ . "/../models/FoodStock.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../config/database.php";
 
 // HZ-FOOD-CTRL-001: Require user authentication and authorization
 requireLogin();
 $currentUser = getCurrentUser();
 
+// HZ-FOOD-CTRL-RBAC: Enforce food stock permission (admin, staff)
+rbacRequirePermission('food_stock');
+
 // Initialize database connection and model
-$pdo = getDBConnection();
+$pdo = getConnection();
 $foodStockModel = new FoodStock($pdo);
 
 // Get action from request
@@ -229,7 +236,7 @@ function handleDeleteAction() {
     global $foodStockModel, $error, $success;
 
     // HZ-FOOD-CTRL-006a: Check admin authorization
-    if ($GLOBALS['currentUser']['role'] !== 'admin') {
+    if (!rbacCan('food_stock.delete')) {
         $error = 'You do not have permission to delete food stock items.';
         handleListAction();
         return;

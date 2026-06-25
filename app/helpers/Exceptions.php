@@ -102,12 +102,12 @@ class ValidationException extends FSMSException
      * @param string $message Internal message
      * @param Throwable $previous Previous exception
      */
-    public function __construct($errors = [], $message = "Validation failed", Throwable $previous = null)
+    public function __construct($message = "Validation failed", $errors = [], Throwable $previous = null)
     {
-        // Store errors array
+        // Accept either a single error string or an array of validation errors.
         if (is_array($errors)) {
             $this->errors = $errors;
-        } else {
+        } elseif ($errors !== null && $errors !== '') {
             $this->errors = [$errors];
         }
         

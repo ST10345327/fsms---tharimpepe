@@ -110,6 +110,7 @@
                             <i class="fas fa-times"></i> Cancel
                         </a>
                         <form method="POST" action="UserController.php">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                             <input type="hidden" name="action" value="destroy">
                             <input type="hidden" name="id" value="<?php echo (int)$user['UserID']; ?>">
                             <button type="submit" class="btn btn-danger">

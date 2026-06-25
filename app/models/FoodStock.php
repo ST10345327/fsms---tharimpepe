@@ -12,7 +12,7 @@
  * [3] Database Normalization Principles (Codd, 1970)
  */
 
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../config/database.php";
 
 class FoodStock {
     private $pdo;

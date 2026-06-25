@@ -86,11 +86,13 @@
                     <a href="VolunteerController.php?action=edit&id=<?php echo $volunteer['VolunteerID']; ?>" class="btn btn-warning flex-grow-1">
                         <i class="fas fa-edit"></i> Edit
                     </a>
-                    <a href="VolunteerController.php?action=delete&id=<?php echo $volunteer['VolunteerID']; ?>" 
-                       class="btn btn-danger flex-grow-1" 
-                       onclick="return confirm('Are you sure you want to deactivate this volunteer?');">
-                        <i class="fas fa-trash"></i> Deactivate
-                    </a>
+                    <form method="POST" action="VolunteerController.php?action=delete" class="flex-grow-1 m-0">
+                        <?php echo csrfTokenInput(); ?>
+                        <input type="hidden" name="volunteer_id" value="<?php echo (int)$volunteer['VolunteerID']; ?>">
+                        <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to deactivate this volunteer?');">
+                            <i class="fas fa-trash"></i> Deactivate
+                        </button>
+                    </form>
                     <a href="VolunteerController.php?action=list" class="btn btn-secondary flex-grow-1">
                         <i class="fas fa-arrow-left"></i> Back
                     </a>

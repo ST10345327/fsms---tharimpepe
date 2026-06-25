@@ -26,24 +26,29 @@
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
 
     <!-- Search Results -->
-    <div class="container pt-5 pb-5">
+    <div class="container pt-5 pb-5 text-center">
         <h1 class="mb-4"><i class="fas fa-search"></i> Search Results</h1>
 
         <?php if (!empty($volunteers)): ?>
             <p class="text-muted mb-4">Found <?php echo count($volunteers); ?> volunteer(s)</p>
 
-            <div class="row">
+            <div class="row justify-content-center">
                 <?php foreach ($volunteers as $volunteer): ?>
+                    <?php
+                        $fullName = trim(($volunteer['FullName'] ?? '') !== '' ? $volunteer['FullName'] : (($volunteer['FirstName'] ?? '') . ' ' . ($volunteer['LastName'] ?? '')));
+                        $phone = $volunteer['Phone'] ?? '';
+                        $email = $volunteer['Email'] ?? '';
+                    ?>
                     <div class="col-md-6">
-                        <div class="volunteer-card">
+                        <div class="volunteer-card text-start">
                             <!-- HZ-VOL-UI-005: Search result card -->
-                            <h5><?php echo htmlspecialchars($volunteer['FirstName'] . ' ' . $volunteer['LastName']); ?></h5>
+                            <h5><?php echo htmlspecialchars($fullName !== '' ? $fullName : 'Unnamed Volunteer'); ?></h5>
                             
                             <div class="volunteer-info">
-                                <i class="fas fa-envelope"></i> <?php echo htmlspecialchars($volunteer['Email']); ?>
+                                <i class="fas fa-envelope"></i> <?php echo htmlspecialchars($email); ?>
                             </div>
                             <div class="volunteer-info">
-                                <i class="fas fa-phone"></i> <?php echo htmlspecialchars($volunteer['Phone']); ?>
+                                <i class="fas fa-phone"></i> <?php echo htmlspecialchars($phone); ?>
                             </div>
 
                             <div class="btn-group-sm d-flex gap-2 mt-3">

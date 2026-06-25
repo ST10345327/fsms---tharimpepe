@@ -129,7 +129,7 @@ class FormValidator
      */
     public static function validatePassword($password, $fieldName = 'Password', $minLength = 6)
     {
-        $password = $_POST[$password] ?? '';
+        $password = trim($password ?? '');
         
         if (empty($password)) {
             self::$errors[] = "{$fieldName} is required";

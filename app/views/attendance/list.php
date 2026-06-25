@@ -71,6 +71,10 @@
                     <a href="AttendanceController.php?action=daily-summary" class="btn btn-light">
                         <i class="fas fa-calendar-day"></i> Daily Summary
                     </a>
+                    <a href="AttendanceController.php?action=export&mode=list<?php echo !empty($dateFilter) ? '&date=' . urlencode($dateFilter) : ''; ?><?php echo !empty($statusFilter) ? '&status=' . urlencode($statusFilter) : ''; ?><?php echo !empty($beneficiaryId) ? '&beneficiary_id=' . (int)$beneficiaryId : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>"
+                       class="btn btn-light">
+                        <i class="fas fa-download"></i> Export
+                    </a>
                 </div>
             </div>
         </div>
@@ -123,19 +127,42 @@
 
         <!-- Filter Section -->
         <div class="filter-section">
-            <div class="row">
-                <div class="col-md-4">
-                    <form method="GET" action="AttendanceController.php" class="d-flex">
-                        <input type="hidden" name="action" value="list">
-                        <input type="date" name="date" class="form-control me-2"
-                               value="<?php echo htmlspecialchars($dateFilter ?? ''); ?>">
+            <form method="GET" action="AttendanceController.php">
+                <input type="hidden" name="action" value="list">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" value="<?php echo htmlspecialchars($dateFilter ?? ''); ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">All Status</option>
+                            <option value="present" <?php echo ($statusFilter === 'present') ? 'selected' : ''; ?>>Present</option>
+                            <option value="absent" <?php echo ($statusFilter === 'absent') ? 'selected' : ''; ?>>Absent</option>
+                            <option value="marked" <?php echo ($statusFilter === 'marked') ? 'selected' : ''; ?>>Marked</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Beneficiary</label>
+                        <select name="beneficiary_id" class="form-select">
+                            <option value="">All Beneficiaries</option>
+                            <?php foreach ($beneficiaries as $beneficiary): ?>
+                                <option value="<?php echo (int)$beneficiary['BeneficiaryID']; ?>" <?php echo ((string)$beneficiaryId === (string)$beneficiary['BeneficiaryID']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($beneficiary['FirstName'] . ' ' . $beneficiary['LastName']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" name="search" class="form-control" placeholder="Name or ID" value="<?php echo htmlspecialchars($searchTerm ?? ''); ?>">
+                    </div>
+                    <div class="col-12 d-flex gap-2 flex-wrap">
                         <button type="submit" class="btn btn-outline-primary">
-                            <i class="fas fa-filter"></i> Filter by Date
+                            <i class="fas fa-filter"></i> Apply Filters
                         </button>
-                    </form>
-                </div>
-                <div class="col-md-4">
-                    <div class="d-flex gap-2">
+                        <a href="AttendanceController.php?action=list" class="btn btn-link">Clear Filters</a>
                         <a href="AttendanceController.php?action=bulk-record" class="btn btn-success">
                             <i class="fas fa-users"></i> Bulk Record
                         </a>
@@ -144,21 +171,7 @@
                         </a>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <form method="GET" action="AttendanceController.php" class="d-flex">
-                        <input type="hidden" name="action" value="list">
-                        <select name="status" class="form-select me-2">
-                            <option value="">All Status</option>
-                            <option value="present" <?php echo ($statusFilter === 'present') ? 'selected' : ''; ?>>Present</option>
-                            <option value="absent" <?php echo ($statusFilter === 'absent') ? 'selected' : ''; ?>>Absent</option>
-                            <option value="marked" <?php echo ($statusFilter === 'marked') ? 'selected' : ''; ?>>Marked</option>
-                        </select>
-                        <button type="submit" class="btn btn-outline-secondary">
-                            <i class="fas fa-search"></i> Filter
-                        </button>
-                    </form>
-                </div>
-            </div>
+            </form>
         </div>
 
         <!-- Attendance List -->
@@ -202,10 +215,12 @@
                                    class="btn btn-sm btn-outline-primary flex-grow-1">
                                     <i class="fas fa-eye"></i> View
                                 </a>
-                                <a href="AttendanceController.php?action=edit&id=<?php echo $record['AttendanceID']; ?>"
-                                   class="btn btn-sm btn-outline-warning flex-grow-1">
-                                    <i class="fas fa-edit"></i> Edit
-                                </a>
+                                <?php if (hasRole('admin') || hasRole('staff')): ?>
+                                    <a href="AttendanceController.php?action=edit&id=<?php echo $record['AttendanceID']; ?>"
+                                       class="btn btn-sm btn-outline-warning flex-grow-1">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -231,7 +246,7 @@
                 <ul class="pagination">
                     <?php if ($page > 1): ?>
                         <li class="page-item">
-                            <a class="page-link" href="?action=list&page=<?php echo $page - 1; ?><?php echo $dateFilter ? '&date=' . $dateFilter : ''; ?><?php echo $statusFilter ? '&status=' . $statusFilter : ''; ?>">
+                            <a class="page-link" href="?action=list&page=<?php echo $page - 1; ?><?php echo $dateFilter ? '&date=' . urlencode($dateFilter) : ''; ?><?php echo $statusFilter ? '&status=' . urlencode($statusFilter) : ''; ?><?php echo !empty($beneficiaryId) ? '&beneficiary_id=' . (int)$beneficiaryId : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
                                 Previous
                             </a>
                         </li>
@@ -242,7 +257,7 @@
                     </li>
 
                     <li class="page-item">
-                        <a class="page-link" href="?action=list&page=<?php echo $page + 1; ?><?php echo $dateFilter ? '&date=' . $dateFilter : ''; ?><?php echo $statusFilter ? '&status=' . $statusFilter : ''; ?>">
+                        <a class="page-link" href="?action=list&page=<?php echo $page + 1; ?><?php echo $dateFilter ? '&date=' . urlencode($dateFilter) : ''; ?><?php echo $statusFilter ? '&status=' . urlencode($statusFilter) : ''; ?><?php echo !empty($beneficiaryId) ? '&beneficiary_id=' . (int)$beneficiaryId : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>">
                             Next
                         </a>
                     </li>

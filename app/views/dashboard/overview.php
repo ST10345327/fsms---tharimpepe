@@ -272,7 +272,7 @@
                                     </div>
                                     <div class="activity-content">
                                         <div class="activity-type">
-                                            <?php echo htmlspecialchars($activity['ActivityType']); ?>
+                                            <?php echo htmlspecialchars($activity['Action']); ?>
                                             <small class="text-muted">by <?php echo htmlspecialchars($activity['username']); ?></small>
                                         </div>
                                         <div class="activity-time">
@@ -360,7 +360,7 @@
 
         // Attendance by Role Chart
         const roleData = <?php echo json_encode($attendanceByRole); ?>;
-        const roleLabels = roleData.map(r => r.Role);
+        const roleLabels = roleData.map(r => r.Status);
         const roleCounts = roleData.map(r => r.count);
 
         const roleCtx = document.getElementById('roleChart').getContext('2d');

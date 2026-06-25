@@ -6,25 +6,23 @@
  * Author: WIL Student
  */
 
-session_start();
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
 
-require_once __DIR__ . "/../config/database.php";
+require_once __DIR__ . "/../../config/database.php";
 require_once __DIR__ . "/../models/Beneficiary.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
 require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
 
-// Require login
+// Require login and beneficiaries permission (admin, staff)
 requireLogin();
-
-// Only admins and staff can access this
-if (!in_array($_SESSION['role'], ['admin', 'staff'])) {
-    header("Location: ../views/dashboard.php?error=Access denied");
-    exit();
-}
+rbacRequirePermission('beneficiaries');
+generateCSRFToken();
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'list';
-$error = "";
-$success = "";
+$error = $_GET['error'] ?? "";
+$success = $_GET['success'] ?? "";
 
 try {
     // Initialize database connection
@@ -51,7 +49,8 @@ try {
 
         $beneficiaries = $beneficiaryModel->getAllBeneficiaries($pageSize, $offset, $status);
         $statusCounts = $beneficiaryModel->getBeneficiaryCountByStatus();
-        $totalCount = $beneficiaryModel->getTotalCount();
+        $totalCount = $beneficiaryModel->getTotalCount($status);
+        $totalPages = ceil($totalCount / $pageSize);
 
         include __DIR__ . "/../views/beneficiaries/list.php";
     }
@@ -71,6 +70,9 @@ try {
      * Flow: Validate input -> Create beneficiary record
      */
     if ($action === 'create' && $_SERVER["REQUEST_METHOD"] === "POST") {
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            $error = "Security validation failed. Please try again.";
+        } else {
         $firstName = trim($_POST['first_name'] ?? "");
         $lastName = trim($_POST['last_name'] ?? "");
         $dateOfBirth = $_POST['date_of_birth'] ?? "";
@@ -78,28 +80,76 @@ try {
         $guardianName = trim($_POST['guardian_name'] ?? "");
         $contactNumber = trim($_POST['contact_number'] ?? "");
         $address = trim($_POST['address'] ?? "");
+        $dietaryNeeds = trim($_POST['dietary_needs'] ?? "");
         $category = $_POST['category'] ?? "";
         $registrationDate = $_POST['registration_date'] ?? "";
 
         // Calculate age from date of birth
         $age = null;
         if (!empty($dateOfBirth)) {
-            $birthDate = new DateTime($dateOfBirth);
-            $today = new DateTime();
-            $age = $today->diff($birthDate)->y;
+            $birthDate = DateTime::createFromFormat('Y-m-d', $dateOfBirth);
+            $birthDateErrors = DateTime::getLastErrors();
+            $birthDateWarningCount = is_array($birthDateErrors) ? (int)($birthDateErrors['warning_count'] ?? 0) : 0;
+            $birthDateErrorCount = is_array($birthDateErrors) ? (int)($birthDateErrors['error_count'] ?? 0) : 0;
+            if (!$birthDate || $birthDateWarningCount > 0 || $birthDateErrorCount > 0) {
+                $error = "Invalid date of birth format";
+            } else {
+                $today = new DateTime('today');
+                if ($birthDate > $today) {
+                    $error = "Date of birth cannot be in the future";
+                } else {
+                    $age = $today->diff($birthDate)->y;
+                }
+            }
+        } else {
+            $error = "Date of birth is required";
         }
 
-        // Validation
-        if (empty($firstName) || empty($lastName) || empty($registrationDate)) {
+        if (empty($error) && empty($gender)) {
+            $error = "Gender is required";
+        }
+
+        if (empty($error) && empty($contactNumber)) {
+            $error = "Contact number is required";
+        }
+
+        if (empty($error) && !preg_match('/^[0-9+\-\s]{7,20}$/', $contactNumber)) {
+            $error = "Contact number format is invalid";
+        }
+
+        if (empty($error) && (!empty($registrationDate))) {
+            $registeredOn = DateTime::createFromFormat('Y-m-d', $registrationDate);
+            $registrationErrors = DateTime::getLastErrors();
+            $registrationWarningCount = is_array($registrationErrors) ? (int)($registrationErrors['warning_count'] ?? 0) : 0;
+            $registrationErrorCount = is_array($registrationErrors) ? (int)($registrationErrors['error_count'] ?? 0) : 0;
+            if (!$registeredOn || $registrationWarningCount > 0 || $registrationErrorCount > 0) {
+                $error = "Invalid registration date format";
+            }
+        }
+
+        if (empty($error) && (empty($firstName) || empty($lastName) || empty($registrationDate))) {
             $error = "First name, last name, and registration date are required";
-        } else {
+        }
+
+        if (empty($error)) {
+            $notesParts = [];
+            if (!empty($guardianName)) {
+                $notesParts[] = "Guardian: " . $guardianName;
+            }
+            if (!empty($category)) {
+                $notesParts[] = "Category: " . $category;
+            }
+            if (!empty($dietaryNeeds)) {
+                $notesParts[] = "Dietary needs: " . $dietaryNeeds;
+            }
+            $notes = implode(" | ", $notesParts);
+
             try {
-                $beneficiaryId = $beneficiaryModel->createBeneficiary($firstName, $lastName, $age, $gender, $contactNumber, null, $address, $registrationDate, $guardianName . " | " . $category);
+                $beneficiaryId = $beneficiaryModel->createBeneficiary($firstName, $lastName, $registrationDate, $age, $gender, $contactNumber, null, $address, $notes);
 
                 if ($beneficiaryId) {
                     ActivityLog::log(getCurrentUser()['user_id'], 'create_beneficiary', 'Beneficiary', $beneficiaryId, "Created beneficiary: $firstName $lastName");
-                    $success = "Beneficiary registered successfully!";
-                    header("Location: ../views/dashboard.php?success=Beneficiary registered successfully");
+                    header("Location: BeneficiaryController.php?action=list&success=Beneficiary registered successfully");
                     exit();
                 } else {
                     $error = "Failed to register beneficiary";
@@ -107,6 +157,7 @@ try {
             } catch (Exception $e) {
                 $error = $e->getMessage();
             }
+        }
         }
 
         include __DIR__ . "/../views/beneficiaries/create.php";
@@ -141,6 +192,9 @@ try {
      * Flow: Validate input -> Update database -> Redirect
      */
     if ($action === 'edit' && $_SERVER["REQUEST_METHOD"] === "POST") {
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            $error = "Security validation failed. Please try again.";
+        } else {
         $beneficiaryId = isset($_POST['beneficiary_id']) ? (int)$_POST['beneficiary_id'] : 0;
         $firstName = trim($_POST['firstName'] ?? "");
         $lastName = trim($_POST['lastName'] ?? "");
@@ -153,7 +207,9 @@ try {
         $status = $_POST['status'] ?? "active";
         $notes = trim($_POST['notes'] ?? "");
 
-        if (empty($firstName) || empty($lastName) || empty($registrationDate)) {
+        if ($beneficiaryId <= 0) {
+            $error = "Invalid beneficiary ID";
+        } elseif (empty($firstName) || empty($lastName) || empty($registrationDate)) {
             $error = "First name, last name, and registration date are required";
         } else {
             try {
@@ -167,6 +223,7 @@ try {
             } catch (Exception $e) {
                 $error = $e->getMessage();
             }
+        }
         }
 
         $beneficiary = $beneficiaryModel->getBeneficiaryById($beneficiaryId);
@@ -199,10 +256,16 @@ try {
     /**
      * HZ-BEN-CTRL-007
      * Purpose: Update beneficiary status
-     * Flow: Parse action parameter -> Update status -> Return JSON
+     * Flow: Parse action parameter -> Validate CSRF -> Update status -> Return JSON
      */
     if ($action === 'update-status') {
         header('Content-Type: application/json');
+
+        // Validate CSRF token
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            echo json_encode(['success' => false, 'message' => 'Security validation failed']);
+            exit();
+        }
 
         $beneficiaryId = isset($_POST['beneficiary_id']) ? (int)$_POST['beneficiary_id'] : 0;
         $status = $_POST['status'] ?? "active";
@@ -294,29 +357,36 @@ try {
     /**
      * HZ-BEN-CTRL-011
      * Purpose: Delete beneficiary record
-     * Flow: Verify beneficiary exists -> Hard delete
+     * Flow: Verify CSRF -> Verify beneficiary exists -> Hard delete
      */
     if ($action === 'delete') {
-        $beneficiaryId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
-        if ($beneficiaryId <= 0) {
-            $error = "Invalid beneficiary ID";
-        } else {
-            try {
-                if ($beneficiaryModel->deleteBeneficiary($beneficiaryId)) {
-                    ActivityLog::log(getCurrentUser()['user_id'], 'delete_beneficiary', 'Beneficiary', $beneficiaryId, "Deleted beneficiary record");
-                    $success = "Beneficiary record has been permanently deleted";
-                    header("Refresh: 2; URL=BeneficiaryController.php?action=list");
-                } else {
-                    $error = "Failed to delete beneficiary record";
-                }
-            } catch (Exception $e) {
-                $error = $e->getMessage();
-            }
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            header("Location: BeneficiaryController.php?action=list&error=Invalid request method");
+            exit();
         }
 
-        if ($error) {
-            header("Location: BeneficiaryController.php?action=list&error=" . urlencode($error));
+        // Validate CSRF token
+        if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+            header("Location: BeneficiaryController.php?action=list&error=Security validation failed");
+            exit();
+        }
+
+        $beneficiaryId = isset($_POST['beneficiary_id']) ? (int)$_POST['beneficiary_id'] : (isset($_POST['id']) ? (int)$_POST['id'] : 0);
+
+        if ($beneficiaryId <= 0) {
+            header("Location: BeneficiaryController.php?action=list&error=Invalid beneficiary ID");
+            exit();
+        }
+
+        try {
+            if ($beneficiaryModel->deleteBeneficiary($beneficiaryId)) {
+                ActivityLog::log(getCurrentUser()['user_id'], 'delete_beneficiary', 'Beneficiary', $beneficiaryId, "Deleted beneficiary record");
+                header("Location: BeneficiaryController.php?action=list&success=Beneficiary record has been permanently deleted");
+            } else {
+                header("Location: BeneficiaryController.php?action=list&error=Failed to delete beneficiary record");
+            }
+        } catch (Exception $e) {
+            header("Location: BeneficiaryController.php?action=list&error=" . urlencode($e->getMessage()));
         }
         exit();
     }

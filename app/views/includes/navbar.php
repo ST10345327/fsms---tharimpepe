@@ -5,24 +5,18 @@
  */
 
 require_once __DIR__ . "/../../helpers/SessionHandler.php";
+require_once __DIR__ . "/../../helpers/Rbac.php";
 $currentUser = getCurrentUser();
 $username = $currentUser['username'] ?? 'Guest';
 $role = $currentUser['role'] ?? 'volunteer';
+$username = (string)($username ?? 'Guest');
+$role = (string)($role ?? 'volunteer');
 $displayName = strtolower($username) === 'admin' ? 'Admin User' : $username;
 $displayRole = strtolower($role) === 'admin' ? 'Administrator' : ucfirst($role);
-$initials = strtolower($username) === 'admin' ? 'AD' : strtoupper(substr($username, 0, 1));
+$initials = strtolower($username) === 'admin' ? 'AD' : strtoupper(substr($username ?: 'G', 0, 1));
 $currentAction = basename($_SERVER['PHP_SELF'] ?? '');
 
-$navItems = [
-    ['label' => 'Dashboard', 'icon' => 'fa-house', 'href' => '../controllers/DashboardController.php?action=overview', 'match' => 'DashboardController.php'],
-    ['label' => 'Beneficiaries', 'icon' => 'fa-users', 'href' => '../controllers/BeneficiaryController.php?action=list', 'match' => 'BeneficiaryController.php'],
-    ['label' => 'Attendance', 'icon' => 'fa-clipboard-check', 'href' => '../controllers/AttendanceController.php?action=list', 'match' => 'AttendanceController.php'],
-    ['label' => 'Food Stock', 'icon' => 'fa-boxes-stacked', 'href' => '../controllers/FoodStockController.php?action=list', 'match' => 'FoodStockController.php'],
-    ['label' => 'Volunteers', 'icon' => 'fa-user-check', 'href' => '../controllers/VolunteerScheduleController.php?action=list', 'match' => 'VolunteerScheduleController.php'],
-    ['label' => 'Donations', 'icon' => 'fa-hand-holding-dollar', 'href' => '../controllers/DonationController.php?action=list', 'match' => 'DonationController.php'],
-    ['label' => 'Reports', 'icon' => 'fa-file-lines', 'href' => '../controllers/ReportsController.php?action=dashboard', 'match' => 'ReportsController.php'],
-    ['label' => 'Users', 'icon' => 'fa-shield-halved', 'href' => '../controllers/UserController.php?action=list', 'match' => 'UserController.php'],
-];
+$navItems = rbacNavItemsForRole($role);
 ?>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -41,7 +35,8 @@ $navItems = [
 
     <nav class="fsms-nav">
         <?php foreach ($navItems as $item): ?>
-            <a class="fsms-nav-link <?php echo $currentAction === $item['match'] ? 'active' : ''; ?>"
+            <?php $isActive = ($currentAction !== '' && strpos($currentAction, $item['match'] ?? '') !== false) ? 'active' : ''; ?>
+            <a class="fsms-nav-link <?php echo $isActive; ?>"
                href="<?php echo htmlspecialchars($item['href']); ?>">
                 <i class="fas <?php echo htmlspecialchars($item['icon']); ?>" aria-hidden="true"></i>
                 <span class="fsms-nav-text"><?php echo htmlspecialchars($item['label']); ?></span>
@@ -49,7 +44,7 @@ $navItems = [
         <?php endforeach; ?>
 
         <div class="fsms-nav-bottom">
-            <a class="fsms-nav-link" href="../controllers/AuthController.php?action=logout">
+            <a class="fsms-nav-link" href="../../index.php?action=logout">
                 <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
                 <span class="fsms-nav-text">Logout</span>
             </a>
@@ -66,7 +61,8 @@ $navItems = [
     <div class="offcanvas-body">
         <nav class="fsms-nav offcanvas-nav">
             <?php foreach ($navItems as $item): ?>
-                <a class="fsms-nav-link <?php echo $currentAction === $item['match'] ? 'active' : ''; ?>"
+                <?php $isActive = ($currentAction !== '' && strpos($currentAction, $item['match'] ?? '') !== false) ? 'active' : ''; ?>
+                <a class="fsms-nav-link <?php echo $isActive; ?>"
                    href="<?php echo htmlspecialchars($item['href']); ?>">
                     <i class="fas <?php echo htmlspecialchars($item['icon']); ?>" aria-hidden="true"></i>
                     <span class="fsms-nav-text"><?php echo htmlspecialchars($item['label']); ?></span>
@@ -74,7 +70,7 @@ $navItems = [
             <?php endforeach; ?>
 
             <div class="fsms-nav-bottom">
-                <a class="fsms-nav-link" href="../controllers/AuthController.php?action=logout">
+                <a class="fsms-nav-link" href="../../index.php?action=logout">
                     <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
                     <span class="fsms-nav-text">Logout</span>
                 </a>
@@ -91,11 +87,50 @@ $navItems = [
         <h1 class="fsms-page-title"><?php echo htmlspecialchars($pageTitle ?? 'Admin Portal'); ?></h1>
         <div class="fsms-page-subtitle">Tharimpepe Feeding Scheme</div>
     </div>
+    <?php
+        require_once __DIR__ . "/../../helpers/NotificationHelper.php";
+        $notif = new NotificationHelper($currentUser['user_id'] ?? 0, $role);
+        $notifications = $notif->getNotifications();
+        $totalCount = array_sum(array_column($notifications, 'count'));
+        $totalCount = $totalCount ?: count($notifications);
+    ?>
     <div class="fsms-top-actions">
-        <a class="fsms-icon-button" href="../controllers/MessageController.php?action=inbox" aria-label="View notifications and messages">
-            <i class="fas fa-bell" aria-hidden="true"></i>
-            <span class="fsms-alert-dot" aria-hidden="true"></span>
-        </a>
+        <?php if (rbacCan('messages', $role)): ?>
+        <div class="dropdown d-inline-block">
+            <a class="fsms-icon-button dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="View notifications">
+                <i class="fas fa-bell" aria-hidden="true"></i>
+                <?php if ($totalCount > 0): ?>
+                <span class="fsms-alert-dot" aria-hidden="true"><?php echo $totalCount > 9 ? '9+' : $totalCount; ?></span>
+                <?php endif; ?>
+            </a>
+            <div class="dropdown-menu dropdown-menu-end shadow" style="width:320px;border-radius:10px;padding:0;margin-top:10px;">
+                <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;font-weight:700;font-size:15px;color:#1f2a44;">
+                    Notifications
+                    <?php if ($totalCount > 0): ?>
+                    <span class="badge bg-danger ms-2"><?php echo $totalCount; ?></span>
+                    <?php endif; ?>
+                </div>
+                <div style="max-height:360px;overflow-y:auto;">
+                <?php if (empty($notifications)): ?>
+                    <div style="padding:30px 16px;text-align:center;color:#9ca3af;">
+                        <i class="fas fa-check-circle fs-3 mb-2 d-block"></i>
+                        <span>All caught up!</span>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($notifications as $n): ?>
+                    <a href="<?php echo htmlspecialchars($n['link']); ?>" class="dropdown-item" style="padding:12px 16px;border-bottom:1px solid #f3f4f6;white-space:normal;display:flex;align-items:flex-start;gap:12px;">
+                        <i class="<?php echo htmlspecialchars($n['icon']); ?> text-<?php echo htmlspecialchars($n['type']); ?>" style="font-size:18px;margin-top:2px;"></i>
+                        <span style="font-size:14px;color:#374151;line-height:1.4;"><?php echo htmlspecialchars($n['text']); ?></span>
+                    </a>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+                </div>
+                <a href="../controllers/MessageController.php?action=inbox" style="display:block;padding:12px 16px;text-align:center;border-top:1px solid #e5e7eb;font-size:14px;font-weight:600;color:#1b3a5c;text-decoration:none;border-radius:0 0 10px 10px;">
+                    <i class="fas fa-envelope me-1"></i> View All Messages
+                </a>
+            </div>
+        </div>
+        <?php endif; ?>
         <div class="fsms-user-chip">
             <span class="fsms-avatar" aria-hidden="true"><?php echo htmlspecialchars($initials); ?></span>
             <span class="fsms-user-meta">

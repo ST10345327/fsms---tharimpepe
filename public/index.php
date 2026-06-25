@@ -16,9 +16,33 @@ require_once __DIR__ . '/../app/helpers/bootstrap.php';
  */
 
 try {
+    // Route: Handle login form submission
+    if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'login') {
+        require_once __DIR__ . '/../app/controllers/AuthController.php';
+        exit();
+    }
+
+    // Route: Handle logout
+    if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'logout') {
+        require_once __DIR__ . '/../app/controllers/AuthController.php';
+        exit();
+    }
+
+    // Route: Handle registration
+    if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'register') {
+        require_once __DIR__ . '/../app/controllers/AuthController.php';
+        exit();
+    }
+
     // Check if user is already logged in
     if (isUserLoggedIn()) {
-        // Serve dashboard view directly (avoid external redirect outside DocumentRoot)
+        // Redirect donors to their own dashboard
+        $role = strtolower((string)($_SESSION['role'] ?? ''));
+        if ($role === 'donor') {
+            header("Location: /controllers/DonorController.php?action=dashboard");
+            exit;
+        }
+        // Serve operational dashboard view directly
         require_once __DIR__ . '/../app/views/dashboard.php';
         exit();
     } else {
@@ -29,7 +53,8 @@ try {
 } catch (Exception $e) {
     // Log error and show user-friendly message
     logMessage("Entry point error: " . $e->getMessage(), 'ERROR');
-    header("Location: ../app/views/login.php?error=system_error");
+    $error = "An error occurred. Please try again.";
+    require_once __DIR__ . '/../app/views/login.php';
     exit();
 }
 ?>

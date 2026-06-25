@@ -56,8 +56,16 @@ require_once CONFIG_PATH . '/database.php';
 // Load session handler
 require_once HELPERS_PATH . '/SessionHandler.php';
 
-// Start session if not already started
+// Configure secure session cookies before starting session
 if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => !empty($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
     session_start();
 }
 

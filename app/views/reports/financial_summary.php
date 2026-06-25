@@ -172,9 +172,17 @@
 
         <!-- Export & Back -->
         <div class="d-flex gap-2 justify-content-between">
-            <button onclick="window.print()" class="btn btn-outline-secondary">
-                <i class="fas fa-print"></i> Print Report
-            </button>
+            <div class="d-flex gap-2">
+                <a href="ReportsController.php?action=export&report=financial_summary&year=<?php echo urlencode($_GET['year'] ?? date('Y')); ?>&month=<?php echo urlencode($_GET['month'] ?? date('m')); ?>" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="ReportsController.php?action=export_xls&report=financial_summary&year=<?php echo urlencode($_GET['year'] ?? date('Y')); ?>&month=<?php echo urlencode($_GET['month'] ?? date('m')); ?>" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> XLS
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+            </div>
             <a href="ReportsController.php?action=dashboard" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Reports
             </a>

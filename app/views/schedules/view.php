@@ -48,6 +48,7 @@
 </head>
 <body>
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
+    <?php $canManageSchedules = in_array(strtolower(rbacCurrentRole()), ['admin', 'staff'], true); ?>
 
     <!-- Page Header -->
     <div class="page-header">
@@ -59,7 +60,7 @@
                 </div>
                 <div>
                     <a href="VolunteerScheduleController.php?action=edit&id=<?php echo (int)$schedule['ScheduleID']; ?>" 
-                       class="btn btn-light me-2">
+                       class="btn btn-light me-2<?php echo $canManageSchedules ? '' : ' d-none'; ?>">
                         <i class="fas fa-edit"></i> Edit
                     </a>
                     <a href="VolunteerScheduleController.php?action=list" class="btn btn-light">
@@ -91,8 +92,8 @@
                     <div class="detail-row">
                         <div class="detail-label">Time:</div>
                         <div class="detail-value">
-                            <?php echo substr($schedule['StartTime'], 0, 5); ?> - 
-                            <?php echo substr($schedule['EndTime'], 0, 5); ?>
+                            <?php echo substr((string)($schedule['StartTime'] ?? ''), 0, 5); ?> - 
+                            <?php echo substr((string)($schedule['EndTime'] ?? ''), 0, 5); ?>
                         </div>
                     </div>
 
@@ -124,31 +125,31 @@
                     
                     <div class="detail-row">
                         <div class="detail-label">Name:</div>
-                        <div class="detail-value"><?php echo htmlspecialchars($schedule['FullName']); ?></div>
+                        <div class="detail-value"><?php echo htmlspecialchars($schedule['FullName'] ?? ''); ?></div>
                     </div>
 
                     <div class="detail-row">
                         <div class="detail-label">Email:</div>
                         <div class="detail-value">
-                            <a href="mailto:<?php echo htmlspecialchars($schedule['Email']); ?>">
-                                <?php echo htmlspecialchars($schedule['Email']); ?>
+                            <a href="mailto:<?php echo htmlspecialchars($schedule['Email'] ?? ''); ?>">
+                                <?php echo htmlspecialchars($schedule['Email'] ?? ''); ?>
                             </a>
                         </div>
                     </div>
 
                     <div class="detail-row">
                         <div class="detail-label">Phone:</div>
-                        <div class="detail-value"><?php echo htmlspecialchars($schedule['Phone']); ?></div>
+                        <div class="detail-value"><?php echo htmlspecialchars($schedule['Phone'] ?? ''); ?></div>
                     </div>
 
                     <div class="detail-row">
                         <div class="detail-label">Role:</div>
-                        <div class="detail-value"><?php echo htmlspecialchars($schedule['Role']); ?></div>
+                        <div class="detail-value"><?php echo htmlspecialchars($schedule['Role'] ?? ''); ?></div>
                     </div>
 
                     <div class="detail-row">
                         <div class="detail-label">Location:</div>
-                        <div class="detail-value"><?php echo htmlspecialchars($schedule['Location']); ?></div>
+                        <div class="detail-value"><?php echo htmlspecialchars($schedule['Location'] ?? ''); ?></div>
                     </div>
                 </div>
 
@@ -178,14 +179,14 @@
 
                 <!-- Action Buttons -->
                 <div class="d-grid gap-2">
-                    <?php if ($schedule['Status'] !== 'completed'): ?>
+                    <?php if ($canManageSchedules && $schedule['Status'] !== 'completed'): ?>
                         <a href="VolunteerScheduleController.php?action=edit&id=<?php echo (int)$schedule['ScheduleID']; ?>" 
                            class="btn btn-success btn-lg">
                             <i class="fas fa-edit"></i> Edit Schedule
                         </a>
                     <?php endif; ?>
                     
-                    <?php if ($schedule['Status'] === 'scheduled'): ?>
+                    <?php if ($canManageSchedules && $schedule['Status'] === 'scheduled'): ?>
                         <a href="VolunteerScheduleController.php?action=delete&id=<?php echo (int)$schedule['ScheduleID']; ?>" 
                            class="btn btn-danger btn-lg">
                             <i class="fas fa-trash"></i> Delete Schedule

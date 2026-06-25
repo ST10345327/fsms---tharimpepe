@@ -1,8 +1,15 @@
 <?php
 require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
 requireLogin();
 
 $user = getCurrentUser();
+$role = strtolower((string)($user['role'] ?? ''));
+// Redirect donors to their own dashboard
+if ($role === 'donor') {
+    header("Location: /controllers/DonorController.php?action=dashboard");
+    exit;
+}
 $pageTitle = 'Dashboard';
 ?>
 <!DOCTYPE html>
@@ -333,6 +340,7 @@ $pageTitle = 'Dashboard';
             <div class="proto-card">
                 <h2>Quick Actions</h2>
                 <div class="quick-actions">
+                    <?php if (in_array($role, ['admin', 'staff'], true)): ?>
                     <a href="../controllers/BeneficiaryController.php?action=create" class="quick-action navy">
                         <i class="fas fa-plus" aria-hidden="true"></i>
                         <span>Add Beneficiary</span>
@@ -349,6 +357,7 @@ $pageTitle = 'Dashboard';
                         <i class="far fa-file-lines" aria-hidden="true"></i>
                         <span>Generate Report</span>
                     </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </section>

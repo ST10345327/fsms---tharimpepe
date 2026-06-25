@@ -21,10 +21,29 @@ CREATE TABLE IF NOT EXISTS Users (
     Username VARCHAR(50) UNIQUE NOT NULL,
     Email VARCHAR(100) UNIQUE NOT NULL,
     PasswordHash VARCHAR(255) NOT NULL,
+    FullName VARCHAR(200),
+    Phone VARCHAR(20),
     Role ENUM('admin', 'volunteer', 'donor', 'staff') DEFAULT 'volunteer',
+    Status ENUM('pending', 'active', 'inactive') DEFAULT 'pending',
     CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    IsActive BOOLEAN DEFAULT TRUE
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ==============================================================
+-- HZ-LOG-TABLE-001
+-- Purpose: Store user activity logs for audit trail
+-- Entity: ActivityLog
+-- Fields: LogID (PK), UserID (FK), Action, AffectedEntityName, AffectedEntityID, Details, Timestamp
+-- ==============================================================
+CREATE TABLE IF NOT EXISTS ActivityLog (
+    LogID INT AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    Action VARCHAR(50) NOT NULL,
+    AffectedEntityName VARCHAR(100),
+    AffectedEntityID INT,
+    Details TEXT,
+    Timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE
 );
 
 -- ==============================================================
@@ -187,6 +206,44 @@ CREATE TABLE IF NOT EXISTS Gallery (
 );
 
 -- ==============================================================
+-- HZ-SCHED-TABLE-001
+-- Purpose: Store volunteer shift schedules
+-- Entity: VolunteerSchedules
+-- Fields: ScheduleID (PK), VolunteerID (FK), ScheduleDate, StartTime, EndTime, Location, Role, Status, Notes, CreatedAt
+-- ==============================================================
+CREATE TABLE IF NOT EXISTS VolunteerSchedules (
+    ScheduleID INT AUTO_INCREMENT PRIMARY KEY,
+    VolunteerID INT NOT NULL,
+    ScheduleDate DATE NOT NULL,
+    StartTime TIME NOT NULL,
+    EndTime TIME NOT NULL,
+    Location VARCHAR(100),
+    Role VARCHAR(50),
+    Status ENUM('scheduled', 'completed', 'cancelled', 'no-show') DEFAULT 'scheduled',
+    HoursWorked DECIMAL(5, 2),
+    Notes TEXT,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (VolunteerID) REFERENCES Volunteers(VolunteerID) ON DELETE CASCADE
+);
+
+-- ==============================================================
+-- HZ-SCHED-TABLE-002
+-- Purpose: Store volunteer weekly availability preferences
+-- Entity: VolunteerAvailability
+-- Fields: AvailabilityID (PK), VolunteerID (FK), DayOfWeek, IsAvailable, Notes
+-- ==============================================================
+CREATE TABLE IF NOT EXISTS VolunteerAvailability (
+    AvailabilityID INT AUTO_INCREMENT PRIMARY KEY,
+    VolunteerID INT NOT NULL,
+    DayOfWeek VARCHAR(10) NOT NULL,
+    IsAvailable BOOLEAN DEFAULT TRUE,
+    Notes TEXT,
+    FOREIGN KEY (VolunteerID) REFERENCES Volunteers(VolunteerID) ON DELETE CASCADE,
+    UNIQUE KEY uq_volunteer_day (VolunteerID, DayOfWeek)
+);
+
+-- ==============================================================
 -- Create Index for Performance Optimization
 -- ==============================================================
 -- Note: UNIQUE constraints automatically create indexes, so we skip idx_username and idx_email
@@ -195,12 +252,17 @@ CREATE INDEX idx_attendance_beneficiary ON Attendance(BeneficiaryID);
 CREATE INDEX idx_attendance_meal_session ON Attendance(MealSessionID);
 CREATE INDEX idx_attendance_date ON Attendance(SessionDate);
 CREATE INDEX idx_donation_date ON Donations(DonationDate);
--- Note: Messages table indexes commented out as table may not exist in current schema
--- CREATE INDEX idx_message_sender ON Messages(SenderID);
--- CREATE INDEX idx_message_recipient ON Messages(RecipientID);
+CREATE INDEX idx_activitylog_user ON ActivityLog(UserID);
+CREATE INDEX idx_activitylog_timestamp ON ActivityLog(Timestamp);
+CREATE INDEX idx_schedule_volunteer ON VolunteerSchedules(VolunteerID);
+CREATE INDEX idx_schedule_date ON VolunteerSchedules(ScheduleDate);
+CREATE INDEX idx_schedule_status ON VolunteerSchedules(Status);
+CREATE INDEX idx_availability_volunteer ON VolunteerAvailability(VolunteerID);
 
 -- ==============================================================
--- Sample Admin Account (Password: admin123 - hashed with password_hash PHP function)
+-- Sample Admin Account
+-- Password: admin123 (hashed with PHP password_hash using bcrypt)
 -- ==============================================================
--- INSERT INTO Users (Username, Email, PasswordHash, Role) 
--- VALUES ('admin', 'admin@fsms.local', '$2y$10$...hash...', 'admin');
+INSERT INTO Users (Username, Email, PasswordHash, Role, Status)
+VALUES ('admin', 'admin@fsms.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active')
+ON DUPLICATE KEY UPDATE Username = Username;

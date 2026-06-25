@@ -136,7 +136,20 @@
         <?php endif; ?>
 
         <!-- HZ-UI-REGISTER-002: Registration Form -->
-        <form method="POST" action="../controllers/AuthController.php?action=register" class="register-form">
+        <form method="POST" action="/index.php?action=register" class="register-form">
+            <div class="form-group">
+                <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                <input 
+                    type="text" 
+                    class="form-control" 
+                    id="full_name" 
+                    name="full_name" 
+                    placeholder="Enter your full name"
+                    required
+                    value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>"
+                />
+            </div>
+
             <div class="form-group">
                 <label for="username" class="form-label">Username</label>
                 <input 
@@ -166,6 +179,27 @@
                     autocomplete="email"
                     value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>"
                 />
+            </div>
+
+            <div class="form-group">
+                <label for="phone" class="form-label">Phone Number</label>
+                <input 
+                    type="tel" 
+                    class="form-control" 
+                    id="phone" 
+                    name="phone" 
+                    placeholder="Enter your phone number (optional)"
+                    value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>"
+                />
+            </div>
+
+            <div class="form-group">
+                <label for="role" class="form-label">I want to register as</label>
+                <select class="form-control" id="role" name="role" required>
+                    <option value="volunteer" <?php echo ($_POST['role'] ?? 'volunteer') === 'volunteer' ? 'selected' : ''; ?>>Volunteer</option>
+                    <option value="donor" <?php echo ($_POST['role'] ?? '') === 'donor' ? 'selected' : ''; ?>>Donor</option>
+                    <option value="staff" <?php echo ($_POST['role'] ?? '') === 'staff' ? 'selected' : ''; ?>>Staff Member</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -201,7 +235,7 @@
 
         <!-- HZ-UI-REGISTER-003: Login Link -->
         <div class="form-footer">
-            <p>Already have an account? <a href="login.php">Login here</a></p>
+            <p>Already have an account? <a href="/index.php?action=login">Login here</a></p>
         </div>
     </div>
 

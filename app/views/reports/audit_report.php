@@ -111,7 +111,7 @@
                         <?php if (!empty($auditData)): ?>
                             <?php foreach ($auditData as $log): ?>
                                 <?php 
-                                    $activityType = htmlspecialchars($log['ActivityType'] ?? '');
+                                    $activityType = htmlspecialchars($log['Action'] ?? '');
                                     $statusBg = match($activityType) {
                                         'Create' => 'success',
                                         'Update' => 'info',
@@ -123,10 +123,10 @@
                                 ?>
                                 <tr>
                                     <td><small><?php echo date('M d, Y H:i:s', strtotime($log['Timestamp'] ?? '')); ?></small></td>
-                                    <td><strong><?php echo htmlspecialchars($log['FullName'] ?? $log['UserName'] ?? ''); ?></strong></td>
+                                    <td><strong><?php echo htmlspecialchars($log['FullName'] ?: $log['Username']); ?></strong></td>
                                     <td><span class="badge bg-<?php echo $statusBg; ?>"><?php echo $activityType; ?></span></td>
                                     <td><span class="badge bg-light text-dark"><?php echo htmlspecialchars($log['Module'] ?? '-'); ?></span></td>
-                                    <td><?php echo htmlspecialchars($log['Description'] ?? '-'); ?></td>
+                                    <td><?php echo htmlspecialchars($log['Details'] ?? '-'); ?></td>
                                     <td>
                                         <i class="fas fa-check-circle text-success"></i>
                                     </td>
@@ -144,9 +144,17 @@
 
         <!-- Export & Back -->
         <div class="d-flex gap-2 justify-content-between">
-            <button onclick="window.print()" class="btn btn-outline-secondary">
-                <i class="fas fa-print"></i> Print Report
-            </button>
+            <div class="d-flex gap-2">
+                <a href="ReportsController.php?action=export&report=audit&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="ReportsController.php?action=export_xls&report=audit&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> XLS
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print"></i> Print Report
+                </button>
+            </div>
             <a href="ReportsController.php?action=dashboard" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Reports
             </a>

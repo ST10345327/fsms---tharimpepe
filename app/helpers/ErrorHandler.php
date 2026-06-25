@@ -103,7 +103,9 @@ class ErrorHandler
             // Display appropriate error page
             if (self::isJsonRequest()) {
                 http_response_code(500);
-                header('Content-Type: application/json');
+                if (!headers_sent()) {
+                    header('Content-Type: application/json');
+                }
                 echo json_encode([
                     'success' => false,
                     'message' => 'An unexpected error occurred. Please try again later.',
@@ -180,7 +182,9 @@ class ErrorHandler
     private static function sendJsonError($exception)
     {
         http_response_code(500);
-        header('Content-Type: application/json');
+        if (!headers_sent()) {
+            header('Content-Type: application/json');
+        }
         
         $response = [
             'success' => false,
@@ -210,7 +214,9 @@ class ErrorHandler
     private static function sendHtmlError($exception)
     {
         http_response_code(500);
-        header('Content-Type: text/html; charset=UTF-8');
+        if (!headers_sent()) {
+            header('Content-Type: text/html; charset=UTF-8');
+        }
         
         $title = 'Application Error';
         $message = 'An unexpected error occurred. Our team has been notified. Please try again later.';

@@ -63,6 +63,7 @@
                     </div>
 
                     <form method="POST" action="UserController.php" class="needs-validation">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
                         <input type="hidden" name="action" value="store">
 
                         <!-- User Credentials Section -->

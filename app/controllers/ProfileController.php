@@ -1,99 +1,110 @@
 <?php
 /**
- * Profile & password management — available to all authenticated roles.
+ * Module: User Profile Controller
+ * Purpose: Handle user profile viewing and password changes
+ * Reference: HZ-PROF-CTRL-001 to HZ-PROF-CTRL-003
+ * Author: WIL Student
  */
 
-require_once __DIR__ . '/../helpers/Rbac.php';
-require_once __DIR__ . '/../../config/database.php';
-require_once __DIR__ . '/../models/User.php';
-require_once __DIR__ . '/../models/ActivityLog.php';
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
 
+require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../models/User.php";
+require_once __DIR__ . "/../models/ActivityLog.php";
+require_once __DIR__ . "/../../config/database.php";
+
+// Require login
 requireLogin();
 
-$action = $_POST['action'] ?? $_GET['action'] ?? 'profile';
+$action = isset($_GET['action']) ? $_GET['action'] : 'profile';
+$currentUser = getCurrentUser();
 
-switch ($action) {
-    case 'profile':
-        rbacRequirePermission('profile');
-        showProfile();
-        break;
-    case 'change_password':
-        rbacRequirePermission('change_password');
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            processChangePassword();
-        } else {
-            showChangePasswordForm();
-        }
-        break;
-    default:
-        rbacRequirePermission('profile');
-        showProfile();
+try {
+    $db = getDBConnection();
+    $userModel = new User($db);
+
+    switch ($action) {
+        // HZ-PROF-CTRL-001: View user profile
+        case 'profile':
+            $user = $userModel->getUserById($currentUser['user_id']);
+            if (!$user) {
+                $_SESSION['error'] = "User not found";
+                header("Location: ../views/dashboard.php");
+                exit();
+            }
+            include __DIR__ . "/../views/users/profile.php";
+            break;
+
+        // HZ-PROF-CTRL-002: Show change password form
+        case 'change_password':
+            include __DIR__ . "/../views/users/change_password.php";
+            break;
+
+        // HZ-PROF-CTRL-003: Process password change
+        case 'update_password':
+            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+                header("Location: ProfileController.php?action=change_password");
+                exit();
+            }
+
+            if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+                $_SESSION['error'] = "Security validation failed. Please try again.";
+                header("Location: ProfileController.php?action=change_password");
+                exit();
+            }
+
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+
+            // Validation
+            if (empty($currentPassword) || empty($newPassword) || empty($confirmPassword)) {
+                $_SESSION['error'] = "All fields are required";
+                header("Location: ProfileController.php?action=change_password");
+                exit();
+            }
+
+            if ($newPassword !== $confirmPassword) {
+                $_SESSION['error'] = "New passwords do not match";
+                header("Location: ProfileController.php?action=change_password");
+                exit();
+            }
+
+            if (strlen($newPassword) < 6) {
+                $_SESSION['error'] = "Password must be at least 6 characters";
+                header("Location: ProfileController.php?action=change_password");
+                exit();
+            }
+
+            // Verify current password
+            $user = $userModel->getUserById($currentUser['user_id']);
+            if (!password_verify($currentPassword, $user['PasswordHash'])) {
+                $_SESSION['error'] = "Current password is incorrect";
+                header("Location: ProfileController.php?action=change_password");
+                exit();
+            }
+
+            // Update password
+            if ($userModel->changePassword($currentUser['user_id'], $newPassword)) {
+                ActivityLog::log($currentUser['user_id'], 'change_password', 'User', $currentUser['user_id'], "Changed own password");
+                $_SESSION['success'] = "Password changed successfully";
+                header("Location: ProfileController.php?action=profile");
+                exit();
+            } else {
+                $_SESSION['error'] = "Failed to change password";
+                header("Location: ProfileController.php?action=change_password");
+                exit();
+            }
+            break;
+
+        default:
+            header("Location: ProfileController.php?action=profile");
+            exit();
+    }
+} catch (Exception $e) {
+    $_SESSION['error'] = "Error: " . $e->getMessage();
+    header("Location: ../views/dashboard.php");
+    exit();
 }
-
-function showProfile()
-{
-    $userId = getCurrentUser()['user_id'];
-    $conn = getConnection();
-    $stmt = $conn->prepare('SELECT * FROM users WHERE UserID = :user_id');
-    $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
-    $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$user) {
-        rbacDenyWeb('User account not found.');
-    }
-
-    include __DIR__ . '/../views/users/profile.php';
-}
-
-function showChangePasswordForm()
-{
-    include __DIR__ . '/../views/users/change_password.php';
-}
-
-function processChangePassword()
-{
-    $currentUser = getCurrentUser();
-    $currentPassword = $_POST['current_password'] ?? '';
-    $newPassword = $_POST['new_password'] ?? '';
-    $confirmPassword = $_POST['confirm_password'] ?? '';
-
-    if ($newPassword !== $confirmPassword) {
-        $_SESSION['error'] = 'New passwords do not match.';
-        header('Location: ProfileController.php?action=change_password');
-        exit;
-    }
-
-    if (strlen($newPassword) < 6) {
-        $_SESSION['error'] = 'Password must be at least 6 characters.';
-        header('Location: ProfileController.php?action=change_password');
-        exit;
-    }
-
-    $conn = getConnection();
-    $userModel = new User($conn);
-
-    $row = $userModel->getUserById($currentUser['user_id']);
-    if (!$row) {
-        $_SESSION['error'] = 'User account not found.';
-        header('Location: ProfileController.php?action=change_password');
-        exit;
-    }
-
-    $verifyStmt = $conn->prepare('SELECT PasswordHash FROM users WHERE UserID = :user_id');
-    $verifyStmt->execute([':user_id' => $currentUser['user_id']]);
-    $hashRow = $verifyStmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$hashRow || !password_verify($currentPassword, $hashRow['PasswordHash'])) {
-        $_SESSION['error'] = 'Current password is incorrect.';
-        header('Location: ProfileController.php?action=change_password');
-        exit;
-    }
-
-    $userModel->changePassword($currentUser['user_id'], $newPassword);
-    ActivityLog::log($currentUser['user_id'], 'change_password', 'User', $currentUser['user_id'], 'Password changed');
-
-    $_SESSION['success'] = 'Password changed successfully. Please log in again.';
-    header('Location: /controllers/AuthController.php?action=logout');
-    exit;
-}
+?>

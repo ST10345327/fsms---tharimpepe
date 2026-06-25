@@ -70,6 +70,91 @@ The repo is now in a workable development state:
 
 That means the next development phase should stay anchored to the documentation and avoid drifting into unrelated modules unless they clearly support the documented FSMS scope.
 
+## How to Run
+
+This application has two delivery methods: a **PHP website** served via XAMPP, and a **mobile Android app** built with Capacitor.
+
+---
+
+### 🌐 Website (PHP + XAMPP)
+
+#### Prerequisites
+
+- [XAMPP](https://www.apachefriends.org/) installed (Apache + MySQL/MariaDB)
+- PHP 8.x
+
+#### Steps
+
+**1. Start XAMPP services**
+- Open XAMPP Control Panel
+- Start **Apache** and **MySQL**
+
+**2. Create the database**
+- Open phpMyAdmin (`http://localhost/phpmyadmin`)
+- Create a new database (e.g. `fsms_db`)
+- Import `sql/schema.sql`
+- Or run the included setup script:
+  ```powershell
+  setup_db.bat
+  ```
+
+**3. Open the app**
+- Navigate to:
+  ```
+  http://localhost/fsms - tharimpepe/public/index.php
+  ```
+  (Or use the configured virtual host in `tools/fsms_vhost.conf`)
+
+**4. Run tests**
+  ```powershell
+  php tests\run_all_tests.php
+  ```
+
+---
+
+### 📱 Mobile App (Capacitor + Android)
+
+This project uses [Capacitor](https://capacitorjs.com/) to package the web app as a native Android application.
+
+#### Prerequisites
+
+- [Node.js](https://nodejs.org/) installed
+- [Android Studio](https://developer.android.com/studio) (for building the APK)
+- The web app files must be in the `www/` directory
+
+#### Steps
+
+**1. Sync web assets to Android**
+Run this after making any changes to your web app (views, assets, etc.):
+```powershell
+npm run mobile:sync
+```
+This copies files from `www/` into the Android project and syncs Capacitor plugins.
+
+**2. Preview in browser (optional)**
+```powershell
+npm run mobile:serve
+```
+Starts a static file server at `http://localhost:3000` serving the `www/` directory.
+
+**3. Build and run in Android Studio**
+- Open the `android/` folder in Android Studio
+- Wait for Gradle to finish syncing
+- Click the **Run** button (green triangle) or select **Build > Build Bundle(s) / APK(s) > Build APK(s)**
+- The APK will be generated at:
+  ```
+  android\app\build\outputs\apk\debug\app-debug.apk
+  ```
+
+#### Typical mobile workflow
+
+1. Make changes to your web app
+2. Run `npm run mobile:sync` to push changes to Android
+3. Run `npm run mobile:serve` to preview in a browser
+4. Open Android Studio, build, and run on a device/emulator
+
+---
+
 ## Quick Start
 
 ### 1. Start MySQL/MariaDB

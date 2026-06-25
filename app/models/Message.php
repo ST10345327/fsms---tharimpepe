@@ -43,8 +43,10 @@ class Message
         // Sanitize and bind parameters
         $stmt->bindParam(":senderId", $senderId, PDO::PARAM_INT);
         $stmt->bindParam(":recipientId", $recipientId, PDO::PARAM_INT);
-        $stmt->bindParam(":subject", htmlspecialchars(strip_tags($subject)));
-        $stmt->bindParam(":content", htmlspecialchars(strip_tags($content)));
+        $cleanSubject = strip_tags($subject);
+        $cleanContent = strip_tags($content);
+        $stmt->bindParam(":subject", $cleanSubject);
+        $stmt->bindParam(":content", $cleanContent);
 
         // Execute and return result
         if ($stmt->execute()) {
@@ -185,7 +187,7 @@ class Message
     {
         $query = "SELECT UserID, Username, Role
                  FROM Users
-                 WHERE IsActive = 1
+                 WHERE Status = 'active'
                  AND Role IN ('admin', 'staff', 'volunteer')
                  ORDER BY Username ASC";
 

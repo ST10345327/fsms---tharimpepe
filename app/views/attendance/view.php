@@ -131,12 +131,14 @@
         <!-- Action Buttons -->
         <div class="action-buttons">
             <div class="d-flex justify-content-center gap-3">
-                <a href="AttendanceController.php?action=edit&id=<?php echo $attendance['AttendanceID']; ?>" class="btn btn-warning">
-                    <i class="fas fa-edit"></i> Edit Record
-                </a>
-                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                    <i class="fas fa-trash"></i> Delete Record
-                </button>
+                <?php if (hasRole('admin') || hasRole('staff')): ?>
+                    <a href="AttendanceController.php?action=edit&id=<?php echo $attendance['AttendanceID']; ?>" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Record
+                    </a>
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash"></i> Delete Record
+                    </button>
+                <?php endif; ?>
                 <button type="button" class="btn btn-primary" onclick="window.print()">
                     <i class="fas fa-print"></i> Print Details
                 </button>
@@ -245,17 +247,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php
-                                // Get beneficiary attendance history (placeholder - would be fetched from model)
-                                $history = []; // In real implementation, get from AttendanceModel::getBeneficiaryAttendance()
-                                if (empty($history)):
-                                ?>
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted">
-                                        <i class="fas fa-info-circle"></i> This is the only attendance record for this beneficiary.
-                                    </td>
-                                </tr>
-                                <?php else: ?>
+                                <?php if (!empty($history)): ?>
                                     <?php foreach ($history as $record): ?>
                                     <tr>
                                         <td><?php echo date('M d, Y', strtotime($record['SessionDate'])); ?></td>
@@ -268,6 +260,12 @@
                                         <td><?php echo date('M d, H:i', strtotime($record['CreatedAt'])); ?></td>
                                     </tr>
                                     <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">
+                                            <i class="fas fa-info-circle"></i> This is the only attendance record for this beneficiary.
+                                        </td>
+                                    </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -278,6 +276,7 @@
     </div>
 
     <!-- Delete Confirmation Modal -->
+    <?php if (hasRole('admin') || hasRole('staff')): ?>
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -306,6 +305,7 @@
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Footer -->
     <?php include __DIR__ . "/../includes/footer.php"; ?>

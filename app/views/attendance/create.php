@@ -171,18 +171,24 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php
-                                // Get recent attendance (last 5 records)
-                                $recentAttendance = array_slice($beneficiaries, 0, 5); // Placeholder - in real app, get from model
-                                foreach ($recentAttendance as $beneficiary):
-                                ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($beneficiary['FirstName'] . ' ' . $beneficiary['LastName']); ?></td>
-                                    <td><?php echo date('M d, Y'); ?></td>
-                                    <td><span class="badge bg-secondary">Not Recorded</span></td>
-                                    <td><?php echo date('H:i'); ?></td>
-                                </tr>
-                                <?php endforeach; ?>
+                                <?php if (!empty($recentAttendance)): ?>
+                                    <?php foreach ($recentAttendance as $record): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($record['FirstName'] . ' ' . $record['LastName']); ?></td>
+                                        <td><?php echo !empty($record['SessionDate']) ? date('M d, Y', strtotime($record['SessionDate'])) : 'N/A'; ?></td>
+                                        <td>
+                                            <span class="badge <?php echo $record['Status'] === 'present' ? 'bg-success' : ($record['Status'] === 'absent' ? 'bg-danger' : 'bg-warning text-dark'); ?>">
+                                                <?php echo ucfirst($record['Status']); ?>
+                                            </span>
+                                        </td>
+                                        <td><?php echo !empty($record['CreatedAt']) ? date('H:i', strtotime($record['CreatedAt'])) : 'N/A'; ?></td>
+                                    </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">No recent attendance records found.</td>
+                                    </tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>

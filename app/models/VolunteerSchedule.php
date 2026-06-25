@@ -38,28 +38,38 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT vs.*, v.FullName, v.Phone, v.Email FROM VolunteerSchedules vs 
+$query = "SELECT vs.*, vs.STATUS AS `Status`, u.FullName, u.Phone, u.Email FROM VolunteerSchedules vs 
                       LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
+                      LEFT JOIN Users u ON v.UserID = u.UserID
                       WHERE 1=1";
-            
-            if (!empty($filters['status'])) {
-                $query .= " AND vs.Status = '" . $connection->quote($filters['status']) . "'";
+            $params = [];
+
+            if (!empty($filters['status']) && in_array($filters['status'], ['scheduled', 'completed', 'cancelled', 'no-show'], true)) {
+                $query .= " AND vs.Status = :status";
+                $params[':status'] = $filters['status'];
             }
             if (!empty($filters['volunteer_id'])) {
-                $query .= " AND vs.VolunteerID = " . (int)$filters['volunteer_id'];
+                $query .= " AND vs.VolunteerID = :volunteer_id";
+                $params[':volunteer_id'] = (int)$filters['volunteer_id'];
             }
             if (!empty($filters['from_date'])) {
-                $query .= " AND vs.ScheduleDate >= '" . $connection->quote($filters['from_date']) . "'";
+                $query .= " AND vs.ScheduleDate >= :from_date";
+                $params[':from_date'] = $filters['from_date'];
             }
             if (!empty($filters['to_date'])) {
-                $query .= " AND vs.ScheduleDate <= '" . $connection->quote($filters['to_date']) . "'";
+                $query .= " AND vs.ScheduleDate <= :to_date";
+                $params[':to_date'] = $filters['to_date'];
             }
             if (!empty($filters['location'])) {
-                $query .= " AND vs.Location = '" . $connection->quote($filters['location']) . "'";
+                $query .= " AND vs.Location = :location";
+                $params[':location'] = $filters['location'];
             }
-            
+
             $query .= " ORDER BY vs.ScheduleDate ASC, vs.StartTime ASC LIMIT :limit OFFSET :offset";
             $stmt = $connection->prepare($query);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
             $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
@@ -76,8 +86,9 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT vs.*, v.FullName, v.Phone, v.Email FROM VolunteerSchedules vs 
+$query = "SELECT vs.*, vs.STATUS AS `Status`, u.FullName, u.Phone, u.Email FROM VolunteerSchedules vs 
                       LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
+                      LEFT JOIN Users u ON v.UserID = u.UserID
                       WHERE vs.ScheduleID = :schedule_id";
             $stmt = $connection->prepare($query);
             $stmt->bindParam(':schedule_id', $scheduleId);
@@ -87,6 +98,49 @@ class VolunteerSchedule {
         } catch (PDOException $e) {
             error_log("VolunteerSchedule::getScheduleById - " . $e->getMessage());
             return null;
+        }
+    }
+
+    // HZ-SCHED-003A: Get schedule count with filtering
+    public static function getScheduleCount($filters = [])
+    {
+        $connection = getConnection();
+
+        try {
+            $query = "SELECT COUNT(*) AS total FROM VolunteerSchedules vs WHERE 1=1";
+            $params = [];
+
+            if (!empty($filters['status']) && in_array($filters['status'], ['scheduled', 'completed', 'cancelled', 'no-show'], true)) {
+                $query .= " AND vs.Status = :status";
+                $params[':status'] = $filters['status'];
+            }
+            if (!empty($filters['volunteer_id'])) {
+                $query .= " AND vs.VolunteerID = :volunteer_id";
+                $params[':volunteer_id'] = (int)$filters['volunteer_id'];
+            }
+            if (!empty($filters['from_date'])) {
+                $query .= " AND vs.ScheduleDate >= :from_date";
+                $params[':from_date'] = $filters['from_date'];
+            }
+            if (!empty($filters['to_date'])) {
+                $query .= " AND vs.ScheduleDate <= :to_date";
+                $params[':to_date'] = $filters['to_date'];
+            }
+            if (!empty($filters['location'])) {
+                $query .= " AND vs.Location = :location";
+                $params[':location'] = $filters['location'];
+            }
+
+            $stmt = $connection->prepare($query);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
+            $stmt->execute();
+
+            return (int)$stmt->fetchColumn();
+        } catch (PDOException $e) {
+            error_log("VolunteerSchedule::getScheduleCount - " . $e->getMessage());
+            return 0;
         }
     }
 
@@ -184,8 +238,9 @@ class VolunteerSchedule {
         $connection = getConnection();
         
         try {
-            $query = "SELECT vs.*, v.FullName, v.Phone FROM VolunteerSchedules vs 
+$query = "SELECT vs.*, vs.STATUS AS `Status`, u.FullName, u.Phone FROM VolunteerSchedules vs 
                       LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
+                      LEFT JOIN Users u ON v.UserID = u.UserID
                       WHERE vs.ScheduleDate BETWEEN :from_date AND :to_date 
                       ORDER BY vs.ScheduleDate ASC, vs.StartTime ASC";
             $stmt = $connection->prepare($query);
@@ -230,7 +285,8 @@ class VolunteerSchedule {
                         SUM(CASE WHEN Status = 'completed' THEN 1 ELSE 0 END) as completed,
                         SUM(CASE WHEN Status = 'cancelled' THEN 1 ELSE 0 END) as cancelled,
                         COUNT(DISTINCT VolunteerID) as total_volunteers,
-                        (SELECT COUNT(*) FROM VolunteerSchedules WHERE ScheduleDate = CURDATE()) as today_schedules
+                        (SELECT COUNT(*) FROM VolunteerSchedules WHERE ScheduleDate = CURDATE()) as today_schedules,
+                        COALESCE(SUM(COALESCE(HoursWorked, 0)), 0) as total_hours
                       FROM VolunteerSchedules";
             $stmt = $connection->prepare($query);
             $stmt->execute();
@@ -295,309 +351,50 @@ class VolunteerSchedule {
             return null;
         }
     }
-}
-?>
-<?php
-/**
- * Module: Volunteer Scheduling Model
- * Purpose: Manage volunteer scheduling, shifts, and availability tracking
- * Reference: HZ-SCHEDULE-001 to HZ-SCHEDULE-012
- * Database Tables: VolunteerSchedule, VolunteerAvailability, VolunteerShifts
- * Author: WIL Student
- */
 
-require_once __DIR__ . "/../../config/database.php";
-
-class VolunteerSchedule {
-    // HZ-SCHEDULE-001: Create volunteer schedule
-    public static function createSchedule($volunteerId, $scheduleDate, $shiftType, $startTime, $endTime, $location = '') {
+    // HZ-SCHED-013: Get volunteer schedule summary for reporting
+    public static function getVolunteerScheduleSummary($fromDate = null, $toDate = null, $status = null)
+    {
         $connection = getConnection();
-        
-        try {
-            $query = "INSERT INTO VolunteerSchedule (VolunteerID, ScheduleDate, ShiftType, StartTime, EndTime, Location, Status, CreatedAt) 
-                      VALUES (:volunteer_id, :schedule_date, :shift_type, :start_time, :end_time, :location, 'scheduled', NOW())";
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':volunteer_id', $volunteerId);
-            $stmt->bindParam(':schedule_date', $scheduleDate);
-            $stmt->bindParam(':shift_type', $shiftType);
-            $stmt->bindParam(':start_time', $startTime);
-            $stmt->bindParam(':end_time', $endTime);
-            $stmt->bindParam(':location', $location);
-            
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::createSchedule - " . $e->getMessage());
-            return false;
-        }
-    }
 
-    // HZ-SCHEDULE-002: Get all schedules for a volunteer
-    public static function getVolunteerSchedules($volunteerId, $limit = 50, $offset = 0) {
-        $connection = getConnection();
-        
         try {
-            $query = "SELECT * FROM VolunteerSchedule WHERE VolunteerID = :volunteer_id 
-                      ORDER BY ScheduleDate DESC LIMIT :limit OFFSET :offset";
+            $query = "SELECT vs.VolunteerID,
+                             u.FullName,
+                             COUNT(*) as total_schedules,
+                             SUM(CASE WHEN vs.Status = 'completed' THEN 1 ELSE 0 END) as completed,
+                             COALESCE(SUM(COALESCE(vs.HoursWorked, 0)), 0) as total_hours
+                      FROM VolunteerSchedules vs
+                      INNER JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID
+                      INNER JOIN Users u ON v.UserID = u.UserID
+                      WHERE 1=1";
+
+            $params = [];
+            if ($fromDate) {
+                $query .= " AND vs.ScheduleDate >= :from_date";
+                $params[':from_date'] = $fromDate;
+            }
+            if ($toDate) {
+                $query .= " AND vs.ScheduleDate <= :to_date";
+                $params[':to_date'] = $toDate;
+            }
+            if ($status && in_array($status, ['scheduled', 'completed', 'cancelled', 'no-show'], true)) {
+                $query .= " AND vs.Status = :status";
+                $params[':status'] = $status;
+            }
+
+            $query .= " GROUP BY vs.VolunteerID, u.FullName
+                        ORDER BY total_hours DESC, completed DESC, u.FullName ASC";
+
             $stmt = $connection->prepare($query);
-            $stmt->bindParam(':volunteer_id', $volunteerId);
-            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-            $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
             $stmt->execute();
-            
+
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("VolunteerSchedule::getVolunteerSchedules - " . $e->getMessage());
+            error_log("VolunteerSchedule::getVolunteerScheduleSummary - " . $e->getMessage());
             return [];
-        }
-    }
-
-    // HZ-SCHEDULE-003: Get schedules by date range
-    public static function getSchedulesByDateRange($fromDate, $toDate, $volunteerId = null) {
-        $connection = getConnection();
-        
-        try {
-            $query = "SELECT vs.*, v.FullName, v.Email, v.Phone FROM VolunteerSchedule vs 
-                      LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
-                      WHERE vs.ScheduleDate BETWEEN :from_date AND :to_date";
-            
-            if ($volunteerId) {
-                $query .= " AND vs.VolunteerID = :volunteer_id";
-            }
-            
-            $query .= " ORDER BY vs.ScheduleDate ASC, vs.StartTime ASC";
-            
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':from_date', $fromDate);
-            $stmt->bindParam(':to_date', $toDate);
-            
-            if ($volunteerId) {
-                $stmt->bindParam(':volunteer_id', $volunteerId);
-            }
-            
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::getSchedulesByDateRange - " . $e->getMessage());
-            return [];
-        }
-    }
-
-    // HZ-SCHEDULE-004: Get schedule by ID
-    public static function getScheduleById($scheduleId) {
-        $connection = getConnection();
-        
-        try {
-            $query = "SELECT vs.*, v.FullName, v.Email, v.Phone FROM VolunteerSchedule vs 
-                      LEFT JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
-                      WHERE vs.ScheduleID = :schedule_id";
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':schedule_id', $scheduleId);
-            $stmt->execute();
-            
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::getScheduleById - " . $e->getMessage());
-            return null;
-        }
-    }
-
-    // HZ-SCHEDULE-005: Update schedule
-    public static function updateSchedule($scheduleId, $scheduleDate, $shiftType, $startTime, $endTime, $location = '', $status = 'scheduled') {
-        $connection = getConnection();
-        
-        try {
-            $query = "UPDATE VolunteerSchedule SET ScheduleDate = :schedule_date, ShiftType = :shift_type, 
-                      StartTime = :start_time, EndTime = :end_time, Location = :location, Status = :status, 
-                      UpdatedAt = NOW() WHERE ScheduleID = :schedule_id";
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':schedule_date', $scheduleDate);
-            $stmt->bindParam(':shift_type', $shiftType);
-            $stmt->bindParam(':start_time', $startTime);
-            $stmt->bindParam(':end_time', $endTime);
-            $stmt->bindParam(':location', $location);
-            $stmt->bindParam(':status', $status);
-            $stmt->bindParam(':schedule_id', $scheduleId);
-            
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::updateSchedule - " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // HZ-SCHEDULE-006: Delete schedule
-    public static function deleteSchedule($scheduleId) {
-        $connection = getConnection();
-        
-        try {
-            $query = "DELETE FROM VolunteerSchedule WHERE ScheduleID = :schedule_id";
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':schedule_id', $scheduleId);
-            
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::deleteSchedule - " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // HZ-SCHEDULE-007: Record volunteer availability
-    public static function setAvailability($volunteerId, $dayOfWeek, $isAvailable, $startTime = '', $endTime = '') {
-        $connection = getConnection();
-        
-        try {
-            // Check if record exists
-            $checkQuery = "SELECT COUNT(*) FROM VolunteerAvailability WHERE VolunteerID = :volunteer_id AND DayOfWeek = :day_of_week";
-            $checkStmt = $connection->prepare($checkQuery);
-            $checkStmt->bindParam(':volunteer_id', $volunteerId);
-            $checkStmt->bindParam(':day_of_week', $dayOfWeek);
-            $checkStmt->execute();
-            $exists = $checkStmt->fetchColumn() > 0;
-            
-            if ($exists) {
-                $query = "UPDATE VolunteerAvailability SET IsAvailable = :is_available, PreferredStartTime = :start_time, 
-                          PreferredEndTime = :end_time, UpdatedAt = NOW() 
-                          WHERE VolunteerID = :volunteer_id AND DayOfWeek = :day_of_week";
-            } else {
-                $query = "INSERT INTO VolunteerAvailability (VolunteerID, DayOfWeek, IsAvailable, PreferredStartTime, PreferredEndTime, CreatedAt) 
-                          VALUES (:volunteer_id, :day_of_week, :is_available, :start_time, :end_time, NOW())";
-            }
-            
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':volunteer_id', $volunteerId);
-            $stmt->bindParam(':day_of_week', $dayOfWeek);
-            $stmt->bindParam(':is_available', $isAvailable);
-            $stmt->bindParam(':start_time', $startTime);
-            $stmt->bindParam(':end_time', $endTime);
-            
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::setAvailability - " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // HZ-SCHEDULE-008: Get volunteer availability
-    public static function getVolunteerAvailability($volunteerId) {
-        $connection = getConnection();
-        
-        try {
-            $query = "SELECT * FROM VolunteerAvailability WHERE VolunteerID = :volunteer_id ORDER BY DayOfWeek ASC";
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':volunteer_id', $volunteerId);
-            $stmt->execute();
-            
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::getVolunteerAvailability - " . $e->getMessage());
-            return [];
-        }
-    }
-
-    // HZ-SCHEDULE-009: Get volunteers available on specific date
-    public static function getAvailableVolunteers($scheduleDate) {
-        $connection = getConnection();
-        
-        try {
-            $dayOfWeek = date('l', strtotime($scheduleDate)); // Get day name
-            
-            $query = "SELECT DISTINCT v.* FROM Volunteers v 
-                      INNER JOIN VolunteerAvailability va ON v.VolunteerID = va.VolunteerID 
-                      WHERE va.DayOfWeek = :day_of_week AND va.IsAvailable = 1 AND v.Status = 'active'
-                      ORDER BY v.FullName ASC";
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':day_of_week', $dayOfWeek);
-            $stmt->execute();
-            
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::getAvailableVolunteers - " . $e->getMessage());
-            return [];
-        }
-    }
-
-    // HZ-SCHEDULE-010: Record attendance/completion of scheduled shift
-    public static function markShiftCompleted($scheduleId, $hoursWorked, $notes = '') {
-        $connection = getConnection();
-        
-        try {
-            $query = "UPDATE VolunteerSchedule SET Status = 'completed', ActualHoursWorked = :hours_worked, 
-                      Notes = :notes, CompletedAt = NOW() WHERE ScheduleID = :schedule_id";
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':hours_worked', $hoursWorked);
-            $stmt->bindParam(':notes', $notes);
-            $stmt->bindParam(':schedule_id', $scheduleId);
-            
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::markShiftCompleted - " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // HZ-SCHEDULE-011: Get scheduling statistics
-    public static function getSchedulingStats($volunteerId = null) {
-        $connection = getConnection();
-        
-        try {
-            $query = "SELECT 
-                        COUNT(*) as total_scheduled,
-                        SUM(CASE WHEN Status = 'completed' THEN 1 ELSE 0 END) as completed_shifts,
-                        SUM(CASE WHEN Status = 'scheduled' THEN 1 ELSE 0 END) as scheduled_shifts,
-                        SUM(CASE WHEN Status = 'cancelled' THEN 1 ELSE 0 END) as cancelled_shifts,
-                        SUM(CASE WHEN Status = 'no_show' THEN 1 ELSE 0 END) as no_show_shifts,
-                        SUM(ActualHoursWorked) as total_hours_worked
-                      FROM VolunteerSchedule WHERE 1=1";
-            
-            if ($volunteerId) {
-                $query .= " AND VolunteerID = :volunteer_id";
-            }
-            
-            $stmt = $connection->prepare($query);
-            
-            if ($volunteerId) {
-                $stmt->bindParam(':volunteer_id', $volunteerId);
-            }
-            
-            $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::getSchedulingStats - " . $e->getMessage());
-            return null;
-        }
-    }
-
-    // HZ-SCHEDULE-012: Get volunteer hours summary
-    public static function getVolunteerHoursSummary($volunteerId, $fromDate = null, $toDate = null) {
-        $connection = getConnection();
-        
-        try {
-            $query = "SELECT v.FullName, COUNT(vs.ScheduleID) as shift_count, 
-                      SUM(vs.ActualHoursWorked) as total_hours, AVG(vs.ActualHoursWorked) as avg_hours
-                      FROM VolunteerSchedule vs 
-                      INNER JOIN Volunteers v ON vs.VolunteerID = v.VolunteerID 
-                      WHERE vs.VolunteerID = :volunteer_id AND vs.Status = 'completed'";
-            
-            if ($fromDate && $toDate) {
-                $query .= " AND vs.ScheduleDate BETWEEN :from_date AND :to_date";
-            }
-            
-            $query .= " GROUP BY vs.VolunteerID";
-            
-            $stmt = $connection->prepare($query);
-            $stmt->bindParam(':volunteer_id', $volunteerId);
-            
-            if ($fromDate && $toDate) {
-                $stmt->bindParam(':from_date', $fromDate);
-                $stmt->bindParam(':to_date', $toDate);
-            }
-            
-            $stmt->execute();
-            return $stmt->fetch(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("VolunteerSchedule::getVolunteerHoursSummary - " . $e->getMessage());
-            return null;
         }
     }
 }
-?>

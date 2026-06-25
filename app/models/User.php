@@ -49,10 +49,10 @@ class User
      */
     public function findByUsername($username)
     {
-        $query = "SELECT UserID, Username, Email, PasswordHash, Role, CreatedAt, IsActive 
+        $query = "SELECT UserID, Username, Email, PasswordHash, Role, CreatedAt, Status 
                   FROM " . $this->table . " 
                   WHERE Username = :username 
-                  AND IsActive = TRUE 
+                  AND Status IN ('active', 'pending') 
                   LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
@@ -74,10 +74,10 @@ class User
      */
     public function findByEmail($email)
     {
-        $query = "SELECT UserID, Username, Email, Role, CreatedAt 
+        $query = "SELECT UserID, Username, Email, Role, CreatedAt, Status 
                   FROM " . $this->table . " 
                   WHERE Email = :email 
-                  AND IsActive = TRUE 
+                  AND Status IN ('active', 'pending')
                   LIMIT 1";
 
         $stmt = $this->conn->prepare($query);
@@ -98,7 +98,7 @@ class User
      * Security: Hashes password using PHP password_hash, validates input
      * Validation: Checks for duplicate username/email, validates email format
      */
-    public function register($username, $email, $password, $role = 'volunteer')
+    public function register($username, $email, $password, $role = 'volunteer', $fullName = null, $phone = null, $status = 'pending')
     {
         // Validation: Check if username already exists
         if ($this->findByUsername($username)) {
@@ -125,8 +125,8 @@ class User
 
         // Prepare and execute INSERT query
         $query = "INSERT INTO " . $this->table . " 
-                  (Username, Email, PasswordHash, Role) 
-                  VALUES (:username, :email, :password_hash, :role)";
+                  (Username, Email, PasswordHash, FullName, Phone, Role, Status) 
+                  VALUES (:username, :email, :password_hash, :full_name, :phone, :role, :status)";
 
         $stmt = $this->conn->prepare($query);
 
@@ -134,7 +134,10 @@ class User
         $stmt->bindParam(":username", $username);
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":password_hash", $hashedPassword);
+        $stmt->bindParam(":full_name", $fullName);
+        $stmt->bindParam(":phone", $phone);
         $stmt->bindParam(":role", $role);
+        $stmt->bindParam(":status", $status);
 
         if ($stmt->execute()) {
             return $this->conn->lastInsertId();
@@ -152,7 +155,7 @@ class User
      */
     public function getUserById($userId)
     {
-        $query = "SELECT UserID, Username, Email, Role, CreatedAt, IsActive 
+        $query = "SELECT UserID, Username, Email, FullName, Phone, Role, CreatedAt, Status, UpdatedAt 
                   FROM " . $this->table . " 
                   WHERE UserID = :user_id 
                   LIMIT 1";
@@ -177,7 +180,7 @@ class User
     public function deactivateUser($userId)
     {
         $query = "UPDATE " . $this->table . " 
-                  SET IsActive = FALSE 
+                  SET Status = 'inactive' 
                   WHERE UserID = :user_id";
 
         $stmt = $this->conn->prepare($query);

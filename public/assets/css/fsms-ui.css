@@ -176,6 +176,21 @@ a {
     top: 8px;
     width: 10px;
 }
+.fsms-alert-dot:not(:empty) {
+    align-items: center;
+    border-radius: 10px;
+    display: flex;
+    font-size: 10px;
+    font-weight: 700;
+    height: auto;
+    justify-content: center;
+    line-height: 1;
+    min-width: 18px;
+    padding: 3px 5px;
+    right: 0;
+    top: 2px;
+    width: auto;
+}
 
 .fsms-user-chip {
     align-items: center;
@@ -381,6 +396,135 @@ body:has(.fsms-sidebar) .page-header p {
     }
 }
 
+/* ===== Donor Dashboard / Stat Cards ===== */
+.fsms-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.fsms-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 24px;
+}
+.fsms-stat {
+    background: var(--fsms-surface);
+    border: 1px solid var(--fsms-border);
+    border-radius: var(--fsms-radius);
+    box-shadow: var(--fsms-shadow);
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+    align-items: flex-start;
+}
+.fsms-stat-label {
+    color: var(--fsms-muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.fsms-stat-value {
+    color: var(--fsms-text);
+    font-size: 28px;
+    font-weight: 800;
+    margin: 6px 0 4px;
+}
+.fsms-stat-meta {
+    color: var(--fsms-muted);
+    font-size: 12px;
+}
+.fsms-stat-icon {
+    align-items: center;
+    border-radius: 10px;
+    display: flex;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+    flex-shrink: 0;
+}
+.fsms-stat-icon.blue { background: #e0f2fe; color: #0369a1; }
+.fsms-stat-icon.green { background: #dcfce7; color: #15803d; }
+.fsms-stat-icon.orange { background: #ffedd5; color: #c2410c; }
+.fsms-stat-icon.purple { background: #f3e8ff; color: #7c3aed; }
+.fsms-stat-icon i { font-size: 18px; }
+
+/* ===== Donor Dashboard / Cards ===== */
+.fsms-card {
+    background: var(--fsms-surface);
+    border: 1px solid var(--fsms-border);
+    border-radius: var(--fsms-radius);
+    box-shadow: var(--fsms-shadow);
+}
+.fsms-card-body {
+    padding: 24px;
+}
+.fsms-card-title {
+    color: var(--fsms-text);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+/* ===== Donor Dashboard / Quick Actions ===== */
+.fsms-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.fsms-action {
+    align-items: center;
+    border: 1px solid var(--fsms-border);
+    border-radius: 8px;
+    display: flex;
+    font-size: 14px;
+    font-weight: 600;
+    gap: 12px;
+    padding: 12px 16px;
+    text-decoration: none;
+    transition: background 0.15s, border-color 0.15s;
+}
+.fsms-action:hover {
+    background: var(--fsms-bg);
+}
+.fsms-action i {
+    text-align: center;
+    width: 20px;
+}
+.fsms-action.navy { color: var(--fsms-navy); }
+.fsms-action.green { color: var(--fsms-green); }
+.fsms-action.orange { color: var(--fsms-orange); }
+.fsms-action.teal { color: var(--fsms-teal); }
+.fsms-action.red { color: var(--fsms-red); }
+
+/* ===== Donor History Page Header ===== */
+.fsms-page-header {
+    background: linear-gradient(135deg, var(--fsms-navy) 0%, var(--fsms-navy-2) 100%);
+    color: #fff;
+    padding: 28px 0;
+    margin-bottom: 0;
+}
+.fsms-page-header h1 {
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+.fsms-page-header p {
+    color: rgba(255,255,255,0.75);
+}
+
+/* ===== Table Card ===== */
+.table-card {
+    background: var(--fsms-surface);
+    border: 1px solid var(--fsms-border);
+    border-radius: var(--fsms-radius);
+    box-shadow: var(--fsms-shadow);
+    padding: 20px;
+}
+
 /* Hamburger visibility and offcanvas tweaks */
 .fsms-hamburger {
     display: none;
@@ -404,4 +548,26 @@ body:has(.fsms-sidebar) .page-header p {
     .offcanvas-nav .fsms-nav-link i {
         width: 20px;
     }
+}
+
+/* ============================================
+   Print styles for reports
+   ============================================ */
+@media print {
+    .fsms-sidebar, .fsms-topbar, .fsms-hamburger,
+    .offcanvas, .navbar, .no-print { display: none !important; }
+    body { background: #fff !important; padding: 20px !important; margin: 0 !important; }
+    .page-header, .filter-card, .filter-form,
+    .report-control, .btn, .d-flex.gap-2,
+    .preview-head, .export-card, .report-btn { display: none !important; }
+    .report-card, .table-card, .stat-card, .stat-box,
+    .chart-container, .preview-body, .compose-card {
+        box-shadow: none !important;
+        border: 1px solid #d1d5db !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .table th, .table td { border-color: #9ca3af !important; }
+    .stat-card { border-left-width: 5px !important; }
+    .report-metric { border: 1px solid #d1d5db !important; }
 }

@@ -6,14 +6,29 @@
  * Author: WIL Student
  */
 
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
+
 require_once __DIR__ . "/../../config/database.php";
 require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
+require_once __DIR__ . "/../models/Volunteer.php";
 require_once __DIR__ . "/../models/VolunteerSchedule.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
 
 requireLogin();
 
+// HZ-SCHED-CTRL-RBAC: Enforce schedule access (admin, staff, volunteer)
+rbacRequirePermission('schedules');
+
 $action = isset($_GET['action']) ? $_GET['action'] : '';
+
+function requireScheduleManagementRole() {
+    $role = strtolower((string)(getCurrentUser()['role'] ?? ''));
+    if (!in_array($role, ['admin', 'staff'], true)) {
+        rbacDenyWeb('You do not have permission to manage volunteer schedules.');
+    }
+}
 
 switch ($action) {
     case 'list':
@@ -69,19 +84,20 @@ function listSchedules() {
     
     $schedules = VolunteerSchedule::getAllSchedules($limit, $offset, $filters);
     $stats = VolunteerSchedule::getScheduleStats();
-    
-    $conn = getConnection();
-    $countStmt = $conn->prepare("SELECT COUNT(*) FROM VolunteerSchedules WHERE 1=1");
-    $countStmt->execute();
-    $totalSchedules = $countStmt->fetchColumn();
-    $totalPages = ceil($totalSchedules / $limit);
+    $totalSchedules = VolunteerSchedule::getScheduleCount($filters);
+    $totalPages = max(1, (int)ceil($totalSchedules / $limit));
     
     include __DIR__ . "/../views/schedules/list.php";
 }
 
 function showCreateForm() {
+    requireScheduleManagementRole();
     $conn = getConnection();
-    $stmt = $conn->prepare("SELECT VolunteerID, FullName FROM Volunteers WHERE Status = 'active' ORDER BY FullName ASC");
+    $stmt = $conn->prepare("SELECT v.VolunteerID, u.FullName
+                            FROM Volunteers v
+                            INNER JOIN Users u ON v.UserID = u.UserID
+                            WHERE u.Status = 'active' AND v.Status = 'approved'
+                            ORDER BY u.FullName ASC");
     $stmt->execute();
     $volunteers = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -89,8 +105,15 @@ function showCreateForm() {
 }
 
 function storeSchedule() {
+    requireScheduleManagementRole();
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         header("Location: VolunteerScheduleController.php?action=list");
+        exit;
+    }
+    
+    if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: VolunteerScheduleController.php?action=create");
         exit;
     }
     
@@ -126,6 +149,7 @@ function viewSchedule() {
 }
 
 function showEditForm() {
+    requireScheduleManagementRole();
     $scheduleId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     $schedule = VolunteerSchedule::getScheduleById($scheduleId);
@@ -138,12 +162,19 @@ function showEditForm() {
 }
 
 function updateSchedule() {
+    requireScheduleManagementRole();
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         header("Location: VolunteerScheduleController.php?action=list");
         exit;
     }
     
-    $scheduleId = (int)$_POST['id'];
+    if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: VolunteerScheduleController.php?action=edit&id=" . (int)($_POST['id'] ?? $_POST['schedule_id'] ?? 0));
+        exit;
+    }
+    
+    $scheduleId = (int)($_POST['id'] ?? $_POST['schedule_id'] ?? 0);
     $startTime = $_POST['start_time'];
     $endTime = $_POST['end_time'];
     $location = $_POST['location'] ?? '';
@@ -163,6 +194,7 @@ function updateSchedule() {
 }
 
 function deleteScheduleConfirm() {
+    requireScheduleManagementRole();
     $scheduleId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     $schedule = VolunteerSchedule::getScheduleById($scheduleId);
@@ -175,12 +207,19 @@ function deleteScheduleConfirm() {
 }
 
 function destroySchedule() {
+    requireScheduleManagementRole();
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         header("Location: VolunteerScheduleController.php?action=list");
         exit;
     }
     
-    $scheduleId = (int)$_POST['id'];
+    if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: VolunteerScheduleController.php?action=list");
+        exit;
+    }
+    
+    $scheduleId = (int)($_POST['id'] ?? $_POST['schedule_id'] ?? 0);
     
     if (VolunteerSchedule::deleteSchedule($scheduleId)) {
         ActivityLog::log(getCurrentUser()['user_id'], 'delete_schedule', 'VolunteerSchedule', $scheduleId, "Deleted schedule");
@@ -193,23 +232,39 @@ function destroySchedule() {
 
 function manageAvailability() {
     $volunteerId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-    
+    if ($volunteerId <= 0) {
+        header("Location: VolunteerScheduleController.php?action=list");
+        exit;
+    }
+
+    $volunteerModel = new Volunteer(getConnection());
+    $volunteer = $volunteerModel->getVolunteerById($volunteerId);
+    if (!$volunteer) {
+        header("Location: VolunteerScheduleController.php?action=list");
+        exit;
+    }
+
+    $currentUser = getCurrentUser();
+    if ($currentUser && strtolower((string)$currentUser['role']) === 'volunteer') {
+        $currentVolunteer = $volunteerModel->getVolunteerByUserId((int)$currentUser['user_id']);
+        if (!$currentVolunteer || (int)$currentVolunteer['VolunteerID'] !== $volunteerId) {
+            rbacDenyWeb('You can only update your own availability.');
+        }
+    }
+
     $availability = VolunteerSchedule::getVolunteerAvailability($volunteerId);
-    
-    // Ensure all days exist
     $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     $availabilityMap = [];
-    
+
+    foreach ($daysOfWeek as $day) {
+        $availabilityMap[$day] = ['DayOfWeek' => $day, 'IsAvailable' => 0, 'Notes' => ''];
+    }
+
     foreach ($availability as $av) {
         $availabilityMap[$av['DayOfWeek']] = $av;
     }
-    
-    // Fill in missing days
-    foreach ($daysOfWeek as $day) {
-        if (!isset($availabilityMap[$day])) {
-            $availabilityMap[$day] = ['DayOfWeek' => $day, 'IsAvailable' => 0, 'Notes' => ''];
-        }
-    }
+
+    $availability = $availabilityMap;
     
     include __DIR__ . "/../views/schedules/availability.php";
 }
@@ -220,14 +275,31 @@ function saveAvailability() {
         exit;
     }
     
-    $volunteerId = (int)$_POST['volunteer_id'];
-    $daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: VolunteerScheduleController.php?action=availability&id=" . (int)$_POST['volunteer_id']);
+        exit;
+    }
     
-    foreach ($daysOfWeek as $day) {
-        $isAvailable = isset($_POST["available_$day"]) ? 1 : 0;
-        $notes = $_POST["notes_$day"] ?? '';
-        
-        VolunteerSchedule::setAvailability($volunteerId, $day, $isAvailable, $notes);
+    $volunteerId = (int)$_POST['volunteer_id'];
+    $currentUser = getCurrentUser();
+    if ($currentUser && strtolower((string)$currentUser['role']) === 'volunteer') {
+        $volunteerModel = new Volunteer(getConnection());
+        $currentVolunteer = $volunteerModel->getVolunteerByUserId((int)$currentUser['user_id']);
+        if (!$currentVolunteer || (int)$currentVolunteer['VolunteerID'] !== $volunteerId) {
+            rbacDenyWeb('You can only update your own availability.');
+        }
+    }
+
+    $availabilityRows = $_POST['availability'] ?? [];
+    foreach ($availabilityRows as $row) {
+        $day = $row['day_of_week'] ?? '';
+        $isAvailable = isset($row['is_available']) ? (int)$row['is_available'] : 0;
+        $notes = trim($row['notes'] ?? '');
+
+        if ($day) {
+            VolunteerSchedule::setAvailability($volunteerId, $day, $isAvailable, $notes);
+        }
     }
     
     ActivityLog::log(getCurrentUser()['user_id'], 'update_availability', 'VolunteerAvailability', $volunteerId, "Updated volunteer availability");
@@ -242,8 +314,8 @@ function viewShifts() {
         $_GET['date'] = date('Y-m-d');
     }
     
-    $scheduleDate = $_GET['date'];
-    $schedules = VolunteerSchedule::getSchedulesByDateRange($scheduleDate, $scheduleDate);
+    $selectedDate = $_GET['date'];
+    $shifts = VolunteerSchedule::getSchedulesByDateRange($selectedDate, $selectedDate);
     
     include __DIR__ . "/../views/schedules/shifts.php";
 }
@@ -251,9 +323,12 @@ function viewShifts() {
 function scheduleReport() {
     $fromDate = $_GET['from_date'] ?? date('Y-m-01');
     $toDate = $_GET['to_date'] ?? date('Y-m-d');
+    $status = $_GET['status'] ?? null;
     
-    $schedules = VolunteerSchedule::getSchedulesByDateRange($fromDate, $toDate);
+    $scheduleData = VolunteerSchedule::getSchedulesByDateRange($fromDate, $toDate);
     $stats = VolunteerSchedule::getScheduleStats();
+    $volunteerStats = VolunteerSchedule::getVolunteerScheduleSummary($fromDate, $toDate, $status);
+    $recentSchedules = array_slice($scheduleData, 0, 10);
     
     include __DIR__ . "/../views/schedules/report.php";
 }

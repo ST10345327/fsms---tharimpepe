@@ -58,9 +58,6 @@
                     <h1><i class="fas fa-users"></i> Volunteer Management</h1>
                     <p class="mb-0 mt-2">Manage volunteer profiles and schedules</p>
                 </div>
-                <a href="VolunteerController.php?action=create" class="btn btn-light">
-                    <i class="fas fa-plus"></i> Register Volunteer
-                </a>
             </div>
         </div>
     </div>
@@ -79,6 +76,31 @@
                 <i class="fas fa-check-circle"></i> <?php echo htmlspecialchars($success); ?>
             </div>
         <?php endif; ?>
+
+        <div class="row mb-4 g-3 align-items-end">
+            <div class="col-lg-6">
+                <form class="d-flex gap-2" method="GET" action="VolunteerController.php">
+                    <input type="hidden" name="action" value="search">
+                    <input type="search" class="form-control" name="q" placeholder="Search volunteers by name or phone">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </form>
+            </div>
+            <div class="col-lg-6">
+                <div class="d-flex gap-2 justify-content-lg-end flex-wrap">
+                    <a class="btn btn-outline-secondary" href="VolunteerController.php?action=export<?php echo isset($_GET['status']) ? '&status=' . urlencode($_GET['status']) : ''; ?><?php echo !empty($_GET['q']) ? '&q=' . urlencode($_GET['q']) : ''; ?>">
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </a>
+                    <a class="btn btn-outline-primary" href="ReportsController.php?action=volunteer_performance">
+                        <i class="fas fa-star"></i> Performance Report
+                    </a>
+                    <a class="btn btn-outline-primary" href="ReportsController.php?action=volunteer_schedule">
+                        <i class="fas fa-calendar-alt"></i> Schedule Report
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <!-- Statistics -->
         <div class="row mb-4">
@@ -136,26 +158,33 @@
         <div class="row">
             <?php if (!empty($volunteers)): ?>
                 <?php foreach ($volunteers as $volunteer): ?>
+                    <?php
+                        $fullName = trim(($volunteer['FullName'] ?? '') !== '' ? $volunteer['FullName'] : (($volunteer['FirstName'] ?? '') . ' ' . ($volunteer['LastName'] ?? '')));
+                        $phone = $volunteer['Phone'] ?? '';
+                        $email = $volunteer['Email'] ?? '';
+                        $address = $volunteer['Address'] ?? 'Not provided';
+                        $availability = $volunteer['AvailabilityStatus'] ?? 'unavailable';
+                    ?>
                     <div class="col-md-6 col-lg-4">
                         <div class="volunteer-card">
                             <!-- HZ-VOL-UI-001: Volunteer card display -->
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <h5><?php echo htmlspecialchars($volunteer['FirstName'] . ' ' . $volunteer['LastName']); ?></h5>
-                                    <span class="badge badge-<?php echo str_replace('_', '-', $volunteer['AvailabilityStatus']); ?>">
-                                        <?php echo ucfirst(str_replace('_', ' ', $volunteer['AvailabilityStatus'])); ?>
+                                    <h5><?php echo htmlspecialchars($fullName !== '' ? $fullName : 'Unnamed Volunteer'); ?></h5>
+                                    <span class="badge badge-<?php echo str_replace('_', '-', $availability); ?>">
+                                        <?php echo ucfirst(str_replace('_', ' ', $availability)); ?>
                                     </span>
                                 </div>
                             </div>
                             
                             <div class="volunteer-info">
-                                <i class="fas fa-envelope"></i> <?php echo htmlspecialchars($volunteer['Email']); ?>
+                                <i class="fas fa-envelope"></i> <?php echo htmlspecialchars($email); ?>
                             </div>
                             <div class="volunteer-info">
-                                <i class="fas fa-phone"></i> <?php echo htmlspecialchars($volunteer['Phone']); ?>
+                                <i class="fas fa-phone"></i> <?php echo htmlspecialchars($phone); ?>
                             </div>
                             <div class="volunteer-info">
-                                <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($volunteer['Address'] ?? 'Not provided'); ?>
+                                <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($address); ?>
                             </div>
 
                             <!-- Action Buttons -->
@@ -168,6 +197,13 @@
                                    class="btn btn-sm btn-outline-warning flex-grow-1">
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
+                                <form method="POST" action="VolunteerController.php?action=delete" class="flex-grow-1 m-0">
+                                    <?php echo csrfTokenInput(); ?>
+                                    <input type="hidden" name="volunteer_id" value="<?php echo (int)$volunteer['VolunteerID']; ?>">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100" onclick="return confirm('Deactivate this volunteer?');">
+                                        <i class="fas fa-trash"></i> Deactivate
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -175,11 +211,25 @@
             <?php else: ?>
                 <div class="col-12">
                     <div class="alert alert-info" role="alert">
-                        <i class="fas fa-info-circle"></i> No volunteers found. <a href="VolunteerController.php?action=create">Register a volunteer</a>
+                        <i class="fas fa-info-circle"></i> No volunteers found. Volunteers must register themselves via the public registration page.
                     </div>
                 </div>
             <?php endif; ?>
         </div>
+
+        <?php if (($totalPages ?? 1) > 1): ?>
+            <nav class="mt-4" aria-label="Volunteer pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item <?php echo ($page ?? 1) <= 1 ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="VolunteerController.php?action=list&page=<?php echo max(1, ($page ?? 1) - 1); ?><?php echo isset($_GET['status']) ? '&status=' . urlencode($_GET['status']) : ''; ?><?php echo !empty($_GET['q']) ? '&q=' . urlencode($_GET['q']) : ''; ?>">Previous</a>
+                    </li>
+                    <li class="page-item disabled"><span class="page-link">Page <?php echo (int)($page ?? 1); ?> of <?php echo (int)$totalPages; ?></span></li>
+                    <li class="page-item <?php echo ($page ?? 1) >= ($totalPages ?? 1) ? 'disabled' : ''; ?>">
+                        <a class="page-link" href="VolunteerController.php?action=list&page=<?php echo min(($totalPages ?? 1), ($page ?? 1) + 1); ?><?php echo isset($_GET['status']) ? '&status=' . urlencode($_GET['status']) : ''; ?><?php echo !empty($_GET['q']) ? '&q=' . urlencode($_GET['q']) : ''; ?>">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        <?php endif; ?>
     </div>
 
     <!-- Footer -->

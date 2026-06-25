@@ -6,12 +6,19 @@
  * Hazard ID: HZ-RPT-CTRL-*
  */
 
-require_once __DIR__ . "/../../helpers/SessionHandler.php";
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
+
+require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
 require_once __DIR__ . "/../models/Reports.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
 
 // HZ-RPT-CTRL-001: Require authentication
 requireLogin();
+
+// HZ-RPT-CTRL-RBAC: Enforce reports access (admin, staff)
+rbacRequirePermission('reports');
 
 $reports = new Reports();
 $action = $_GET['action'] ?? 'dashboard';
@@ -90,11 +97,10 @@ try {
 
         // HZ-RPT-CTRL-009: Beneficiary report
         case 'beneficiaries':
-            $roleFilter = $_GET['role'] ?? null;
-            $statusFilter = $_GET['status'] ?? null;
+            $statusFilter = $_GET['status_filter'] ?? null;
             
-            ActivityLog::log(getCurrentUser()['user_id'], 'view_report', 'Reports', 0, "Viewed Beneficiary Report (Role: $roleFilter, Status: $statusFilter)");
-            $beneficiaryData = $reports->getBeneficiaryReport($roleFilter, $statusFilter);
+            ActivityLog::log(getCurrentUser()['user_id'], 'view_report', 'Reports', 0, "Viewed Beneficiary Report (Status: $statusFilter)");
+            $beneficiaryData = $reports->getBeneficiaryReport($statusFilter);
             
             require __DIR__ . "/../views/reports/beneficiary_report.php";
             break;
@@ -133,6 +139,75 @@ try {
             
             require __DIR__ . "/../views/reports/financial_summary.php";
             break;
+
+        // HZ-RPT-CTRL-013: Export report data as CSV
+        case 'export':
+            $report = $_GET['report'] ?? '';
+            $fromDate = $_GET['from_date'] ?? null;
+            $toDate = $_GET['to_date'] ?? null;
+            $statusFilter = $_GET['status_filter'] ?? null;
+            $status = $_GET['status'] ?? null;
+            $year = $_GET['year'] ?? date('Y');
+            $month = $_GET['month'] ?? date('m');
+
+            $donationType = $_GET['donation_type'] ?? null;
+
+            $exportData = match ($report) {
+                'attendance' => $reports->getAttendanceReport($fromDate, $toDate),
+                'donations' => $reports->getDonationReport($fromDate, $toDate, $donationType),
+                'beneficiaries' => $reports->getBeneficiaryReport($statusFilter),
+                'food_stock' => $reports->getFoodStockReport(),
+                'food_distribution' => $reports->getFoodDistributionReport($fromDate, $toDate),
+                'volunteer_performance' => $reports->getVolunteerPerformanceReport(),
+                'volunteer_schedule' => $reports->getVolunteerScheduleReport($fromDate, $toDate, $status),
+                'audit' => $reports->getActivityAuditReport($fromDate, $toDate),
+                'program_summary' => $reports->getProgramSummaryExport($fromDate, $toDate),
+                'financial_summary' => [$reports->getMonthlyFinancialSummary($year, $month)],
+                default => [],
+            };
+
+            if (!empty($exportData)) {
+                ActivityLog::log(getCurrentUser()['user_id'], 'export_report', 'Reports', 0, "Exported $report report as CSV");
+                $reports->exportAsCSV($exportData, "fsms_{$report}_report.csv");
+                exit;
+            }
+            $_SESSION['error'] = "No data to export for: $report";
+            header("Location: ReportsController.php?action=dashboard");
+            exit;
+
+        // HZ-RPT-CTRL-014: Export report as styled XLS
+        case 'export_xls':
+            $report = $_GET['report'] ?? '';
+            $fromDate = $_GET['from_date'] ?? null;
+            $toDate = $_GET['to_date'] ?? null;
+            $statusFilter = $_GET['status_filter'] ?? null;
+            $status = $_GET['status'] ?? null;
+            $year = $_GET['year'] ?? date('Y');
+            $month = $_GET['month'] ?? date('m');
+            $donationType = $_GET['donation_type'] ?? null;
+
+            $exportData = match ($report) {
+                'attendance' => $reports->getAttendanceReport($fromDate, $toDate),
+                'donations' => $reports->getDonationReport($fromDate, $toDate, $donationType),
+                'beneficiaries' => $reports->getBeneficiaryReport($statusFilter),
+                'food_stock' => $reports->getFoodStockReport(),
+                'food_distribution' => $reports->getFoodDistributionReport($fromDate, $toDate),
+                'volunteer_performance' => $reports->getVolunteerPerformanceReport(),
+                'volunteer_schedule' => $reports->getVolunteerScheduleReport($fromDate, $toDate, $status),
+                'audit' => $reports->getActivityAuditReport($fromDate, $toDate),
+                'program_summary' => $reports->getProgramSummaryExport($fromDate, $toDate),
+                'financial_summary' => [$reports->getMonthlyFinancialSummary($year, $month)],
+                default => [],
+            };
+
+            if (!empty($exportData)) {
+                ActivityLog::log(getCurrentUser()['user_id'], 'export_report', 'Reports', 0, "Exported $report report as XLS");
+                $reports->exportAsXLS($exportData, "fsms_{$report}_report.xls", ucwords(str_replace('_', ' ', $report)) . ' Report');
+                exit;
+            }
+            $_SESSION['error'] = "No data to export for: $report";
+            header("Location: ReportsController.php?action=dashboard");
+            exit;
 
         default:
             require __DIR__ . "/../views/reports/dashboard.php";

@@ -6,16 +6,18 @@
  * Author: WIL Student
  */
 
+// Initialize application with error handling and validation
+require_once __DIR__ . "/../helpers/bootstrap.php";
+
 require_once __DIR__ . "/../../config/database.php";
 require_once __DIR__ . "/../helpers/SessionHandler.php";
+require_once __DIR__ . "/../helpers/Rbac.php";
 require_once __DIR__ . "/../models/ActivityLog.php";
+require_once __DIR__ . "/../models/Volunteer.php";
 
 // Require admin access
 requireLogin();
-if (getCurrentUser()['role'] !== 'admin') {
-    header("Location: ../../views/dashboard.php");
-    exit;
-}
+rbacRequirePermission('users');
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
@@ -80,6 +82,16 @@ switch ($action) {
         userProfile();
         break;
     
+    // HZ-USER-CTRL-013: Approve pending user
+    case 'approve':
+        approveUser();
+        break;
+    
+    // HZ-USER-CTRL-014: Reject pending user
+    case 'reject':
+        rejectUser();
+        break;
+    
     default:
         listUsers();
 }
@@ -105,14 +117,14 @@ function listUsers() {
               FROM Users WHERE 1=1";
     
     if (!empty($filters['role'])) {
-        $query .= " AND Role = '" . $conn->quote($filters['role']) . "'";
+        $query .= " AND Role = " . $conn->quote($filters['role']);
     }
     if (!empty($filters['status'])) {
-        $query .= " AND Status = '" . $conn->quote($filters['status']) . "'";
+        $query .= " AND Status = " . $conn->quote($filters['status']);
     }
     if (!empty($filters['search'])) {
         $search = '%' . $filters['search'] . '%';
-        $query .= " AND (Username LIKE '" . $conn->quote($search) . "' OR FullName LIKE '" . $conn->quote($search) . "')";
+        $query .= " AND (Username LIKE " . $conn->quote($search) . " OR FullName LIKE " . $conn->quote($search) . ")";
     }
     
     $query .= " ORDER BY CreatedAt DESC LIMIT :limit OFFSET :offset";
@@ -125,10 +137,10 @@ function listUsers() {
     // Get total count
     $countQuery = "SELECT COUNT(*) FROM Users WHERE 1=1";
     if (!empty($filters['role'])) {
-        $countQuery .= " AND Role = '" . $conn->quote($filters['role']) . "'";
+        $countQuery .= " AND Role = " . $conn->quote($filters['role']);
     }
     if (!empty($filters['status'])) {
-        $countQuery .= " AND Status = '" . $conn->quote($filters['status']) . "'";
+        $countQuery .= " AND Status = " . $conn->quote($filters['status']);
     }
     $stmt = $conn->prepare($countQuery);
     $stmt->execute();
@@ -148,6 +160,12 @@ function storeUser() {
         exit;
     }
     
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: UserController.php?action=create");
+        exit;
+    }
+    
     $username = $_POST['username'] ?? '';
     $email = $_POST['email'] ?? '';
     $fullname = $_POST['fullname'] ?? '';
@@ -159,8 +177,8 @@ function storeUser() {
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
     
     try {
-        $query = "INSERT INTO Users (Username, Email, Password, FullName, Phone, Role, Status, CreatedAt) 
-                  VALUES (:username, :email, :password, :fullname, :phone, :role, 'active', NOW())";
+        $query = "INSERT INTO Users (Username, Email, PasswordHash, FullName, Phone, Role, Status, CreatedAt) 
+                  VALUES (:username, :email, :password, :fullname, :phone, :role, 'pending', NOW())";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(':username', $username);
         $stmt->bindParam(':email', $email);
@@ -234,6 +252,12 @@ function updateUser() {
         exit;
     }
     
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: UserController.php?action=edit&id=" . (int)$_POST['id']);
+        exit;
+    }
+    
     $userId = (int)$_POST['id'];
     $email = $_POST['email'] ?? '';
     $fullname = $_POST['fullname'] ?? '';
@@ -286,6 +310,12 @@ function destroyUser() {
         exit;
     }
     
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
+        header("Location: UserController.php?action=list");
+        exit;
+    }
+    
     $userId = (int)$_POST['id'];
     $conn = getConnection();
     
@@ -315,6 +345,12 @@ function roleManagement() {
 
 function updateUserRole() {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        header("Location: UserController.php?action=role_management");
+        exit;
+    }
+    
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        $_SESSION['error'] = "Security validation failed. Please try again.";
         header("Location: UserController.php?action=role_management");
         exit;
     }
@@ -372,5 +408,131 @@ function userProfile() {
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     include __DIR__ . "/../views/users/profile.php";
+}
+
+function approveUser() {
+    $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    
+    if ($userId <= 0) {
+        $_SESSION['error'] = "Invalid user ID";
+        header("Location: UserController.php?action=list");
+        exit;
+    }
+    
+    $conn = getConnection();
+    $userStmt = $conn->prepare("SELECT UserID, Username, Email, FullName, Phone, Role, Status FROM Users WHERE UserID = :user_id LIMIT 1");
+    $userStmt->bindParam(':user_id', $userId);
+    $userStmt->execute();
+    $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$user) {
+        $_SESSION['error'] = "User not found";
+        header("Location: UserController.php?action=list");
+        exit;
+    }
+
+    $ownTransaction = !$conn->inTransaction();
+    if ($ownTransaction) {
+        $conn->beginTransaction();
+    }
+
+    try {
+        $query = "UPDATE Users SET Status = 'active', UpdatedAt = NOW() WHERE UserID = :user_id AND Status = 'pending'";
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId);
+        
+        if ($stmt->execute() && $stmt->rowCount() > 0) {
+            if (strtolower((string)$user['Role']) === 'volunteer') {
+                $volunteerModel = new Volunteer($conn);
+                $existingVolunteer = $volunteerModel->getVolunteerByUserId($userId);
+
+                $fullName = trim((string)($user['FullName'] ?? ''));
+                $firstName = $fullName !== '' ? strtok($fullName, ' ') : $user['Username'];
+                $lastName = $fullName !== '' ? trim(substr($fullName, strlen((string)$firstName))) : '';
+                $phone = $user['Phone'] ?? '';
+
+                if ($existingVolunteer) {
+                    $volunteerUpdate = $conn->prepare("UPDATE Volunteers SET Status = 'approved', AvailabilityStatus = 'available' WHERE VolunteerID = :volunteer_id");
+                    $volunteerUpdate->bindParam(':volunteer_id', $existingVolunteer['VolunteerID']);
+                    $volunteerUpdate->execute();
+                } else {
+                    $volunteerModel->createVolunteer($userId, (string)$firstName, (string)$lastName, (string)$phone, null, 'approved', 'available');
+                }
+            }
+
+            ActivityLog::log(getCurrentUser()['user_id'], 'approve_user', 'User', $userId, "Approved user registration");
+            if ($ownTransaction) {
+                $conn->commit();
+            }
+            $_SESSION['success'] = "User approved successfully. They can now login.";
+        } else {
+            if ($ownTransaction) {
+                $conn->rollBack();
+            }
+            $_SESSION['error'] = "User not found or already approved";
+        }
+    } catch (Exception $e) {
+        if ($ownTransaction && $conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        $_SESSION['error'] = "Error approving user: " . $e->getMessage();
+    }
+    
+    header("Location: UserController.php?action=list");
+    exit;
+}
+
+function rejectUser() {
+    $userId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    
+    if ($userId <= 0) {
+        $_SESSION['error'] = "Invalid user ID";
+        header("Location: UserController.php?action=list");
+        exit;
+    }
+    
+    $conn = getConnection();
+    $userStmt = $conn->prepare("SELECT UserID, Role FROM Users WHERE UserID = :user_id LIMIT 1");
+    $userStmt->bindParam(':user_id', $userId);
+    $userStmt->execute();
+    $user = $userStmt->fetch(PDO::FETCH_ASSOC);
+
+    $ownTransaction = !$conn->inTransaction();
+    if ($ownTransaction) {
+        $conn->beginTransaction();
+    }
+
+    try {
+        $query = "UPDATE Users SET Status = 'inactive', UpdatedAt = NOW() WHERE UserID = :user_id AND Status = 'pending'";
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(':user_id', $userId);
+        
+        if ($stmt->execute() && $stmt->rowCount() > 0) {
+            if ($user && strtolower((string)$user['Role']) === 'volunteer') {
+                $volunteerUpdate = $conn->prepare("UPDATE Volunteers SET Status = 'inactive', AvailabilityStatus = 'unavailable' WHERE UserID = :user_id");
+                $volunteerUpdate->bindParam(':user_id', $userId);
+                $volunteerUpdate->execute();
+            }
+
+            ActivityLog::log(getCurrentUser()['user_id'], 'reject_user', 'User', $userId, "Rejected user registration");
+            if ($ownTransaction) {
+                $conn->commit();
+            }
+            $_SESSION['success'] = "User registration rejected";
+        } else {
+            if ($ownTransaction) {
+                $conn->rollBack();
+            }
+            $_SESSION['error'] = "User not found or already processed";
+        }
+    } catch (Exception $e) {
+        if ($ownTransaction && $conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        $_SESSION['error'] = "Error rejecting user: " . $e->getMessage();
+    }
+    
+    header("Location: UserController.php?action=list");
+    exit;
 }
 ?>

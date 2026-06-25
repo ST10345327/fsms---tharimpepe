@@ -94,7 +94,7 @@
             <div class="col-md-4">
                 <div style="background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
                     <div style="color: #667eea; font-size: 2.5rem; font-weight: 700;">
-                        <?php echo count(array_filter($attendanceData ?? [], fn($a) => $a['MealProvided'] == 'yes')); ?>
+                        <?php echo count(array_filter($attendanceData ?? [], fn($a) => $a['AttendanceStatus'] === 'present')); ?>
                     </div>
                     <div class="text-muted">Meals Provided</div>
                 </div>
@@ -110,8 +110,8 @@
                         <tr>
                             <th>Date</th>
                             <th>Beneficiary Name</th>
-                            <th>Role</th>
                             <th>Status</th>
+                            <th>Attendance</th>
                             <th>Meal Provided</th>
                             <th>Notes</th>
                         </tr>
@@ -120,11 +120,11 @@
                         <?php if (!empty($attendanceData)): ?>
                             <?php foreach ($attendanceData as $record): ?>
                                 <tr>
-                                    <td><strong><?php echo date('M d, Y', strtotime($record['AttendanceDate'])); ?></strong></td>
+                                    <td><strong><?php echo date('M d, Y', strtotime($record['SessionDate'])); ?></strong></td>
                                     <td><?php echo htmlspecialchars($record['FullName']); ?></td>
-                                    <td><?php echo htmlspecialchars($record['Role']); ?></td>
-                                    <td><span class="badge bg-success"><?php echo htmlspecialchars($record['Status']); ?></span></td>
-                                    <td><?php echo $record['MealProvided'] == 'yes' ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>'; ?></td>
+                                    <td><?php echo htmlspecialchars($record['BeneficiaryStatus']); ?></td>
+                                    <td><span class="badge bg-success"><?php echo htmlspecialchars($record['AttendanceStatus']); ?></span></td>
+                                    <td><?php echo $record['AttendanceStatus'] === 'present' ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>'; ?></td>
                                     <td><?php echo htmlspecialchars($record['Notes'] ?? '-'); ?></td>
                                 </tr>
                             <?php endforeach; ?>
@@ -140,9 +140,17 @@
 
         <!-- Export & Back -->
         <div class="d-flex gap-2 justify-content-between">
-            <button onclick="window.print()" class="btn btn-outline-secondary">
-                <i class="fas fa-print"></i> Print Report
-            </button>
+            <div class="d-flex gap-2">
+                <a href="ReportsController.php?action=export&report=attendance&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>" class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> CSV
+                </a>
+                <a href="ReportsController.php?action=export_xls&report=attendance&from_date=<?php echo urlencode($_GET['from_date'] ?? ''); ?>&to_date=<?php echo urlencode($_GET['to_date'] ?? ''); ?>" class="btn btn-primary">
+                    <i class="fas fa-file-excel"></i> XLS
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
             <a href="ReportsController.php?action=dashboard" class="btn btn-outline-primary">
                 <i class="fas fa-arrow-left"></i> Back to Reports
             </a>

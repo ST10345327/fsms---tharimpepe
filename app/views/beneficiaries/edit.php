@@ -109,6 +109,7 @@
                     <!-- HZ-BEN-UI-003: Beneficiary edit form -->
                     <form method="POST" action="BeneficiaryController.php?action=edit&id=<?php echo $beneficiary['BeneficiaryID']; ?>" id="beneficiaryForm">
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
+                        <input type="hidden" name="beneficiary_id" value="<?php echo htmlspecialchars($beneficiary['BeneficiaryID']); ?>">
 
                         <!-- Personal Information -->
                         <div class="form-section">
@@ -233,10 +234,13 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <a href="BeneficiaryController.php?action=delete&id=<?php echo $beneficiary['BeneficiaryID']; ?>&csrf_token=<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>"
-                       class="btn btn-danger">
-                        <i class="fas fa-trash"></i> Delete Beneficiary
-                    </a>
+                    <form method="POST" action="BeneficiaryController.php?action=delete" class="d-inline">
+                        <input type="hidden" name="beneficiary_id" value="<?php echo htmlspecialchars($beneficiary['BeneficiaryID']); ?>">
+                        <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Delete Beneficiary
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

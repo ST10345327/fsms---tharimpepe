@@ -84,6 +84,7 @@
 </head>
 <body>
     <?php include __DIR__ . "/../includes/navbar.php"; ?>
+    <?php $canManageSchedules = in_array(strtolower(rbacCurrentRole()), ['admin', 'staff'], true); ?>
 
     <!-- Page Header -->
     <div class="page-header">
@@ -120,17 +121,17 @@
                     <?php foreach ($shifts as $shift): ?>
                         <div class="shift-card">
                             <div class="shift-time">
-                                <?php echo substr($shift['StartTime'], 0, 5); ?><br>
+                                <?php echo substr((string)($shift['StartTime'] ?? ''), 0, 5); ?><br>
                                 <span style="font-size: 0.8rem; color: #999;">
-                                    <?php echo substr($shift['EndTime'], 0, 5); ?>
+                                    <?php echo substr((string)($shift['EndTime'] ?? ''), 0, 5); ?>
                                 </span>
                             </div>
 
                             <div class="shift-info">
-                                <div class="shift-volunteer"><?php echo htmlspecialchars($shift['FullName']); ?></div>
+                                <div class="shift-volunteer"><?php echo htmlspecialchars($shift['FullName'] ?? ''); ?></div>
                                 <div class="shift-meta">
-                                    <span><i class="fas fa-briefcase"></i> <?php echo htmlspecialchars($shift['Role']); ?></span>
-                                    <span><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($shift['Location']); ?></span>
+                                    <span><i class="fas fa-briefcase"></i> <?php echo htmlspecialchars($shift['Role'] ?? ''); ?></span>
+                                    <span><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($shift['Location'] ?? ''); ?></span>
                                 </div>
                             </div>
 
@@ -182,9 +183,11 @@
 
                     <hr>
 
-                    <a href="VolunteerScheduleController.php?action=create" class="btn btn-success btn-sm w-100">
-                        <i class="fas fa-plus"></i> Add Shift
-                    </a>
+                    <?php if ($canManageSchedules): ?>
+                        <a href="VolunteerScheduleController.php?action=create" class="btn btn-success btn-sm w-100">
+                            <i class="fas fa-plus"></i> Add Shift
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
