@@ -40,35 +40,35 @@
 | | Daily summary | ✅ | ✅ | 👁️ | Controller |
 | | Export | ✅ | ✅ | ❌ | Controller |
 | **Beneficiaries** | View list | ✅ | ✅ | ❌ | Controller |
-| | Create | ✅ | ✅ | ❌ | Controller + View |
-| | Edit | ✅ | ✅ | ❌ | Controller + View |
-| | Delete | ✅ | 🔒 | ❌ | View (rbacCan) |
+| | Create | ✅ | ✅ | ❌ | Controller |
+| | Edit | ✅ | ✅ | ❌ | Controller |
+| | Delete | ✅ | ❌ | ❌ | Controller + View (`beneficiaries.delete`) |
 | | Search/Filter | ✅ | ✅ | ❌ | Controller |
 | **Donations** | View list | ✅ | ✅ | ❌ | Controller |
 | | Create | ✅ | ✅ | ❌ | Controller |
 | | Edit | ✅ | ✅ | ❌ | Controller |
-| | Delete | ✅ | ❌ | ❌ | Controller + View |
+| | Delete | ✅ | ❌ | ❌ | Controller + View (`donations.delete`) |
 | | Report | ✅ | ✅ | ❌ | Controller |
 | **Food Stock** | View list | ✅ | ✅ | ❌ | Controller |
-| | Add item | ✅ | ✅ | ❌ | Controller + View |
+| | Add item | ✅ | ✅ | ❌ | Controller |
 | | Edit item | ✅ | ✅ | ❌ | Controller |
 | | Distribute | ✅ | ✅ | ❌ | Controller |
-| | Delete item | ✅ | ❌ | ❌ | Controller + View |
+| | Delete item / Mark Disposed | ✅ | ❌ | ❌ | Controller + View (`food_stock.delete`) |
 | **Volunteers** | View list | ✅ | ✅ | ❌ | Controller |
 | | Edit | ✅ | ✅ | ❌ | Controller + View |
 | | Deactivate | ✅ | ✅ | ❌ | Controller + View |
 | | Export | ✅ | ✅ | ❌ | Controller |
 | **Schedules** | View schedule | ✅ | ✅ | ✅ | Controller |
-| | Create schedule | ✅ | ✅ | ❌ | Controller |
-| | Edit schedule | ✅ | ✅ | ❌ | Controller |
-| | Delete schedule | ✅ | ✅ | ❌ | Controller |
+| | Create schedule | ✅ | ✅ | ❌ | Controller (`requireScheduleManagementRole`) |
+| | Edit schedule | ✅ | ✅ | ❌ | Controller (`requireScheduleManagementRole`) |
+| | Delete schedule | ✅ | ✅ | ❌ | Controller (`requireScheduleManagementRole`) |
 | | Manage own availability | ✅ | ✅ | ✅ | Controller (ownership check) |
 | **Reports** | View dashboard | ✅ | ✅ | ❌ | Controller |
 | | Generate report | ✅ | ✅ | ❌ | Controller |
 | | Export CSV/XLS | ✅ | ✅ | ❌ | Controller |
 | **Messages** | Inbox/Sent | ✅ | ✅ | ✅ | Controller |
 | | Compose/Send | ✅ | ✅ | ✅ | Controller |
-| | Delete message | ✅ | ✅ | ✅ | Controller (model ownership) |
+| | Delete message | ✅ | ✅ | ✅ | Model (ownership check) |
 | **Users** | All (list/create/edit/delete/roles) | ✅ | ❌ | ❌ | Controller |
 
 ---
@@ -110,16 +110,26 @@
 
 ---
 
+## 6. Deletion Permission Keys (Admin-Only)
+
+| Permission Key | Admin | Staff | Volunteer | Used By |
+|---|---|---|---|---|
+| `donations.delete` | ✅ | ❌ | ❌ | DonationController::delete, views |
+| `food_stock.delete` | ✅ | ❌ | ❌ | FoodStockController::delete, views, expired disposal |
+| `beneficiaries.delete` | ✅ | ❌ | ❌ | BeneficiaryController::delete, views |
+
+---
+
 ## Summary: What Staff CAN vs CANNOT Do
 
 ### Staff CAN:
 - View operational dashboard
-- Manage beneficiaries (CRUD, search, filter) — no delete
-- Record and manage attendance
-- Manage food inventory (add, edit, distribute) — no delete
-- Manage donations (create, edit, view) — no delete
+- Manage beneficiaries (CRUD, search, filter) — **no delete**
+- Record and manage attendance — **create, edit, delete own records**
+- Manage food inventory (add, edit, distribute) — **no delete / no dispose**
+- Manage donations (create, edit, view) — **no delete**
 - View and manage volunteer profiles (edit, deactivate)
-- View and create schedules
+- View and create/edit/delete schedules
 - Generate and export all reports (CSV + XLS)
 - Send and receive messages
 - View and update own profile + change password
@@ -127,8 +137,9 @@
 ### Staff CANNOT:
 - Create, edit, delete, or deactivate user accounts
 - Assign or modify roles/permissions
+- Delete beneficiaries
 - Delete donations (admin-only)
-- Delete food stock items (admin-only)
+- Delete food stock items or mark expired items as disposed (admin-only)
 - Access the Users module or role management
 - Access donor-specific dashboards or donation history
 - See restricted navigation items (Users, My Dashboard, My Donations)
@@ -137,10 +148,16 @@
 
 ## File-by-File Enforcement Summary
 
+### RBAC Configuration
+| File | Change Made |
+|---|---|
+| `app/helpers/Rbac.php` | Added `beneficiaries.delete` permission key (admin only) |
+
 ### Controller-Level
 | File | Change Made |
 |---|---|
 | `app/controllers/ProfileController.php` | Added `rbacRequirePermission('profile')` (was missing) |
+| `app/controllers/BeneficiaryController.php` | Added `rbacCan('beneficiaries.delete')` gate on delete action |
 
 ### View-Level (defense-in-depth button hiding)
 | File | Change Made |
@@ -150,8 +167,9 @@
 | `app/views/food_stock/list.php` | Delete link + Add Stock button wrapped in `rbacCan(...)` |
 | `app/views/food_stock/view.php` | Delete button wrapped in `rbacCan('food_stock.delete')` |
 | `app/views/food_stock/delete.php` | Delete form wrapped in `rbacCan('food_stock.delete')` |
+| `app/views/food_stock/expired.php` | "Mark as Disposed" button wrapped in `rbacCan('food_stock.delete')` |
 | `app/views/volunteers/list.php` | Edit + Deactivate wrapped in `rbacCan('volunteers')` |
 | `app/views/volunteers/view.php` | Edit + Deactivate wrapped in `rbacCan('volunteers')` |
 | `app/views/beneficiaries/list.php` | Register + Edit buttons wrapped in `rbacCan('beneficiaries')` |
-| `app/views/beneficiaries/view.php` | Edit + Delete buttons wrapped in `rbacCan('beneficiaries')` |
-| `app/views/beneficiaries/edit.php` | Delete button wrapped in `rbacCan('beneficiaries')` |
+| `app/views/beneficiaries/view.php` | Edit button wrapped in `rbacCan('beneficiaries')`, Delete button wrapped in `rbacCan('beneficiaries.delete')` |
+| `app/views/beneficiaries/edit.php` | Delete button wrapped in `rbacCan('beneficiaries.delete')` |

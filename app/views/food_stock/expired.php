@@ -151,10 +151,12 @@
                             <a href="FoodStockController.php?action=view&id=<?php echo (int)$item['FoodStockID']; ?>" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-eye"></i> View Details
                             </a>
+                            <?php if (function_exists('rbacCan') && rbacCan('food_stock.delete')): ?>
                             <button type="button" class="btn btn-sm btn-danger" 
                                     onclick="confirmDisposal(<?php echo (int)$item['FoodStockID']; ?>, '<?php echo htmlspecialchars($item['ItemName']); ?>')">
                                 <i class="fas fa-trash"></i> Mark as Disposed
                             </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>

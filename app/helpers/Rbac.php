@@ -46,6 +46,7 @@ function rbacPermissions()
         // Destructive actions
         'donations.delete'      => ['admin'],
         'food_stock.delete'     => ['admin'],
+        'beneficiaries.delete'   => ['admin'],
 
         // API permission groups
         'api.beneficiaries'     => ['admin', 'staff'],

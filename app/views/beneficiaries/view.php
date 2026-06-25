@@ -128,7 +128,7 @@
                     <i class="fas fa-edit"></i> Edit Beneficiary
                 </a>
                 <?php endif; ?>
-                <?php if (function_exists('rbacCan') && rbacCan('beneficiaries')): ?>
+                <?php if (function_exists('rbacCan') && rbacCan('beneficiaries.delete')): ?>
                 <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                     <i class="fas fa-trash"></i> Delete Beneficiary
                 </button>
@@ -228,6 +228,7 @@
         </div>
     </div>
 
+    <?php if (function_exists('rbacCan') && rbacCan('beneficiaries.delete')): ?>
     <!-- Delete Confirmation Modal -->
     <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -256,6 +257,7 @@
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- Footer -->
     <?php include __DIR__ . "/../includes/footer.php"; ?>

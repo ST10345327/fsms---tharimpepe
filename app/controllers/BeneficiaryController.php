@@ -356,10 +356,15 @@ try {
 
     /**
      * HZ-BEN-CTRL-011
-     * Purpose: Delete beneficiary record
-     * Flow: Verify CSRF -> Verify beneficiary exists -> Hard delete
+     * Purpose: Delete beneficiary record (admin only)
+     * Flow: Verify RBAC -> Verify CSRF -> Verify beneficiary exists -> Hard delete
      */
     if ($action === 'delete') {
+        if (!rbacCan('beneficiaries.delete')) {
+            header("Location: BeneficiaryController.php?action=list&error=You do not have permission to delete beneficiaries");
+            exit();
+        }
+
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             header("Location: BeneficiaryController.php?action=list&error=Invalid request method");
             exit();

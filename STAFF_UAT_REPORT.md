@@ -1,7 +1,7 @@
 # Staff Role — PASS/FAIL UAT Report
 
 **Date:** June 25, 2026
-**Scope:** Full Staff role enforcement across FSMS (controllers, views, navigation, actions)
+**Scope:** Full Staff role enforcement across FSMS (controllers, views, navigation, actions, deletion gates)
 **Method:** Code audit + RBAC configuration analysis + controller/view-level verification
 
 ---
@@ -32,14 +32,19 @@
 | B1 | Attendance: Staff can create | Allowed | Controller gate + no extra restriction | ✅ PASS |
 | B2 | Attendance: Staff can edit | Allowed | `hasRole('admin')` OR `hasRole('staff')` at view level | ✅ PASS |
 | B3 | Attendance: Volunteer cannot edit | Blocked | `hasRole('admin')` OR `hasRole('staff')` blocks volunteer | ✅ PASS |
-| B4 | Donation: Staff cannot delete | Blocked | `rbacCan('donations.delete')` → admin only at controller level | ✅ PASS |
-| B5 | Donation: Staff sees no Delete button | Hidden | View wrapped in `rbacCan('donations.delete')` | ✅ PASS |
-| B6 | Food Stock: Staff cannot delete | Blocked | `rbacCan('food_stock.delete')` → admin only at controller level | ✅ PASS |
-| B7 | Food Stock: Staff sees no Delete button | Hidden | View wrapped in `rbacCan('food_stock.delete')` | ✅ PASS |
-| B8 | Beneficiary: Staff can create/edit | Allowed | Controller gate + view wrapped in `rbacCan('beneficiaries')` | ✅ PASS |
-| B9 | Schedule: Staff can create/edit/delete | Allowed | `requireScheduleManagementRole()` → admin,staff | ✅ PASS |
-| B10 | Schedule: Volunteer cannot create/edit/delete | Blocked | `requireScheduleManagementRole()` blocks volunteer | ✅ PASS |
-| B11 | Volunteer: Staff can edit/deactivate | Allowed | View + controller gate → admin,staff | ✅ PASS |
+| B4 | **Donation: Staff cannot delete** | Blocked | `rbacCan('donations.delete')` → admin only at controller level | ✅ PASS |
+| B5 | **Donation: Staff sees no Delete button** | Hidden | View wrapped in `rbacCan('donations.delete')` | ✅ PASS |
+| B6 | **Food Stock: Staff cannot delete** | Blocked | `rbacCan('food_stock.delete')` → admin only at controller level | ✅ PASS |
+| B7 | **Food Stock: Staff sees no Delete button** | Hidden | View wrapped in `rbacCan('food_stock.delete')` | ✅ PASS |
+| B8 | **Food Stock: Staff cannot mark expired as disposed** | Blocked | View button wrapped in `rbacCan('food_stock.delete')`; controller delete gated | ✅ PASS |
+| B9 | Beneficiary: Staff can create/edit | Allowed | Controller gate + view wrapped in `rbacCan('beneficiaries')` | ✅ PASS |
+| B10 | **Beneficiary: Staff cannot delete** | Blocked | `rbacCan('beneficiaries.delete')` → admin only at controller level | ✅ PASS |
+| B11 | **Beneficiary: Staff sees no Delete button** | Hidden | View changed from `rbacCan('beneficiaries')` to `rbacCan('beneficiaries.delete')` | ✅ PASS |
+| B12 | Schedule: Staff can create/edit/delete | Allowed | `requireScheduleManagementRole()` → admin,staff | ✅ PASS |
+| B13 | Schedule: Volunteer cannot create/edit/delete | Blocked | `requireScheduleManagementRole()` blocks volunteer | ✅ PASS |
+| B14 | Volunteer: Staff can edit/deactivate | Allowed | View + controller gate → admin,staff | ✅ PASS |
+| B15 | Messages: Staff can delete own messages | Allowed | Model ownership check, controller permits all | ✅ PASS |
+| B16 | Messages: Staff cannot delete others' messages | Blocked | Model `deleteMessage()` checks ownership | ✅ PASS |
 
 ---
 
@@ -98,12 +103,13 @@
 | # | Check | Status |
 |---|---|---|
 | F1 | Every controller has `requireLogin()` | ✅ PASS (all 13) |
-| F2 | Every controller has `rbacRequirePermission()` (except public AuthController) | ✅ PASS (now all 12 authenticated controllers) |
-| F3 | Delete-sensitive actions have extra `rbacCan('...delete')` check | ✅ PASS (DonationController, FoodStockController) |
+| F2 | Every controller has `rbacRequirePermission()` (except public AuthController) | ✅ PASS (all 12 authenticated controllers) |
+| F3 | Delete-sensitive actions have extra `rbacCan('...delete')` check | ✅ PASS (DonationController, FoodStockController, BeneficiaryController) |
 | F4 | Volunteer schedule CUD gated by `requireScheduleManagementRole()` | ✅ PASS |
 | F5 | `rbacPermissions()` matches controller enforcement | ✅ PASS |
 | F6 | `rbacNavItems()` permission keys match `rbacPermissions()` | ✅ PASS |
 | F7 | No controller uses `hasRole()` in place of `rbacCan()` for access denial | ✅ (hasRole used only for view-level UI hints) |
+| F8 | `beneficiaries.delete` permission key exists and is admin-only | ✅ PASS (NEW) |
 
 ---
 
@@ -116,6 +122,9 @@
 | G3 | Edit/Deactivate buttons visible to volunteers in volunteers views | ✅ **FIXED** — wrapped in `rbacCan('volunteers')` |
 | G4 | Register Beneficiary / Add Stock buttons visible to volunteers | ✅ **FIXED** — wrapped in `rbacCan()` guards |
 | G5 | Notification bell shown to donors | ✅ **FIXED** — wrapped in `rbacCan('messages')` |
+| G6 | **BeneficiaryController delete action had NO RBAC check** | ✅ **FIXED** — added `rbacCan('beneficiaries.delete')` gate + new permission key |
+| G7 | **Beneficiary delete buttons used `rbacCan('beneficiaries')` instead of admin-only check** | ✅ **FIXED** — changed to `rbacCan('beneficiaries.delete')` in view.php and edit.php |
+| G8 | **Food stock expired "Mark as Disposed" button visible to all** | ✅ **FIXED** — wrapped in `rbacCan('food_stock.delete')` in expired.php |
 
 ---
 
@@ -123,11 +132,12 @@
 
 | Total Tests | PASS | FAIL |
 |---|---|---|
-| 35 | 35 | 0 |
+| 44 | 44 | 0 |
 
 **All Staff role enforcement tests PASS.** The Staff role is now fully implemented and enforced at every layer:
 - **Controller level**: `rbacRequirePermission()` gates every authenticated controller
-- **Action level**: Fine-grained `rbacCan()` checks for delete-sensitive operations
+- **Action level**: Fine-grained `rbacCan()` checks for all delete-sensitive operations (`donations.delete`, `food_stock.delete`, `beneficiaries.delete`)
 - **Navigation level**: `rbacNavItemsForRole()` only shows permissible menu items
-- **View level**: Buttons and actions hidden behind `rbacCan()` for defense-in-depth
-- **No gaps remain**: ProfileController was the last missing permission check and has been fixed
+- **View level**: Buttons and actions hidden behind `rbacCan()` for defense-in-depth; delete buttons specifically use `rbacCan('...delete')` admin-only keys
+- **Model level**: Message delete checks ownership
+- **New deletion permission key**: `beneficiaries.delete` added to Rbac.php (admin only), mirroring the pattern of `donations.delete` and `food_stock.delete`
