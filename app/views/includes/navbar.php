@@ -26,10 +26,7 @@ $navItems = rbacNavItemsForRole($role);
 
 <aside class="fsms-sidebar" aria-label="Primary navigation">
     <a class="fsms-brand" href="../index.php">
-           <img class="fsms-brand-logo" src="/assets/images/generate_raster.php?name=tharimpepe-logo&w=172&h=48&dpr=1"
-               srcset="/assets/images/generate_raster.php?name=tharimpepe-logo&w=172&h=48&dpr=1 1x, /assets/images/generate_raster.php?name=tharimpepe-logo&w=344&h=96&dpr=2 2x"
-               sizes="(max-width:640px) 58px, (max-width:992px) 120px, 172px"
-               alt="Tharimpepe" loading="lazy" width="172" height="48">
+        <img class="fsms-brand-logo" src="/assets/images/fsmslogo.png" alt="Tharimpepe" width="172" height="48">
         <span class="fsms-brand-title">Feeding Scheme Management</span>
     </a>
 
@@ -80,12 +77,11 @@ $navItems = rbacNavItemsForRole($role);
 </div>
 
 <header class="fsms-topbar">
-    <button class="fsms-hamburger" type="button" data-bs-toggle="offcanvas" data-bs-target="#fsmsOffcanvas" aria-controls="fsmsOffcanvas" aria-label="Open menu">
-        <i class="fas fa-bars" aria-hidden="true"></i>
-    </button>
-    <div>
+    <div class="fsms-topbar-left">
+        <button class="fsms-hamburger" type="button" data-bs-toggle="offcanvas" data-bs-target="#fsmsOffcanvas" aria-controls="fsmsOffcanvas" aria-label="Open menu">
+            <i class="fas fa-bars" aria-hidden="true"></i>
+        </button>
         <h1 class="fsms-page-title"><?php echo htmlspecialchars($pageTitle ?? 'Admin Portal'); ?></h1>
-        <div class="fsms-page-subtitle">Tharimpepe Feeding Scheme</div>
     </div>
     <?php
         require_once __DIR__ . "/../../helpers/NotificationHelper.php";
