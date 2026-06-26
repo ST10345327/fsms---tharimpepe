@@ -132,6 +132,10 @@
     .tab-btn { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 600; background: white; border: none; cursor: pointer; }
     .tab-btn.active { background: var(--primary-blue); color: white; }
     .tab-btn:not(:last-child) { border-right: 1px solid var(--border-color); }
+    .rpt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .rpt-table-wrap table { min-width: 480px; }
+    .rpt-actions { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    @media print { header, nav, .drawer, .drawer-overlay, .bottom-nav, .rpt-actions, #screen-reports .card:first-child { display: none !important; } main { padding: 0 !important; } .card { break-inside: avoid; border: none !important; box-shadow: none !important; padding: 0 !important; } }
   </style>
 </head>
 <body>
@@ -424,7 +428,13 @@
       </div>
       <div class="card">
         <div id="rpt-loading" class="loading">Loading report</div>
-        <div id="rpt-content" style="display:none;"></div>
+        <div id="rpt-content" style="display:none;">
+          <div class="rpt-actions" id="rpt-actions">
+            <button class="btn-sm primary" onclick="printReport()">Print</button>
+            <button class="btn-sm" onclick="exportCsv()">Export CSV</button>
+          </div>
+          <div class="rpt-table-wrap" id="rpt-table-wrap"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -1130,28 +1140,34 @@ async function registerVolunteer() {
 }
 
 // ==================== REPORTS ====================
+let lastReportData = null;
+let lastReportKeys = null;
+let lastReportType = null;
+
 async function loadReport() {
   const type = document.getElementById('rpt-type').value;
   const from = document.getElementById('rpt-from').value;
   const to = document.getElementById('rpt-to').value;
   document.getElementById('rpt-loading').style.display = 'block';
   document.getElementById('rpt-content').style.display = 'none';
+  lastReportData = null;
+  lastReportKeys = null;
+  lastReportType = type;
   try {
     let url = 'reports?type=' + type;
     if (from) url += '&from_date=' + from;
     if (to) url += '&to_date=' + to;
     const res = await api('GET', url);
     document.getElementById('rpt-loading').style.display = 'none';
-    if (!res.success) { document.getElementById('rpt-content').innerHTML = '<p class="text-muted">' + res.message + '</p>'; document.getElementById('rpt-content').style.display = 'block'; return; }
+    if (!res.success) { document.getElementById('rpt-table-wrap').innerHTML = '<p class="text-muted">' + res.message + '</p>'; document.getElementById('rpt-content').style.display = 'block'; return; }
 
     const data = res.data || [];
     if (Array.isArray(data) && data.length === 0) {
-      document.getElementById('rpt-content').innerHTML = '<p class="text-muted">No data for this report</p>';
+      document.getElementById('rpt-table-wrap').innerHTML = '<p class="text-muted">No data for this report</p>';
       document.getElementById('rpt-content').style.display = 'block';
       return;
     }
 
-    // Handle summary report (object) vs array
     let html = '';
     if (!Array.isArray(data)) {
       html = '<table class="data-table"><tbody>';
@@ -1168,15 +1184,44 @@ async function loadReport() {
       html += '</tbody></table>';
     } else {
       const keys = Object.keys(data[0]);
+      lastReportKeys = keys;
+      lastReportData = data;
       html = '<table class="data-table"><thead><tr>' + keys.map(k => '<th>' + k.replace(/_/g, ' ') + '</th>').join('') + '</tr></thead><tbody>';
       data.forEach(row => {
         html += '<tr>' + keys.map(k => '<td>' + (row[k] ?? '-') + '</td>').join('') + '</tr>';
       });
       html += '</tbody></table>';
     }
-    document.getElementById('rpt-content').innerHTML = html;
+    document.getElementById('rpt-table-wrap').innerHTML = html;
+    document.getElementById('rpt-actions').style.display = 'flex';
     document.getElementById('rpt-content').style.display = 'block';
   } catch (e) { toast('Failed to load report', 'error'); }
+}
+
+function printReport() {
+  window.print();
+}
+
+function exportCsv() {
+  if (!lastReportData || !lastReportKeys) {
+    toast('No table data to export. Generate a list-type report first.', 'error');
+    return;
+  }
+  const rows = [lastReportKeys.join(',')];
+  lastReportData.forEach(row => {
+    rows.push(lastReportKeys.map(k => {
+      const val = row[k] ?? '';
+      const s = String(val);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(','));
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = (lastReportType || 'report') + '_report.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+  toast('Report exported as CSV', 'success');
 }
 
 // ==================== MODAL ====================

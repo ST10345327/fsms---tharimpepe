@@ -24,12 +24,12 @@
       font-family: var(--font-sans);
       background: var(--bg-gray);
       color: var(--text-main);
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
     }
-    .view { height: 100vh; display: none; flex-direction: column; }
+    .view { min-height: 100vh; display: none; flex-direction: column; }
     .view.active { display: flex; }
-    #login-view { background: #f8f9fc; align-items: center; justify-content: center; padding: 20px; }
+    #login-view { background: #f8f9fc; align-items: center; padding: 20px; }
+    .login-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
     .login-logo { margin-bottom: 24px; text-align: center; }
     .login-logo img { width: 96px; height: 96px; border-radius: 20px; object-fit: cover; }
     .login-brand { text-align: center; margin-bottom: 32px; }
@@ -45,7 +45,7 @@
     .register-link { text-align: center; margin-top: 12px; font-size: 14px; }
     .register-link a { color: var(--primary-blue); font-weight: 600; cursor: pointer; text-decoration: none; }
     .register-link a:hover { text-decoration: underline; }
-    .footer-copy { position: absolute; bottom: 40px; text-align: center; font-size: 11px; color: #98a2b3; line-height: 1.5; padding: 0 40px; }
+    .footer-copy { text-align: center; font-size: 11px; color: #98a2b3; line-height: 1.5; padding: 20px 40px; flex-shrink: 0; }
     .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; backdrop-filter: blur(2px); }
     .drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: var(--white); z-index: 2001; transition: 0.3s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
     .drawer.active { left: 0; }
@@ -132,6 +132,10 @@
     .tab-btn { flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 600; background: white; border: none; cursor: pointer; }
     .tab-btn.active { background: var(--primary-blue); color: white; }
     .tab-btn:not(:last-child) { border-right: 1px solid var(--border-color); }
+    .rpt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .rpt-table-wrap table { min-width: 480px; }
+    .rpt-actions { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    @media print { header, nav, .drawer, .drawer-overlay, .bottom-nav, .rpt-actions, #screen-reports .card:first-child { display: none !important; } main { padding: 0 !important; } .card { break-inside: avoid; border: none !important; box-shadow: none !important; padding: 0 !important; } }
   </style>
 </head>
 <body>
@@ -159,34 +163,36 @@
 </div>
 
 <div class="view active" id="login-view">
-  <div class="login-logo">
-    <img src="img/icon.png" alt="Tharimpepe FSMS">
-  </div>
-  <div class="login-brand">
-    <h2>Tharimpepe Feeding Scheme</h2>
-    <p>Feeding Scheme Management System</p>
-  </div>
-  <div class="login-card">
-    <h3>Welcome Back</h3>
-    <p class="sub-text">Sign in to access the portal</p>
-    <p id="login-error" style="color:var(--danger-red);font-size:13px;text-align:center;margin-bottom:12px;display:none;"></p>
-    <div class="form-group">
-      <label>Username</label>
-      <div class="input-wrapper">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <input type="text" id="login-user" placeholder="Enter your username">
-      </div>
+  <div class="login-center">
+    <div class="login-logo">
+      <img src="img/icon.png" alt="Tharimpepe FSMS">
     </div>
-    <div class="form-group">
-      <label>Password</label>
-      <div class="input-wrapper">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <input type="password" id="login-pass" placeholder="Enter your password">
-      </div>
+    <div class="login-brand">
+      <h2>Tharimpepe Feeding Scheme</h2>
+      <p>Feeding Scheme Management System</p>
     </div>
-    <button class="btn-blue" id="login-btn" onclick="doLogin()">Login</button>
-    <div class="forgot-pwd">Forgot password? Contact administrator</div>
-    <div class="register-link">Don't have an account? <a onclick="openRegisterModal()">Create one</a></div>
+    <div class="login-card">
+      <h3>Welcome Back</h3>
+      <p class="sub-text">Sign in to access the portal</p>
+      <p id="login-error" style="color:var(--danger-red);font-size:13px;text-align:center;margin-bottom:12px;display:none;"></p>
+      <div class="form-group">
+        <label>Username</label>
+        <div class="input-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input type="text" id="login-user" placeholder="Enter your username">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrapper">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <input type="password" id="login-pass" placeholder="Enter your password">
+        </div>
+      </div>
+      <button class="btn-blue" id="login-btn" onclick="doLogin()">Login</button>
+      <div class="forgot-pwd">Forgot password? Contact administrator</div>
+      <div class="register-link">Don't have an account? <a onclick="openRegisterModal()">Create one</a></div>
+    </div>
   </div>
   <div class="footer-copy">&copy; 2026 Tharimpepe Feeding Scheme. All rights reserved.</div>
 </div>
@@ -422,7 +428,13 @@
       </div>
       <div class="card">
         <div id="rpt-loading" class="loading">Loading report</div>
-        <div id="rpt-content" style="display:none;"></div>
+        <div id="rpt-content" style="display:none;">
+          <div class="rpt-actions" id="rpt-actions">
+            <button class="btn-sm primary" onclick="printReport()">Print</button>
+            <button class="btn-sm" onclick="exportCsv()">Export CSV</button>
+          </div>
+          <div class="rpt-table-wrap" id="rpt-table-wrap"></div>
+        </div>
       </div>
     </div>
   </main>
@@ -1128,28 +1140,34 @@ async function registerVolunteer() {
 }
 
 // ==================== REPORTS ====================
+let lastReportData = null;
+let lastReportKeys = null;
+let lastReportType = null;
+
 async function loadReport() {
   const type = document.getElementById('rpt-type').value;
   const from = document.getElementById('rpt-from').value;
   const to = document.getElementById('rpt-to').value;
   document.getElementById('rpt-loading').style.display = 'block';
   document.getElementById('rpt-content').style.display = 'none';
+  lastReportData = null;
+  lastReportKeys = null;
+  lastReportType = type;
   try {
     let url = 'reports?type=' + type;
     if (from) url += '&from_date=' + from;
     if (to) url += '&to_date=' + to;
     const res = await api('GET', url);
     document.getElementById('rpt-loading').style.display = 'none';
-    if (!res.success) { document.getElementById('rpt-content').innerHTML = '<p class="text-muted">' + res.message + '</p>'; document.getElementById('rpt-content').style.display = 'block'; return; }
+    if (!res.success) { document.getElementById('rpt-table-wrap').innerHTML = '<p class="text-muted">' + res.message + '</p>'; document.getElementById('rpt-content').style.display = 'block'; return; }
 
     const data = res.data || [];
     if (Array.isArray(data) && data.length === 0) {
-      document.getElementById('rpt-content').innerHTML = '<p class="text-muted">No data for this report</p>';
+      document.getElementById('rpt-table-wrap').innerHTML = '<p class="text-muted">No data for this report</p>';
       document.getElementById('rpt-content').style.display = 'block';
       return;
     }
 
-    // Handle summary report (object) vs array
     let html = '';
     if (!Array.isArray(data)) {
       html = '<table class="data-table"><tbody>';
@@ -1166,15 +1184,44 @@ async function loadReport() {
       html += '</tbody></table>';
     } else {
       const keys = Object.keys(data[0]);
+      lastReportKeys = keys;
+      lastReportData = data;
       html = '<table class="data-table"><thead><tr>' + keys.map(k => '<th>' + k.replace(/_/g, ' ') + '</th>').join('') + '</tr></thead><tbody>';
       data.forEach(row => {
         html += '<tr>' + keys.map(k => '<td>' + (row[k] ?? '-') + '</td>').join('') + '</tr>';
       });
       html += '</tbody></table>';
     }
-    document.getElementById('rpt-content').innerHTML = html;
+    document.getElementById('rpt-table-wrap').innerHTML = html;
+    document.getElementById('rpt-actions').style.display = 'flex';
     document.getElementById('rpt-content').style.display = 'block';
   } catch (e) { toast('Failed to load report', 'error'); }
+}
+
+function printReport() {
+  window.print();
+}
+
+function exportCsv() {
+  if (!lastReportData || !lastReportKeys) {
+    toast('No table data to export. Generate a list-type report first.', 'error');
+    return;
+  }
+  const rows = [lastReportKeys.join(',')];
+  lastReportData.forEach(row => {
+    rows.push(lastReportKeys.map(k => {
+      const val = row[k] ?? '';
+      const s = String(val);
+      return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(','));
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = (lastReportType || 'report') + '_report.csv';
+  link.click();
+  URL.revokeObjectURL(link.href);
+  toast('Report exported as CSV', 'success');
 }
 
 // ==================== MODAL ====================
