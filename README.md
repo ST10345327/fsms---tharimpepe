@@ -20,7 +20,7 @@ This Figma prototype showcases the complete user interface design for all module
 
 **Demo video:** 
 - Website: https://youtu.be/vvwGJumiVZw
-- Mobile App:
+- Mobile App: https://youtu.be/GrrGO9rQQq0
 
 ## Stack
 
