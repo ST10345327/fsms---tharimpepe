@@ -7,6 +7,7 @@ if (empty($endpoint)) {
     apiJsonResponse(true, 'Tharimpepe FSMS API v1.0', [
         'endpoints' => [
             'POST /api/login',
+            'POST /api/register',
             'POST /api/logout',
             'GET /api/beneficiaries',
             'GET /api/beneficiaries/{id}',
@@ -43,6 +44,10 @@ try {
         case 'login':
             require __DIR__ . '/auth.php';
             handleLogin();
+            break;
+        case 'register':
+            require __DIR__ . '/auth.php';
+            handleRegister();
             break;
         case 'logout':
             require __DIR__ . '/auth.php';

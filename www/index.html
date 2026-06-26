@@ -31,7 +31,7 @@
     .view.active { display: flex; }
     #login-view { background: #f8f9fc; align-items: center; justify-content: center; padding: 20px; }
     .login-logo { margin-bottom: 24px; text-align: center; }
-    .logo-box { background: #eee; width: 60px; height: 40px; margin: 0 auto; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: #999; border: 1px solid #ddd; }
+    .login-logo svg { width: 72px; height: 72px; }
     .login-brand { text-align: center; margin-bottom: 32px; }
     .login-brand h2 { font-size: 22px; color: var(--primary-blue); font-weight: 800; margin-bottom: 4px; }
     .login-brand p { font-size: 13px; color: var(--text-muted); }
@@ -42,6 +42,9 @@
     .input-wrapper svg { position: absolute; left: 12px; top: 12px; color: var(--text-muted); }
     .input-wrapper input { padding-left: 40px; width: 100%; padding-top: 12px; padding-bottom: 12px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 14px; outline: none; }
     .forgot-pwd { text-align: center; margin-top: 16px; font-size: 14px; color: var(--text-muted); }
+    .register-link { text-align: center; margin-top: 12px; font-size: 14px; }
+    .register-link a { color: var(--primary-blue); font-weight: 600; cursor: pointer; text-decoration: none; }
+    .register-link a:hover { text-decoration: underline; }
     .footer-copy { position: absolute; bottom: 40px; text-align: center; font-size: 11px; color: #98a2b3; line-height: 1.5; padding: 0 40px; }
     .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; backdrop-filter: blur(2px); }
     .drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: var(--white); z-index: 2001; transition: 0.3s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
@@ -156,7 +159,19 @@
 </div>
 
 <div class="view active" id="login-view">
-  <div class="login-logo"><div class="logo-box">LOGO</div></div>
+  <div class="login-logo">
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="55" fill="#1b3a5c"/>
+      <path d="M60 30c-5 0-10 3-12 8l-6 12h36l-6-12c-2-5-7-8-12-8z" fill="#ffffff" opacity="0.9"/>
+      <path d="M40 56c0-2 1-4 3-4h34c2 0 3 2 3 4v8c0 2-1 4-3 4H43c-2 0-3-2-3-4v-8z" fill="#ffffff" opacity="0.9"/>
+      <rect x="44" y="60" width="32" height="4" rx="2" fill="#1b3a5c"/>
+      <circle cx="60" cy="75" r="10" fill="#f79009" opacity="0.9"/>
+      <path d="M55 75l3 3 7-7" stroke="#1b3a5c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <path d="M40 88c0-6 4-10 8-10h24c4 0 8 4 8 10v4H40v-4z" fill="#12b76a" opacity="0.8"/>
+      <path d="M30 35l8 14" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+      <path d="M90 35l-8 14" stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    </svg>
+  </div>
   <div class="login-brand">
     <h2>Tharimpepe Feeding Scheme</h2>
     <p>Feeding Scheme Management System</p>
@@ -165,7 +180,6 @@
     <h3>Welcome Back</h3>
     <p class="sub-text">Sign in to access the portal</p>
     <p id="login-error" style="color:var(--danger-red);font-size:13px;text-align:center;margin-bottom:12px;display:none;"></p>
-    <p id="login-server" style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:16px;">Server: <span id="server-url"></span></p>
     <div class="form-group">
       <label>Username</label>
       <div class="input-wrapper">
@@ -182,8 +196,43 @@
     </div>
     <button class="btn-blue" id="login-btn" onclick="doLogin()">Login</button>
     <div class="forgot-pwd">Forgot password? Contact administrator</div>
+    <div class="register-link">Don't have an account? <a onclick="openRegisterModal()">Create one</a></div>
   </div>
   <div class="footer-copy">&copy; 2026 Tharimpepe Feeding Scheme. All rights reserved.</div>
+</div>
+
+<div class="modal-overlay" id="register-overlay" onclick="closeRegisterModal()">
+  <div class="modal-card" onclick="event.stopPropagation()">
+    <h3>Create Account</h3>
+    <p class="sub-text" style="text-align:left;margin-bottom:16px;">Register as a volunteer to access the system.</p>
+    <p id="register-error" style="color:var(--danger-red);font-size:13px;text-align:center;margin-bottom:12px;display:none;"></p>
+    <div class="form-group">
+      <label>Full name *</label>
+      <input type="text" id="reg-name" placeholder="e.g. Thabo Molefe">
+    </div>
+    <div class="form-group">
+      <label>Email *</label>
+      <input type="email" id="reg-email" placeholder="your@email.com">
+    </div>
+    <div class="form-group">
+      <label>Username *</label>
+      <input type="text" id="reg-username" placeholder="Choose a username">
+    </div>
+    <div class="form-group">
+      <label>Phone</label>
+      <input type="text" id="reg-phone" placeholder="0XX XXX XXXX">
+    </div>
+    <div class="form-group">
+      <label>Password *</label>
+      <input type="password" id="reg-password" placeholder="At least 6 characters">
+    </div>
+    <div class="form-group">
+      <label>Confirm password *</label>
+      <input type="password" id="reg-confirm" placeholder="Repeat password">
+    </div>
+    <button class="btn-blue" id="register-btn" onclick="doRegister()">Create Account</button>
+    <div class="forgot-pwd" style="margin-top:12px;">Already have an account? <a onclick="closeRegisterModal()" style="color:var(--primary-blue);font-weight:600;cursor:pointer;">Sign in</a></div>
+  </div>
 </div>
 
 <div class="view" id="app-view">
@@ -535,10 +584,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('ben-regdate').valueAsDate = new Date();
   document.getElementById('att-date').valueAsDate = new Date();
   document.getElementById('don-date').valueAsDate = new Date();
-  document.getElementById('server-url').textContent = getApiUrl();
 
   if (AUTH_TOKEN) {
-    document.getElementById('login-error').textContent = 'Connecting to ' + getApiUrl() + '...';
+    document.getElementById('login-error').textContent = 'Restoring session...';
     document.getElementById('login-error').style.display = 'block';
     document.getElementById('login-error').style.color = 'var(--text-muted)';
 
@@ -562,7 +610,78 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('login-user').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
   document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('reg-name').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  document.getElementById('reg-email').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  document.getElementById('reg-username').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  document.getElementById('reg-phone').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  document.getElementById('reg-password').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  document.getElementById('reg-confirm').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
 });
+
+function openRegisterModal() {
+  document.getElementById('register-error').style.display = 'none';
+  document.getElementById('register-overlay').classList.add('active');
+}
+
+function closeRegisterModal() {
+  document.getElementById('register-overlay').classList.remove('active');
+}
+
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const username = document.getElementById('reg-username').value.trim();
+  const phone = document.getElementById('reg-phone').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const confirm = document.getElementById('reg-confirm').value;
+  const errEl = document.getElementById('register-error');
+  const btn = document.getElementById('register-btn');
+
+  if (!name || !email || !username || !password || !confirm) {
+    errEl.textContent = 'Please fill in all required fields';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if (password !== confirm) {
+    errEl.textContent = 'Passwords do not match';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if (password.length < 6) {
+    errEl.textContent = 'Password must be at least 6 characters';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  errEl.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'Creating account...';
+
+  try {
+    const res = await api('POST', 'register', {
+      full_name: name,
+      email,
+      username,
+      phone: phone || null,
+      password
+    });
+    if (res.success) {
+      toast('Account created! You can now login.', 'success');
+      closeRegisterModal();
+      document.getElementById('login-user').value = username;
+    } else {
+      errEl.textContent = res.message;
+      errEl.style.display = 'block';
+    }
+  } catch (e) {
+    errEl.textContent = 'Connection error. Check server.';
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Create Account';
+}
 
 function toggleDrawer() {
   const d = document.getElementById('drawer');

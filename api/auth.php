@@ -32,6 +32,38 @@ function handleLogin() {
     ]);
 }
 
+function handleRegister() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        apiJsonResponse(false, 'Method not allowed', null, 405);
+    }
+
+    $input = getJsonInput();
+    validateRequired($input, ['username', 'email', 'password']);
+
+    $db = getDBConnection();
+    $userModel = new User($db);
+
+    try {
+        $uid = $userModel->register(
+            $input['username'],
+            $input['email'],
+            $input['password'],
+            'volunteer',
+            $input['full_name'] ?? null,
+            $input['phone'] ?? null,
+            'active'
+        );
+        if ($uid) {
+            $data = $userModel->getUserById((int)$uid);
+            unset($data['PasswordHash']);
+            apiJsonResponse(true, 'Account created successfully. You can now login.', $data, 201);
+        }
+        apiJsonResponse(false, 'Failed to create account', null, 500);
+    } catch (Exception $e) {
+        apiJsonResponse(false, $e->getMessage(), null, 400);
+    }
+}
+
 function handleLogout() {
     apiJsonResponse(true, 'Logout successful');
 }
