@@ -9,11 +9,17 @@ Feeding Scheme Management System (FSMS) for the Tharimpepe Feeding Scheme, with 
 - Reports & dashboard summaries
 - Secure authentication
 
-## Figma Prototype
+##  Figma Prototype
 
 **Interactive UI:** [https://trunk-canon-07981658.figma.site](https://trunk-canon-07981658.figma.site)
 
-Screenshots at `docs/screenshots/`.
+This Figma prototype showcases the complete user interface design for all modules: Dashboard, Beneficiaries, Attendance, Stock & Donations, Volunteers, and Reports. Use this as the visual reference for frontend implementation.
+
+**Prototype screenshots:** See `docs/screenshots/`.
+
+**Demo video:** 
+- Website: https://youtu.be/vvwGJumiVZw
+- Mobile App: https://youtu.be/GrrGO9rQQq0
 
 ## Stack
 
