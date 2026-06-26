@@ -1,15 +1,17 @@
 {
-	"appId": "com.tharimpepe.fsms",
-	"appName": "Tharimpepe FSMS",
-	"webDir": "www",
-	"server": {
-		"url": "http://10.0.2.2:8080",
-		"cleartext": true,
-		"allowNavigation": [
-			"10.0.2.2",
-			"10.0.2.2:*",
-			"localhost",
-			"localhost:*"
-		]
-	}
+  "appId": "com.tharimpepe.fsms",
+  "appName": "Tharimpepe FSMS",
+  "webDir": "www",
+  "server": {
+    "url": "http://192.168.18.47:8080",
+    "cleartext": true,
+    "allowNavigation": [
+      "192.168.18.47",
+      "192.168.18.47:*",
+      "10.0.2.2",
+      "10.0.2.2:*",
+      "localhost",
+      "localhost:*"
+    ]
+  }
 }
