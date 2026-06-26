@@ -84,6 +84,7 @@ try {
             $feedingStats = $dashboard->getFeedingStats();
             $schedulingStats = $dashboard->getSchedulingStats();
             $donationStats = $dashboard->getDonationStats();
+            $foodStockStatus = $dashboard->getFoodStockStatus();
             $systemStats = $dashboard->getSystemStats();
             
             require __DIR__ . "/../views/dashboard/kpi_dashboard.php";

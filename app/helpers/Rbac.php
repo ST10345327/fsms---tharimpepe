@@ -82,8 +82,8 @@ function rbacNavItems()
         [
             'label' => 'Dashboard',
             'icon' => 'fa-house',
-            'href' => '/controllers/DashboardController.php?action=overview',
-            'match' => 'DashboardController',
+            'href' => '/',
+            'match' => 'index',
             'permission' => 'dashboard.operational',
         ],
         [

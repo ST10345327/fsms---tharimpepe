@@ -56,6 +56,9 @@ require_once CONFIG_PATH . '/database.php';
 // Load session handler
 require_once HELPERS_PATH . '/SessionHandler.php';
 
+// Load RBAC (role-based access control) helpers
+require_once HELPERS_PATH . '/Rbac.php';
+
 // Configure secure session cookies before starting session
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([

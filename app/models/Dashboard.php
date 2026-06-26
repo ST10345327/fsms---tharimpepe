@@ -104,6 +104,69 @@ class Dashboard {
     }
 
     /**
+     * Return individual food stock items with name, quantity, unit, and percentage
+     */
+    public function getFoodStockItems() {
+        $stmt = $this->pdo->query("
+            SELECT ItemName, Quantity, Unit, ReorderLevel
+            FROM FoodStock
+            WHERE Quantity > 0
+            ORDER BY ItemName ASC
+        ");
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $maxQty = 0;
+        foreach ($items as $item) {
+            $maxQty = max($maxQty, (int)$item['Quantity']);
+        }
+        $reference = max(100, $maxQty);
+
+        $result = [];
+        foreach ($items as $item) {
+            $qty = (int)$item['Quantity'];
+            $reorder = (int)($item['ReorderLevel'] ?? 0);
+            $pct = (int)round(min(100, ($qty / $reference) * 100));
+            $result[] = [
+                'label'     => $item['ItemName'],
+                'quantity'  => $qty,
+                'unit'      => $item['Unit'] ?? 'units',
+                'percent'   => $pct,
+                'danger'    => $reorder > 0 && $qty <= $reorder,
+            ];
+        }
+        return $result;
+    }
+
+    /**
+     * Return daily attendance counts for the past 7 days
+     */
+    public function getWeeklyAttendanceTrend() {
+        $stmt = $this->pdo->query("
+            SELECT SessionDate, COUNT(*) as count
+            FROM Attendance
+            WHERE SessionDate >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+            GROUP BY SessionDate
+            ORDER BY SessionDate ASC
+        ");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $byDate = [];
+        foreach ($rows as $r) {
+            $byDate[$r['SessionDate']] = (int)$r['count'];
+        }
+        $result = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-$i days"));
+            $dayLabel = date('D', strtotime($date));
+            $result[] = [
+                'date'  => $date,
+                'label' => $dayLabel,
+                'count' => $byDate[$date] ?? 0,
+            ];
+        }
+        return $result;
+    }
+
+    /**
      * HZ-DASH-004: Get donation statistics
      */
     public function getDonationStats() {
@@ -288,7 +351,7 @@ class Dashboard {
                 (SELECT COUNT(*) FROM VolunteerSchedules) as total
         ");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
-        $total = $result['total'] ?? 1;
+        $total = max(1, (int)($result['total'] ?? 1));
         $completed = $result['completed'] ?? 0;
         $kpis['volunteer_utilization_rate'] = round(($completed / $total) * 100, 1);
 

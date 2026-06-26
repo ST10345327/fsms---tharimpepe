@@ -42,7 +42,19 @@ try {
             header("Location: /controllers/DonorController.php?action=dashboard");
             exit;
         }
-        // Serve operational dashboard view directly
+        // Serve operational dashboard view with database data
+        require_once __DIR__ . '/../app/models/Dashboard.php';
+        $db = getDBConnection();
+        $dashModel = new Dashboard($db);
+        $systemStats      = $dashModel->getSystemStats();
+        $feedingStats     = $dashModel->getFeedingStats();
+        $foodStockStatus  = $dashModel->getFoodStockStatus();
+        $foodStockItems   = $dashModel->getFoodStockItems();
+        $donationStats    = $dashModel->getDonationStats();
+        $schedulingStats  = $dashModel->getSchedulingStats();
+        $kpis             = $dashModel->getKPIs();
+        $recentActivities = $dashModel->getRecentActivities(8);
+        $weeklyChart      = $dashModel->getWeeklyAttendanceTrend();
         require_once __DIR__ . '/../app/views/dashboard.php';
         exit();
     } else {

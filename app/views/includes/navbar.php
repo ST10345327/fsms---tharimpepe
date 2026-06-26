@@ -25,7 +25,7 @@ $navItems = rbacNavItemsForRole($role);
 <link rel="stylesheet" href="/assets/css/fsms-ui.css">
 
 <aside class="fsms-sidebar" aria-label="Primary navigation">
-    <a class="fsms-brand" href="../controllers/DashboardController.php?action=overview">
+    <a class="fsms-brand" href="../index.php">
            <img class="fsms-brand-logo" src="/assets/images/generate_raster.php?name=tharimpepe-logo&w=172&h=48&dpr=1"
                srcset="/assets/images/generate_raster.php?name=tharimpepe-logo&w=172&h=48&dpr=1 1x, /assets/images/generate_raster.php?name=tharimpepe-logo&w=344&h=96&dpr=2 2x"
                sizes="(max-width:640px) 58px, (max-width:992px) 120px, 172px"
@@ -137,6 +137,7 @@ $navItems = rbacNavItemsForRole($role);
                 <span class="fsms-user-name"><?php echo htmlspecialchars($displayName); ?></span>
                 <span class="fsms-user-role"><?php echo htmlspecialchars($displayRole); ?></span>
             </span>
+            <i class="fas fa-chevron-down fsms-user-chevron" aria-hidden="true"></i>
         </div>
     </div>
 </header>

@@ -1,7 +1,7 @@
 <?php
 $pageTitle = 'Donations';
-$cashTotal = $summary['total_cash'] ?? 15800;
-$foodCount = $summary['food_donations'] ?? 8;
+$cashTotal = $summary['total_cash'] ?? 0;
+$foodCount = $summary['food_donations'] ?? 0;
 $totalDonations = $summary['total_donations'] ?? count($donations ?? []);
 ?>
 <!DOCTYPE html>
@@ -141,26 +141,9 @@ $totalDonations = $summary['total_donations'] ?? count($donations ?? []);
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
-                        <?php
-                        $sampleRows = [
-                            ['DON-001', 'ABC Corporation', 'cash', 'Monthly contribution', 'R5,000', '2026-04-28'],
-                            ['DON-002', 'John Smith', 'food', 'Rice - 50kg', '50kg', '2026-04-27'],
-                            ['DON-003', 'Community Church', 'cash', 'Easter donation', 'R3,500', '2026-04-25'],
-                            ['DON-004', 'Local Supermarket', 'food', 'Assorted goods', 'Mixed', '2026-04-24'],
-                            ['DON-005', 'Anonymous', 'cash', 'General donation', 'R1,200', '2026-04-22'],
-                            ['DON-006', 'XYZ Foundation', 'other', 'Kitchen equipment', 'N/A', '2026-04-20'],
-                        ];
-                        ?>
-                        <?php foreach ($sampleRows as $row): ?>
-                            <tr>
-                                <td><?php echo $row[0]; ?></td>
-                                <td><?php echo $row[1]; ?></td>
-                                <td><span class="type-pill <?php echo $row[2]; ?>"><?php echo ucfirst($row[2]); ?></span></td>
-                                <td><?php echo $row[3]; ?></td>
-                                <td><?php echo $row[4]; ?></td>
-                                <td><?php echo $row[5]; ?></td>
-                            </tr>
-                        <?php endforeach; ?>
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No donations recorded yet</td>
+                        </tr>
                     <?php endif; ?>
                 </tbody>
             </table>

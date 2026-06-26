@@ -21,6 +21,7 @@ $pageTitle = 'Dashboard';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="/assets/css/fsms-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
         .dashboard-wrap {
             padding-top: 24px;
@@ -281,8 +282,8 @@ $pageTitle = 'Dashboard';
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Total Beneficiaries</div>
-                    <div class="kpi-value">342</div>
-                    <div class="kpi-meta">+12 this month</div>
+                    <div class="kpi-value"><?php echo (int)$systemStats['total_beneficiaries']; ?></div>
+                    <div class="kpi-meta">active: <?php echo (int)$systemStats['active_beneficiaries']; ?></div>
                 </div>
                 <span class="kpi-icon blue"><i class="fas fa-users" aria-hidden="true"></i></span>
             </div>
@@ -290,8 +291,8 @@ $pageTitle = 'Dashboard';
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Meals Served Today</div>
-                    <div class="kpi-value">138</div>
-                    <div class="kpi-meta">As of 2:30 PM</div>
+                    <div class="kpi-value"><?php echo (int)$feedingStats['today_attendance']; ?></div>
+                    <div class="kpi-meta">As of <?php echo date('g:i A'); ?></div>
                 </div>
                 <span class="kpi-icon green"><i class="fas fa-utensils" aria-hidden="true"></i></span>
             </div>
@@ -299,8 +300,8 @@ $pageTitle = 'Dashboard';
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Active Volunteers</div>
-                    <div class="kpi-value">24</div>
-                    <div class="kpi-meta">8 scheduled today</div>
+                    <div class="kpi-value"><?php echo (int)$systemStats['active_volunteers']; ?></div>
+                    <div class="kpi-meta"><?php echo (int)$schedulingStats['today_shifts']; ?> scheduled today</div>
                 </div>
                 <span class="kpi-icon purple"><i class="fas fa-user-check" aria-hidden="true"></i></span>
             </div>
@@ -308,7 +309,7 @@ $pageTitle = 'Dashboard';
             <div class="kpi-card">
                 <div>
                     <div class="kpi-label">Low Stock Alerts</div>
-                    <div class="kpi-value">2</div>
+                    <div class="kpi-value"><?php echo (int)$foodStockStatus['low_stock_items']; ?></div>
                     <div class="kpi-meta">Requires attention</div>
                 </div>
                 <span class="kpi-icon orange"><i class="fas fa-triangle-exclamation" aria-hidden="true"></i></span>
@@ -319,21 +320,7 @@ $pageTitle = 'Dashboard';
             <div class="proto-card">
                 <h2>Weekly Attendance</h2>
                 <div class="chart-frame" aria-label="Weekly attendance chart">
-                    <span class="chart-y y160">160</span>
-                    <span class="chart-y y120">120</span>
-                    <span class="chart-y y80">80</span>
-                    <span class="chart-y y40">40</span>
-                    <span class="chart-y y0">0</span>
-                    <div class="chart-grid" aria-hidden="true"></div>
-                    <div class="chart-labels">
-                        <span>Mon</span>
-                        <span>Tue</span>
-                        <span>Wed</span>
-                        <span>Thu</span>
-                        <span>Fri</span>
-                        <span>Sat</span>
-                        <span>Sun</span>
-                    </div>
+                    <canvas id="weeklyChart"></canvas>
                 </div>
             </div>
 
@@ -365,51 +352,75 @@ $pageTitle = 'Dashboard';
         <section class="dashboard-bottom-grid">
             <div class="proto-card">
                 <h2>Food Stock Status</h2>
-                <?php
-                $stockRows = [
-                    ['label' => 'Rice', 'value' => 45, 'bar' => 'bg-success', 'danger' => false],
-                    ['label' => 'Beans', 'value' => 78, 'bar' => 'bg-success', 'danger' => false],
-                    ['label' => 'Oil', 'value' => 25, 'bar' => 'bg-danger', 'danger' => true],
-                    ['label' => 'Maize Meal', 'value' => 82, 'bar' => 'bg-success', 'danger' => false],
-                ];
-                ?>
-                <?php foreach ($stockRows as $row): ?>
-                    <div class="stock-row">
-                        <div class="stock-line">
-                            <span><?php echo htmlspecialchars($row['label']); ?></span>
-                            <span class="<?php echo $row['danger'] ? 'danger' : ''; ?>"><?php echo (int)$row['value']; ?>%</span>
+                <?php if (!empty($foodStockItems)): ?>
+                    <?php foreach ($foodStockItems as $row): ?>
+                        <div class="stock-row">
+                            <div class="stock-line">
+                                <span><?php echo htmlspecialchars($row['label']); ?> (<?php echo (int)$row['quantity']; ?> <?php echo htmlspecialchars($row['unit']); ?>)</span>
+                                <span class="<?php echo $row['danger'] ? 'danger' : ''; ?>"><?php echo (int)$row['percent']; ?>%</span>
+                            </div>
+                            <div class="progress" role="progressbar" aria-label="<?php echo htmlspecialchars($row['label']); ?> stock level" aria-valuenow="<?php echo (int)$row['percent']; ?>" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar <?php echo $row['danger'] ? 'bg-danger' : 'bg-success'; ?>" style="width: <?php echo (int)$row['percent']; ?>%"></div>
+                            </div>
                         </div>
-                        <div class="progress" role="progressbar" aria-label="<?php echo htmlspecialchars($row['label']); ?> stock level" aria-valuenow="<?php echo (int)$row['value']; ?>" aria-valuemin="0" aria-valuemax="100">
-                            <div class="progress-bar <?php echo htmlspecialchars($row['bar']); ?>" style="width: <?php echo (int)$row['value']; ?>%"></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted">No stock items recorded</p>
+                <?php endif; ?>
             </div>
 
             <div class="proto-card">
                 <h2>Recent Activity</h2>
-                <?php
-                $activities = [
-                    ['title' => 'New beneficiary registered', 'by' => 'by John Doe', 'time' => '10 min ago'],
-                    ['title' => 'Attendance recorded (Morning)', 'by' => 'by Sarah Admin', 'time' => '2 hours ago'],
-                    ['title' => 'Stock updated: Rice +50kg', 'by' => 'by Mike Manager', 'time' => '3 hours ago'],
-                    ['title' => 'Donation received: R5,000', 'by' => 'by Admin', 'time' => '5 hours ago'],
-                ];
-                ?>
-                <?php foreach ($activities as $activity): ?>
-                    <div class="activity-item">
-                        <span class="activity-dot" aria-hidden="true"></span>
-                        <div>
-                            <div class="activity-title"><?php echo htmlspecialchars($activity['title']); ?></div>
-                            <div class="activity-by"><?php echo htmlspecialchars($activity['by']); ?></div>
+                <?php if (!empty($recentActivities)): ?>
+                    <?php foreach ($recentActivities as $activity): ?>
+                        <div class="activity-item">
+                            <span class="activity-dot" aria-hidden="true"></span>
+                            <div>
+                                <div class="activity-title"><?php echo htmlspecialchars($activity['Action']); ?></div>
+                                <div class="activity-by">by <?php echo htmlspecialchars($activity['username'] ?? 'system'); ?></div>
+                            </div>
+                            <div class="activity-time"><?php echo date('M d, H:i', strtotime($activity['Timestamp'])); ?></div>
                         </div>
-                        <div class="activity-time"><?php echo htmlspecialchars($activity['time']); ?></div>
-                    </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted">No recent activity</p>
+                <?php endif; ?>
             </div>
         </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    const weeklyData = <?php echo json_encode($weeklyChart); ?>;
+    const labels = weeklyData.map(d => d.label);
+    const counts = weeklyData.map(d => d.count);
+
+    const ctx = document.getElementById('weeklyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Attendance',
+                data: counts,
+                backgroundColor: '#2563ff',
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            }
+        }
+    });
+    </script>
 </body>
 </html>
