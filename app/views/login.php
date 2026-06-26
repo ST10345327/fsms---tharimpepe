@@ -218,10 +218,7 @@
     <main class="login-shell">
         <section class="login-mission" aria-label="Tharimpepe mission">
             <div class="login-mission-inner">
-                 <img class="login-logo" src="/assets/images/generate_raster.php?name=tharimpepe-logo&w=200&h=96&dpr=1"
-                     srcset="/assets/images/generate_raster.php?name=tharimpepe-logo&w=200&h=96&dpr=1 1x, /assets/images/generate_raster.php?name=tharimpepe-logo&w=400&h=192&dpr=2 2x"
-                     sizes="(max-width:640px) 120px, 200px"
-                     alt="Tharimpepe" loading="lazy" width="200" height="96">
+                 <img class="login-logo" src="/assets/images/fsmslogo.png" alt="Tharimpepe" loading="lazy" width="200" height="96">
                 <h1>Tharimpepe Feeding Scheme</h1>
                 <p class="system-name">Feeding Scheme Management System</p>
                 <p class="mission-copy">
@@ -250,7 +247,7 @@
                     </div>
                 <?php endif; ?>
 
-                <form method="POST" action="index.php?action=login">
+                <form method="POST" action="/index.php?action=login">
                     <div class="form-group">
                         <label for="username">Username</label>
                         <div class="input-wrapper">
@@ -287,7 +284,7 @@
                 </form>
 
                 <div class="form-footer">
-                    <a href="../controllers/AuthController.php?action=register">Don't have an account? Register here</a>
+                    <a href="/controllers/AuthController.php?action=register" or Create Account below>Don't have an account? Register here</a>
                 </div>
             </div>
 

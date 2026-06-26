@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Route API requests
+RewriteRule ^api/(.*)$ api/index.php?endpoint=$1 [QSA,L]
+
+# Route web app requests to public/index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ public/index.php [QSA,L]

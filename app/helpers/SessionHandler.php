@@ -31,7 +31,7 @@ function isUserLoggedIn()
 function requireLogin()
 {
     if (!isUserLoggedIn()) {
-        header("Location: login.php");
+        header("Location: /views/login.php");
         exit();
     }
 }

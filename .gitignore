@@ -41,5 +41,15 @@ yarn-error.log*
 package-lock.json
 pnpm-lock.yaml
 
+# Android / Gradle build cache
+.gradle/
+*.lock
+
+# PHP session files
+sess_*
+
+# Temporary files
+*.txt
+
 # Local runtime placeholders
 .fake
