@@ -18,7 +18,9 @@ This Figma prototype showcases the complete user interface design for all module
 
 **Prototype screenshots:** See `docs/screenshots/`.
 
-**Demo video:** YouTube link to be added.
+**Demo video:** 
+- Website: https://youtu.be/vvwGJumiVZw
+- Mobile App:
 
 ## Stack
 
