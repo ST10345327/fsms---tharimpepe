@@ -10,12 +10,10 @@
 require_once __DIR__ . '/../app/helpers/bootstrap.php';
 require_once __DIR__ . '/TestCase.php';
 
-// If running tests with the SQLite fallback, delegate to the robust sqlite runner
-if (php_sapi_name() === 'cli' && getenv('FSMS_TEST_SQLITE') === '1') {
-    // tools/run_all_tests_sqlite.php is a lightweight, reliable runner that
-    // executes each test class against an in-memory SQLite DB.
+// The checked-in test fixtures use SQLite-compatible schemas. Keep the CLI
+// suite isolated from a developer's MySQL database and run it in memory.
+if (php_sapi_name() === 'cli') {
     require_once __DIR__ . '/../tools/run_all_tests_sqlite.php';
-    exit(0);
 }
 
 // Load all test files

@@ -441,9 +441,12 @@ class DatabaseTestCase extends TestCase
                     Username TEXT UNIQUE,
                     Email TEXT UNIQUE,
                     PasswordHash TEXT,
+                    FullName TEXT,
+                    Phone TEXT,
                     Role TEXT,
                     Status TEXT DEFAULT 'active',
-                    CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP
+                    CreatedAt TEXT DEFAULT CURRENT_TIMESTAMP,
+                    UpdatedAt TEXT DEFAULT CURRENT_TIMESTAMP
                 );";
 
                 $this->db->exec($create);

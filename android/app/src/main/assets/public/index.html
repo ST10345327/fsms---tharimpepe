@@ -28,8 +28,20 @@
     }
     .view { min-height: 100vh; display: none; flex-direction: column; }
     .view.active { display: flex; }
-    #login-view { background: #f8f9fc; align-items: center; padding: 20px; }
-    .login-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; }
+    #login-view { background: #f8f9fc; align-items: stretch; flex-direction: row; padding: 0; }
+    .login-center { flex: 0 0 42%; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 42%; padding: 24px; overflow-y: auto; }
+    .login-content { width: 100%; max-width: 420px; margin: auto; }
+    .login-carousel { position: relative; flex: 1 1 58%; min-width: 0; min-height: 100vh; overflow: hidden; color: white; background: var(--primary-blue); }
+    .login-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity 700ms ease, visibility 0s linear 700ms; }
+    .login-slide.is-active { opacity: 1; visibility: visible; z-index: 1; transition-delay: 0s; }
+    .login-slide img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .login-carousel::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; background: linear-gradient(180deg, rgba(9,25,31,.3), transparent 36%, rgba(9,25,31,.64)); }
+    .login-carousel-brand { position: absolute; z-index: 3; }
+    .login-carousel-brand { top: 28px; left: 30px; display: flex; align-items: center; gap: 10px; font-size: 14px; }
+    .login-carousel-brand img { width: 54px; height: 42px; padding: 4px; object-fit: contain; border-radius: 9px; background: rgba(255,255,255,.92); }
+    .login-carousel-brand strong, .login-carousel-brand span { display: block; }
+    .login-carousel-brand span { margin-top: 2px; font-size: 12px; color: rgba(255,255,255,.84); }
+    @media (prefers-reduced-motion: reduce) { .login-slide { transition: none; } }
     .login-logo { margin-bottom: 24px; text-align: center; }
     .login-logo img { width: 96px; height: 96px; border-radius: 20px; object-fit: cover; }
     .login-brand { text-align: center; margin-bottom: 32px; }
@@ -45,7 +57,14 @@
     .register-link { text-align: center; margin-top: 12px; font-size: 14px; }
     .register-link a { color: var(--primary-blue); font-weight: 600; cursor: pointer; text-decoration: none; }
     .register-link a:hover { text-decoration: underline; }
-    .footer-copy { text-align: center; font-size: 11px; color: #98a2b3; line-height: 1.5; padding: 20px 40px; flex-shrink: 0; }
+    .footer-copy { text-align: center; font-size: 11px; color: #98a2b3; line-height: 1.5; padding: 20px 12px 0; flex-shrink: 0; }
+    @media (max-width: 760px) {
+      #login-view { flex-direction: column; }
+      .login-carousel { flex: 0 0 clamp(220px, 34vh, 320px); width: 100%; min-height: 0; }
+      .login-center { flex: 1 0 auto; width: 100%; padding: 18px 20px 24px; overflow: visible; }
+      .login-content { max-width: 420px; }
+      .login-carousel-brand { top: 18px; left: 20px; }
+    }
     .drawer-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: none; backdrop-filter: blur(2px); }
     .drawer { position: fixed; top: 0; left: -280px; width: 280px; height: 100vh; background: var(--white); z-index: 2001; transition: 0.3s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
     .drawer.active { left: 0; }
@@ -82,6 +101,8 @@
     .op-info h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
     .op-info p:last-child { font-size: 11px; color: #98a2b3; }
     .op-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
+    .op-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .profile-avatar-mobile { width: 76px; height: 76px; margin: 0 auto; border-radius: 50%; background: var(--primary-blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; }
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 68px; background: var(--primary-blue); display: flex; z-index: 1000; }
     .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: rgba(255,255,255,0.6); font-size: 10px; gap: 4px; cursor: pointer; }
     .nav-tab.active { color: white; }
@@ -133,9 +154,20 @@
     .tab-btn.active { background: var(--primary-blue); color: white; }
     .tab-btn:not(:last-child) { border-right: 1px solid var(--border-color); }
     .rpt-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .rpt-table-wrap table { min-width: 480px; }
+    .rpt-table-wrap .report-data-table { width: max-content; min-width: 720px; table-layout: auto; }
+    .rpt-table-wrap .report-data-table th,
+    .rpt-table-wrap .report-data-table td { padding: 10px 12px; white-space: nowrap; }
+    .rpt-table-wrap .report-data-table th { font-size: 12px; text-transform: none; }
+    .report-scroll-hint { margin-bottom: 8px; }
     .rpt-actions { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-    @media print { header, nav, .drawer, .drawer-overlay, .bottom-nav, .rpt-actions, #screen-reports .card:first-child { display: none !important; } main { padding: 0 !important; } .card { break-inside: avoid; border: none !important; box-shadow: none !important; padding: 0 !important; } }
+    @media print {
+      header, nav, .drawer, .drawer-overlay, .bottom-nav, .rpt-actions, .report-scroll-hint, #screen-reports .card:first-child { display: none !important; }
+      main { padding: 0 !important; }
+      .card { break-inside: avoid; border: none !important; box-shadow: none !important; padding: 0 !important; }
+      .rpt-table-wrap { overflow: visible !important; }
+      .rpt-table-wrap .report-data-table { width: 100%; min-width: 0; table-layout: auto; }
+      .rpt-table-wrap .report-data-table th, .rpt-table-wrap .report-data-table td { white-space: normal; overflow-wrap: anywhere; padding: 4px; font-size: 8pt; }
+    }
   </style>
 </head>
 <body>
@@ -156,6 +188,8 @@
     <div class="drawer-item" onclick="showScreen('donations')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Donations</div>
     <div class="drawer-item" onclick="showScreen('volunteers')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> Volunteers</div>
     <div class="drawer-item" onclick="showScreen('reports')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Reports</div>
+    <div class="drawer-item" id="drawer-users" onclick="showScreen('users')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> Users</div>
+    <div class="drawer-item" onclick="showScreen('profile')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> My Profile</div>
   </div>
   <div class="drawer-footer">
     <div class="logout-btn" onclick="doLogout()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Log Out</div>
@@ -163,7 +197,18 @@
 </div>
 
 <div class="view active" id="login-view">
+  <!-- Keep the login carousel image-led while retaining the organization branding. -->
+  <section class="login-carousel" aria-label="Tharimpepe community stories" data-login-carousel>
+    <div class="login-slide is-active" data-slide aria-hidden="false"><img src="img/login-carousel/catering.jpeg" alt="Community volunteers preparing fresh vegetables together"></div>
+    <div class="login-slide" data-slide aria-hidden="true"><img src="img/login-carousel/donation.jpeg" alt="A volunteer handing a grocery parcel to a community member" loading="lazy"></div>
+    <div class="login-slide" data-slide aria-hidden="true"><img src="img/login-carousel/serving.jpg" alt="School children sharing a meal outdoors" loading="lazy"></div>
+    <div class="login-carousel-brand" aria-hidden="true">
+      <img src="img/icon.png" alt="">
+      <div><strong>Tharimpepe</strong><span>Feeding Scheme</span></div>
+    </div>
+  </section>
   <div class="login-center">
+    <div class="login-content">
     <div class="login-logo">
       <img src="img/icon.png" alt="Tharimpepe FSMS">
     </div>
@@ -192,9 +237,11 @@
       <button class="btn-blue" id="login-btn" onclick="doLogin()">Login</button>
       <div class="forgot-pwd">Forgot password? Contact administrator</div>
       <div class="register-link">Don't have an account? <a onclick="openRegisterModal()">Create one</a></div>
+      <a class="btn-sm primary" style="display:block;text-align:center;margin-top:14px;text-decoration:none;" onclick="openQuickDonate()">Quick Donate as Guest</a>
+    </div>
+    <div class="footer-copy">&copy; 2026 Tharimpepe Feeding Scheme. All rights reserved.</div>
     </div>
   </div>
-  <div class="footer-copy">&copy; 2026 Tharimpepe Feeding Scheme. All rights reserved.</div>
 </div>
 
 <div class="modal-overlay" id="register-overlay" onclick="closeRegisterModal()">
@@ -220,7 +267,7 @@
     </div>
     <div class="form-group">
       <label>Password *</label>
-      <input type="password" id="reg-password" placeholder="At least 6 characters">
+      <input type="password" id="reg-password" placeholder="At least 8 characters, 1 uppercase and 1 number">
     </div>
     <div class="form-group">
       <label>Confirm password *</label>
@@ -323,6 +370,7 @@
         <div class="card">
           <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Attendance History</div>
           <div id="att-history-loading" class="loading">Loading</div>
+          <p id="att-history-message" class="text-muted" role="status" style="display:none;"></p>
           <table class="data-table" id="att-history-table" style="display:none;">
             <thead><tr><th>Date</th><th>Present</th><th>Absent</th><th>Rate</th></tr></thead>
             <tbody id="att-history-tbody"></tbody>
@@ -364,7 +412,9 @@
     <div class="screen" id="screen-donations">
       <div class="card">
         <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Record Donation</div>
-        <div class="form-group"><label>Donor name *</label><input type="text" id="don-donor" placeholder="e.g. Shoprite Checkers"></div>
+        <p class="text-muted">Admins and volunteers can record donations received in person. Donors can sign in, create a donor account, or donate anonymously.</p>
+        <div class="flex-row gap-4" style="margin-bottom:12px;flex-wrap:wrap;"><button class="btn-sm primary" onclick="showCreateDonorAccount()">Create Donor Account</button><label style="display:flex;align-items:center;gap:8px;margin:0;"><input type="checkbox" id="don-anonymous" onchange="toggleAnonymousDonation()"> Donate anonymously</label></div>
+        <div class="form-group" id="donor-name-group"><label>Donor name *</label><input type="text" id="don-donor" placeholder="e.g. Shoprite Checkers"></div>
         <div class="form-group"><label>Donor email</label><input type="email" id="don-email" placeholder="donor@example.com"></div>
         <div class="form-group"><label>Donation type *</label><select id="don-type"><option value="cash">Cash</option><option value="food">Food</option><option value="supplies">Supplies</option><option value="other">Other</option></select></div>
         <div class="form-group"><label>Amount (for cash donations)</label><input type="number" step="0.01" id="don-amount" placeholder="e.g. 500.00"></div>
@@ -388,6 +438,8 @@
       <div id="vol-list">
         <div class="card">
           <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> Volunteer List</div>
+          <div class="form-group"><label>Search volunteers</label><input type="search" id="vol-search" placeholder="Name, phone, email or address" onkeyup="if(event.key === 'Enter') loadVolunteers()"></div>
+          <button class="btn-sm primary" onclick="loadVolunteers()" style="margin-bottom:12px;">Search</button>
           <div id="vol-loading" class="loading">Loading</div>
           <table class="data-table" id="vol-table" style="display:none;">
             <thead><tr><th>Name</th><th>Status</th><th></th></tr></thead>
@@ -419,6 +471,9 @@
           <option value="food_stock">Food Stock Report</option>
           <option value="beneficiaries">Beneficiary Report</option>
           <option value="volunteers">Volunteer Performance</option>
+          <option value="donors">Donor Summary</option>
+          <option value="activity">Activity Audit</option>
+          <option value="financial">Financial Summary</option>
         </select></div>
         <div class="flex-row gap-4">
           <div class="form-group" style="flex:1;"><label>From</label><input type="date" id="rpt-from"></div>
@@ -432,9 +487,53 @@
           <div class="rpt-actions" id="rpt-actions">
             <button class="btn-sm primary" onclick="printReport()">Print</button>
             <button class="btn-sm" onclick="exportCsv()">Export CSV</button>
+            <button class="btn-sm" onclick="exportXls()">Export CSV (Excel compatible)</button>
           </div>
           <div class="rpt-table-wrap" id="rpt-table-wrap"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="screen" id="screen-users">
+      <div class="card">
+        <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg> User Management</div>
+        <p class="text-muted mb-8">Manage system users and review their roles and status.</p>
+        <button class="btn-blue" onclick="showCreateUser()" style="margin-bottom:12px;">Add User</button>
+        <div class="form-group"><label>Search users</label><input type="search" id="user-search" placeholder="Username or name" onkeyup="filterUsers()"></div>
+        <div id="users-loading" class="loading">Loading users</div>
+        <div id="users-list" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="screen" id="screen-profile">
+      <div id="profile-loading" class="loading">Loading profile</div>
+      <div id="profile-content" style="display:none;">
+        <div class="card text-center" style="padding-top:28px;">
+          <div id="profile-avatar" class="profile-avatar-mobile"></div>
+          <h2 id="profile-name" style="font-size:20px;margin-top:12px;"></h2>
+          <p id="profile-role" class="text-muted"></p>
+        </div>
+        <div class="card">
+          <div class="section-title"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10M7 12h6"/></svg> Account Information</div>
+          <div id="profile-details"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">Edit Profile</div>
+          <div class="form-group"><label>Full name</label><input type="text" id="profile-full-name"></div>
+          <div class="form-group"><label>Email</label><input type="email" id="profile-email"></div>
+          <div class="form-group"><label>Phone</label><input type="text" id="profile-phone"></div>
+          <button class="btn-blue" onclick="saveProfile()">Save Profile</button>
+        </div>
+        <div class="card">
+          <div class="section-title">Change Password</div>
+          <div class="form-group"><label>Current password</label><input type="password" id="profile-current-password"></div>
+          <div class="form-group"><label>New password</label><input type="password" id="profile-new-password"></div>
+          <div class="form-group"><label>Confirm new password</label><input type="password" id="profile-confirm-password"></div>
+          <button class="btn-blue" onclick="savePassword()">Change Password</button>
+        </div>
+        <button class="btn-blue" onclick="doLogout()">Log Out</button>
       </div>
     </div>
   </main>
@@ -472,7 +571,39 @@
 
 <script src="js/config.js"></script>
 <script>
-const API_BASE = typeof FSMS_API_BASE !== 'undefined' ? FSMS_API_BASE : window.location.origin + '/api';
+const API_BASE = FSMS_API_BASE;
+(() => {
+  const carousel = document.querySelector('[data-login-carousel]');
+  if (!carousel) return;
+
+  const slides = Array.from(carousel.querySelectorAll('[data-slide]'));
+  let current = 0;
+  let timer = null;
+
+  function showSlide(index) {
+    current = (index + slides.length) % slides.length;
+    slides.forEach((slide, i) => {
+      const active = i === current;
+      slide.classList.toggle('is-active', active);
+      slide.setAttribute('aria-hidden', String(!active));
+    });
+  }
+
+  function stop() {
+    if (timer) window.clearInterval(timer);
+    timer = null;
+  }
+
+  function start() {
+    stop();
+    if (!document.hidden && slides.length > 1) {
+      timer = window.setInterval(() => showSlide(current + 1), 6000);
+    }
+  }
+  document.addEventListener('visibilitychange', () => start());
+  showSlide(0);
+  start();
+})();
 let AUTH_TOKEN = localStorage.getItem('fsms_token') || '';
 let CURRENT_USER = null;
 let attendanceData = {};
@@ -487,6 +618,18 @@ function toast(msg, type) {
   el.className = 'toast ' + type;
   el.style.display = 'block';
   setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function clearLoginCredentials() {
+  // Credentials are only needed for the sign-in request; never leave them in the form afterward.
+  ['login-user', 'login-pass'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) {
+      field.value = '';
+      field.defaultValue = '';
+      field.removeAttribute('value');
+    }
+  });
 }
 
 function getApiUrl() {
@@ -555,31 +698,41 @@ async function doLogin() {
       AUTH_TOKEN = res.data.token;
       CURRENT_USER = res.data.user;
       localStorage.setItem('fsms_token', AUTH_TOKEN);
+      localStorage.setItem('fsms_user', JSON.stringify(CURRENT_USER));
+      document.getElementById('drawer-users').style.display = CURRENT_USER.role === 'admin' ? 'flex' : 'none';
       document.getElementById('login-view').classList.remove('active');
       document.getElementById('app-view').classList.add('active');
       document.getElementById('drawer-name').textContent = CURRENT_USER.username;
       document.getElementById('drawer-role').textContent = CURRENT_USER.role + ' • FSMS';
+      clearLoginCredentials();
       loadDashboard();
     } else {
       errEl.textContent = res.message;
       errEl.style.display = 'block';
     }
   } catch (e) {
-    errEl.textContent = 'Connection error. Check server.';
+    errEl.textContent = e.message || ('Connection error. Check server at ' + API_BASE + '.');
     errEl.style.display = 'block';
   }
   btn.disabled = false;
   btn.textContent = 'Login';
 }
 
-function doLogout() {
-  api('POST', 'logout');
-  localStorage.removeItem('fsms_token');
-  AUTH_TOKEN = '';
-  CURRENT_USER = null;
-  document.getElementById('app-view').classList.remove('active');
-  document.getElementById('login-view').classList.add('active');
-  toggleDrawer();
+async function doLogout() {
+  try {
+    if (AUTH_TOKEN) await api('POST', 'logout');
+  } catch (e) {
+    // Always clear local credentials, even if the server cannot be reached.
+  } finally {
+    localStorage.removeItem('fsms_token');
+    localStorage.removeItem('fsms_user');
+    AUTH_TOKEN = '';
+    CURRENT_USER = null;
+    clearLoginCredentials();
+    document.getElementById('app-view').classList.remove('active');
+    document.getElementById('login-view').classList.add('active');
+    toggleDrawer();
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -588,6 +741,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('don-date').valueAsDate = new Date();
 
   if (AUTH_TOKEN) {
+    try { CURRENT_USER = JSON.parse(localStorage.getItem('fsms_user') || 'null'); } catch (e) { CURRENT_USER = null; }
+    if (CURRENT_USER) {
+      document.getElementById('drawer-name').textContent = CURRENT_USER.username || 'User';
+      document.getElementById('drawer-role').textContent = (CURRENT_USER.role || 'staff') + ' • FSMS';
+      document.getElementById('drawer-users').style.display = CURRENT_USER.role === 'admin' ? 'flex' : 'none';
+    }
     document.getElementById('login-error').textContent = 'Restoring session...';
     document.getElementById('login-error').style.display = 'block';
     document.getElementById('login-error').style.color = 'var(--text-muted)';
@@ -651,8 +810,8 @@ async function doRegister() {
     return;
   }
 
-  if (password.length < 6) {
-    errEl.textContent = 'Password must be at least 6 characters';
+  if (password.length < 8 || !/[A-Z]/.test(password) || !/[0-9]/.test(password)) {
+    errEl.textContent = 'Password must be at least 8 characters and include an uppercase letter and a number';
     errEl.style.display = 'block';
     return;
   }
@@ -670,9 +829,8 @@ async function doRegister() {
       password
     });
     if (res.success) {
-      toast('Account created! You can now login.', 'success');
+      toast('Account created! Your registration is pending admin approval. You will be able to log in once approved.', 'success');
       closeRegisterModal();
-      document.getElementById('login-user').value = username;
     } else {
       errEl.textContent = res.message;
       errEl.style.display = 'block';
@@ -695,11 +853,12 @@ function toggleDrawer() {
 
 const titles = {
   dashboard: 'Dashboard', beneficiaries: 'Beneficiaries', attendance: 'Attendance',
-  stock: 'Food Stock', donations: 'Donations', volunteers: 'Volunteers', reports: 'Reports'
+  stock: 'Food Stock', donations: 'Donations', volunteers: 'Volunteers', reports: 'Reports',
+  users: 'Users', profile: 'My Profile'
 };
 
 const NAV_ORDER = ['dashboard', 'beneficiaries', 'attendance', 'stock'];
-const ALL_SCREENS = ['dashboard', 'beneficiaries', 'attendance', 'stock', 'donations', 'volunteers', 'reports'];
+const ALL_SCREENS = ['dashboard', 'beneficiaries', 'attendance', 'stock', 'donations', 'volunteers', 'reports', 'users', 'profile'];
 
 function showScreen(id) {
   document.getElementById('drawer').classList.remove('active');
@@ -731,10 +890,12 @@ function showScreen(id) {
   else if (id === 'donations') loadDonations();
   else if (id === 'volunteers') loadVolunteers();
   else if (id === 'reports') loadReport();
+  else if (id === 'users') loadUsers();
+  else if (id === 'profile') loadProfile();
 }
 
 function showMoreMenu() {
-  showScreen('donations');
+  toggleDrawer();
 }
 
 // ==================== DASHBOARD ====================
@@ -751,42 +912,51 @@ async function loadDashboard() {
     const sched = d.scheduling_stats || {};
     const kpis = d.kpis || {};
 
+    // Match the website dashboard's familiar people, calendar, inventory, and giving symbols.
+    const dashboardIcons = {
+      beneficiaries: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+      attendance: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 15l2.5 2.5L16 12"/></svg>',
+      volunteers: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M16 11h6"/></svg>',
+      stock: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 9 4.5v9L12 21l-9-4.5v-9L12 3Z"/><path d="M3.5 7.7 12 12l8.5-4.3M12 12v9M7.5 5.2l9 4.6"/></svg>',
+      donations: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12v9H4v-9M2 7h20v5H2zM12 7v14M12 7H8.5a2.5 2.5 0 1 1 2.5-2.5V7Zm0 0h3.5A2.5 2.5 0 1 0 13 4.5V7Z"/></svg>',
+      shifts: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M12 14v4l3 2"/></svg>'
+    };
     const cards = [
-      { label: 'Active Beneficiaries', value: sys.active_beneficiaries || 0, sub: 'Total: ' + (sys.total_beneficiaries || 0), color: 'var(--success-green)' },
-      { label: "Today's Attendance", value: feed.today_attendance || 0, sub: 'Weekly: ' + (feed.weekly_attendance || 0), color: 'var(--info-blue)' },
-      { label: 'Available Volunteers', value: sys.active_volunteers || 0, sub: 'Total: ' + (sys.total_volunteers || 0), color: 'var(--accent-purple)' },
-      { label: 'Items in Stock', value: food.items_in_stock || 0, sub: 'Low stock: ' + (food.low_stock_items || 0), color: 'var(--warning-orange)' },
-      { label: 'Monthly Donations', value: d.donation_stats?.monthly_donations_count || 0, sub: 'Amount: R' + (parseFloat(d.donation_stats?.monthly_donations_amount) || 0).toFixed(2), color: 'var(--primary-blue)' },
-      { label: "Today's Shifts", value: sched.today_shifts || 0, sub: 'Upcoming: ' + (sched.upcoming_shifts || 0), color: 'var(--danger-red)' },
+      { label: 'Active Beneficiaries', value: sys.active_beneficiaries || 0, sub: 'Total: ' + (sys.total_beneficiaries || 0), color: 'var(--success-green)', icon: 'beneficiaries' },
+      { label: "Today's Attendance", value: feed.today_attendance || 0, sub: 'Weekly: ' + (feed.weekly_attendance || 0), color: 'var(--info-blue)', icon: 'attendance' },
+      { label: 'Available Volunteers', value: sys.active_volunteers || 0, sub: 'Total: ' + (sys.total_volunteers || 0), color: 'var(--accent-purple)', icon: 'volunteers' },
+      { label: 'Items in Stock', value: food.items_in_stock || 0, sub: 'Low stock: ' + (food.low_stock_items || 0), color: 'var(--warning-orange)', icon: 'stock' },
+      { label: 'Monthly Donations', value: d.donation_stats?.monthly_donations_count || 0, sub: 'Amount: R' + (parseFloat(d.donation_stats?.monthly_donations_amount) || 0).toFixed(2), color: 'var(--primary-blue)', icon: 'donations' },
+      { label: "Today's Shifts", value: sched.today_shifts || 0, sub: 'Upcoming: ' + (sched.upcoming_shifts || 0), color: 'var(--danger-red)', icon: 'shifts' },
     ];
 
     document.getElementById('dash-cards').innerHTML = cards.map(c => `
       <div class="op-card">
-        <div class="op-info"><p>${c.label}</p><h3>${c.value}</h3><p>${c.sub}</p></div>
-        <div class="op-icon" style="background:${c.color};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div>
+        <div class="op-info"><p>${escapeHtml(c.label)}</p><h3>${escapeHtml(c.value)}</h3><p>${escapeHtml(c.sub)}</p></div>
+        <div class="op-icon" style="background:${c.color};">${dashboardIcons[c.icon]}</div>
       </div>
     `).join('');
 
     const invItems = d.food_stock_items || [];
     document.getElementById('dash-inventory').innerHTML = invItems.length ? invItems.map(i => `
       <div class="list-item">
-        <span><b>${i.label}</b><br><span class="text-muted">${i.quantity} ${i.unit}</span></span>
-        <span class="badge ${i.danger ? 'badge-danger' : 'badge-success'}">${i.percent}%</span>
+        <span><b>${escapeHtml(i.label)}</b><br><span class="text-muted">${escapeHtml(i.quantity)} ${escapeHtml(i.unit)}</span></span>
+        <span class="badge ${i.danger ? 'badge-danger' : 'badge-success'}">${escapeHtml(i.percent)}%</span>
       </div>
     `).join('') : '<p class="text-muted">No inventory data</p>';
 
     const trend = d.weekly_attendance_trend || [];
     document.getElementById('dash-trend').innerHTML = trend.length ? trend.map(t => `
       <div class="list-item">
-        <span>${t.label} (${t.date})</span>
-        <span><b>${t.count}</b> meals</span>
+        <span>${escapeHtml(t.label)} (${escapeHtml(t.date)})</span>
+        <span><b>${escapeHtml(t.count)}</b> meals</span>
       </div>
     `).join('') : '<p class="text-muted">No attendance data yet</p>';
 
     const donors = d.top_donors || [];
     document.getElementById('dash-donors').innerHTML = donors.length ? donors.map(dn => `
       <div class="list-item">
-        <span><b>${dn.DonorName}</b></span>
+        <span><b>${escapeHtml(dn.DonorName)}</b></span>
         <span>R${parseFloat(dn.total_donated || 0).toFixed(2)}</span>
       </div>
     `).join('') : '<p class="text-muted">No donor data yet</p>';
@@ -826,9 +996,9 @@ async function loadBeneficiaries() {
     document.getElementById('ben-table').style.display = 'table';
     document.getElementById('ben-tbody').innerHTML = list.map(b => `
       <tr>
-        <td><b>${b.FirstName} ${b.LastName}</b></td>
-        <td>${b.Age || '-'}</td>
-        <td><span class="badge ${b.Status === 'active' ? 'badge-success' : 'badge-danger'}">${b.Status}</span></td>
+        <td><b>${escapeHtml(b.FirstName)} ${escapeHtml(b.LastName)}</b></td>
+        <td>${escapeHtml(b.Age || '-')}</td>
+        <td><span class="badge ${b.Status === 'active' ? 'badge-success' : 'badge-danger'}">${escapeHtml(b.Status)}</span></td>
         <td><button class="btn-sm" onclick="viewBeneficiary(${b.BeneficiaryID})">View</button></td>
       </tr>
     `).join('');
@@ -839,17 +1009,82 @@ async function viewBeneficiary(id) {
   const res = await api('GET', 'beneficiaries/' + id);
   if (!res.success) { toast(res.message, 'error'); return; }
   const b = res.data;
+  const editAction = CURRENT_USER && CURRENT_USER.role === 'admin'
+    ? `<button class="btn-sm primary" onclick="editBeneficiary(${Number(id)})">Edit details</button>`
+    : '';
   showModal('Beneficiary Details', `
-    <p><b>Name:</b> ${b.FirstName} ${b.LastName}</p>
-    <p><b>Age:</b> ${b.Age || '-'}</p>
-    <p><b>Gender:</b> ${b.Gender || '-'}</p>
-    <p><b>Phone:</b> ${b.Phone || '-'}</p>
-    <p><b>Email:</b> ${b.Email || '-'}</p>
-    <p><b>Address:</b> ${b.Address || '-'}</p>
-    <p><b>Status:</b> ${b.Status}</p>
-    <p><b>Registered:</b> ${b.RegistrationDate}</p>
-    <p><b>Notes:</b> ${b.Notes || '-'}</p>
+    <p><b>Name:</b> ${escapeHtml(b.FirstName)} ${escapeHtml(b.LastName)}</p>
+    <p><b>Age:</b> ${escapeHtml(b.Age || '-')}</p>
+    <p><b>Gender:</b> ${escapeHtml(b.Gender || '-')}</p>
+    <p><b>Phone:</b> ${escapeHtml(b.Phone || '-')}</p>
+    <p><b>Email:</b> ${escapeHtml(b.Email || '-')}</p>
+    <p><b>Address:</b> ${escapeHtml(b.Address || '-')}</p>
+    <p><b>Status:</b> ${escapeHtml(b.Status)}</p>
+    <p><b>Registered:</b> ${escapeHtml(b.RegistrationDate)}</p>
+    <p><b>Notes:</b> ${escapeHtml(b.Notes || '-')}</p>
+    <div class="flex-row mt-8">${editAction}<button class="btn-sm" onclick="closeModal()">Close</button></div>
   `);
+}
+
+async function editBeneficiary(id) {
+  if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+    toast('Only administrators can edit beneficiary details', 'error');
+    return;
+  }
+
+  try {
+    const res = await api('GET', 'beneficiaries/' + id);
+    if (!res.success) { toast(res.message, 'error'); return; }
+    const b = res.data;
+    const registrationDate = String(b.RegistrationDate || '').slice(0, 10);
+    const gender = String(b.Gender || '');
+    const status = String(b.Status || 'active');
+
+    showModal('Edit Beneficiary', `
+      <form onsubmit="event.preventDefault(); saveBeneficiary(${Number(id)})">
+        <div class="form-group"><label for="edit-ben-first-name">First name *</label><input id="edit-ben-first-name" type="text" value="${escapeHtml(b.FirstName)}" required></div>
+        <div class="form-group"><label for="edit-ben-last-name">Last name *</label><input id="edit-ben-last-name" type="text" value="${escapeHtml(b.LastName)}" required></div>
+        <div class="form-group"><label for="edit-ben-age">Age</label><input id="edit-ben-age" type="number" min="0" max="120" value="${escapeHtml(b.Age ?? '')}"></div>
+        <div class="form-group"><label for="edit-ben-gender">Gender</label><select id="edit-ben-gender"><option value="">Not specified</option><option value="Male" ${gender === 'Male' ? 'selected' : ''}>Male</option><option value="Female" ${gender === 'Female' ? 'selected' : ''}>Female</option><option value="Other" ${gender === 'Other' ? 'selected' : ''}>Other</option></select></div>
+        <div class="form-group"><label for="edit-ben-phone">Phone</label><input id="edit-ben-phone" type="tel" value="${escapeHtml(b.Phone || '')}"></div>
+        <div class="form-group"><label for="edit-ben-email">Email</label><input id="edit-ben-email" type="email" value="${escapeHtml(b.Email || '')}"></div>
+        <div class="form-group"><label for="edit-ben-address">Address</label><textarea id="edit-ben-address">${escapeHtml(b.Address || '')}</textarea></div>
+        <div class="form-group"><label for="edit-ben-registration-date">Registration date *</label><input id="edit-ben-registration-date" type="date" value="${escapeHtml(registrationDate)}" required></div>
+        <div class="form-group"><label for="edit-ben-status">Status *</label><select id="edit-ben-status" required><option value="active" ${status === 'active' ? 'selected' : ''}>Active</option><option value="inactive" ${status === 'inactive' ? 'selected' : ''}>Inactive</option><option value="suspended" ${status === 'suspended' ? 'selected' : ''}>Suspended</option></select></div>
+        <div class="form-group"><label for="edit-ben-notes">Notes</label><textarea id="edit-ben-notes">${escapeHtml(b.Notes || '')}</textarea></div>
+        <div class="flex-row mt-8"><button class="btn-sm primary" type="submit">Save changes</button><button class="btn-sm" type="button" onclick="viewBeneficiary(${Number(id)})">Cancel</button></div>
+      </form>
+    `);
+  } catch (e) {
+    toast('Failed to load beneficiary details', 'error');
+  }
+}
+
+async function saveBeneficiary(id) {
+  const data = {
+    first_name: document.getElementById('edit-ben-first-name').value.trim(),
+    last_name: document.getElementById('edit-ben-last-name').value.trim(),
+    age: document.getElementById('edit-ben-age').value || null,
+    gender: document.getElementById('edit-ben-gender').value || null,
+    phone: document.getElementById('edit-ben-phone').value.trim() || null,
+    email: document.getElementById('edit-ben-email').value.trim() || null,
+    address: document.getElementById('edit-ben-address').value.trim() || null,
+    registration_date: document.getElementById('edit-ben-registration-date').value,
+    status: document.getElementById('edit-ben-status').value,
+    notes: document.getElementById('edit-ben-notes').value.trim() || null
+  };
+
+  if (!data.first_name || !data.last_name || !data.registration_date) {
+    toast('First name, last name, and registration date are required', 'error');
+    return;
+  }
+
+  const res = await api('PUT', 'beneficiaries/' + id, data);
+  if (!res.success) { toast(res.message, 'error'); return; }
+
+  closeModal();
+  toast('Beneficiary details updated', 'success');
+  loadBeneficiaries();
 }
 
 async function registerBeneficiary() {
@@ -916,8 +1151,8 @@ async function loadAttendanceGrid() {
       const initials = (b.FirstName?.[0] || '') + (b.LastName?.[0] || '');
       attendanceData[b.BeneficiaryID] = 'present';
       return `<div class="att-tile present" id="att-tile-${b.BeneficiaryID}" onclick="toggleAttStatus(${b.BeneficiaryID})">
-        <div class="att-avatar" style="background:${colors[i % colors.length]};">${initials || '?'}</div>
-        <p style="font-size:13px;font-weight:700;">${b.FirstName} ${b.LastName}</p>
+        <div class="att-avatar" style="background:${colors[i % colors.length]};">${escapeHtml(initials || '?')}</div>
+        <p style="font-size:13px;font-weight:700;">${escapeHtml(b.FirstName)} ${escapeHtml(b.LastName)}</p>
         <p style="font-size:11px;color:var(--text-muted);" id="att-status-${b.BeneficiaryID}">Present</p>
       </div>`;
     }).join('');
@@ -950,27 +1185,44 @@ async function saveAttendance() {
 }
 
 async function loadAttendanceHistory() {
-  document.getElementById('att-history-loading').style.display = 'block';
-  document.getElementById('att-history-table').style.display = 'none';
+  const loading = document.getElementById('att-history-loading');
+  const message = document.getElementById('att-history-message');
+  const table = document.getElementById('att-history-table');
+  loading.style.display = 'block';
+  message.style.display = 'none';
+  message.textContent = '';
+  table.style.display = 'none';
   try {
     const res = await api('GET', 'attendance/history?days=14');
-    if (!res.success) return;
-    const data = res.data || [];
-    document.getElementById('att-history-loading').style.display = 'none';
-    if (data.length === 0) {
-      document.querySelector('#att-history .card').innerHTML += '<p class="text-muted">No history yet</p>';
+    loading.style.display = 'none';
+    if (!res.success) {
+      message.textContent = res.message || 'Attendance history could not be loaded.';
+      message.style.display = 'block';
       return;
     }
-    document.getElementById('att-history-table').style.display = 'table';
+
+    const data = Array.isArray(res.data) ? res.data : [];
+    if (data.length === 0) {
+      message.textContent = 'No attendance history is available for the selected period.';
+      message.style.display = 'block';
+      return;
+    }
+
+    table.style.display = 'table';
     document.getElementById('att-history-tbody').innerHTML = data.map(d => `
       <tr>
-        <td>${d.SessionDate}</td>
-        <td>${d.present_count || 0}</td>
-        <td>${d.absent_count || 0}</td>
-        <td><span class="badge badge-success">${d.percentage || 0}%</span></td>
+        <td>${escapeHtml(d.SessionDate)}</td>
+        <td>${escapeHtml(d.present_count || 0)}</td>
+        <td>${escapeHtml(d.absent_count || 0)}</td>
+        <td><span class="badge badge-success">${escapeHtml(d.percentage || 0)}%</span></td>
       </tr>
     `).join('');
-  } catch (e) { toast('Failed to load history', 'error'); }
+  } catch (e) {
+    loading.style.display = 'none';
+    message.textContent = 'Failed to load attendance history. Please try again.';
+    message.style.display = 'block';
+    toast('Failed to load history', 'error');
+  }
 }
 
 // ==================== FOOD STOCK ====================
@@ -1000,10 +1252,10 @@ async function loadStock() {
       const status = i.expiry_status || 'ok';
       const badgeClass = status === 'expired' ? 'badge-danger' : status === 'expiring_soon' ? 'badge-warning' : 'badge-success';
       return `<tr>
-        <td><b>${i.ItemName}</b></td>
-        <td>${i.Quantity}</td>
-        <td>${i.Unit}</td>
-        <td><span class="badge ${badgeClass}">${status}</span></td>
+        <td><b>${escapeHtml(i.ItemName)}</b></td>
+        <td>${escapeHtml(i.Quantity)}</td>
+        <td>${escapeHtml(i.Unit)}</td>
+        <td><span class="badge ${badgeClass}">${escapeHtml(status)}</span></td>
       </tr>`;
     }).join('');
   } catch (e) { toast('Failed to load stock', 'error'); }
@@ -1029,15 +1281,17 @@ async function addStockItem() {
 
 // ==================== DONATIONS ====================
 async function recordDonation() {
+  const anonymous = document.getElementById('don-anonymous').checked;
   const data = {
-    donor_name: document.getElementById('don-donor').value.trim(),
+    donor_name: anonymous ? 'Anonymous' : document.getElementById('don-donor').value.trim(),
     donor_email: document.getElementById('don-email').value.trim() || '',
     donation_type: document.getElementById('don-type').value,
     amount: parseFloat(document.getElementById('don-amount').value) || 0,
     description: document.getElementById('don-desc').value.trim() || '',
     donation_date: document.getElementById('don-date').value
   };
-  if (!data.donor_name || !data.donation_date) { toast('Donor name and date required', 'error'); return; }
+  if ((!anonymous && !data.donor_name) || !data.donation_date) { toast('Donor name and date required', 'error'); return; }
+  if (data.donation_type === 'cash' && data.amount <= 0) { toast('Enter a valid cash amount', 'error'); return; }
   const res = await api('POST', 'donations', data);
   if (res.success) {
     toast('Donation recorded!', 'success');
@@ -1063,8 +1317,8 @@ async function loadDonations() {
     }
     document.getElementById('don-list').innerHTML = list.map(d => `
       <div class="list-item">
-        <div><b>${d.DonorName}</b><br><span class="text-muted">${d.DonationType} ${d.Amount ? '- R' + parseFloat(d.Amount).toFixed(2) : ''}</span></div>
-        <span class="text-muted">${d.DonationDate}</span>
+        <div><b>${escapeHtml(d.DonorName)}</b><br><span class="text-muted">${escapeHtml(d.DonationType)} ${d.Amount ? '- R' + parseFloat(d.Amount).toFixed(2) : ''}</span></div>
+        <span class="text-muted">${escapeHtml(d.DonationDate)}</span>
       </div>
     `).join('');
   } catch (e) { toast('Failed to load donations', 'error'); }
@@ -1084,9 +1338,10 @@ async function loadVolunteers() {
   document.getElementById('vol-loading').style.display = 'block';
   document.getElementById('vol-table').style.display = 'none';
   try {
-    const res = await api('GET', 'volunteers?limit=100');
+    const search = document.getElementById('vol-search').value.trim();
+    const res = await api('GET', 'volunteers?limit=100' + (search ? '&search=' + encodeURIComponent(search) : ''));
     if (!res.success) return;
-    const list = res.data.volunteers || [];
+    const list = Array.isArray(res.data) ? res.data : (res.data.volunteers || []);
     document.getElementById('vol-loading').style.display = 'none';
     if (list.length === 0) {
       document.querySelector('#vol-list .card').innerHTML += '<p class="text-muted">No volunteers found</p>';
@@ -1095,8 +1350,8 @@ async function loadVolunteers() {
     document.getElementById('vol-table').style.display = 'table';
     document.getElementById('vol-tbody').innerHTML = list.map(v => `
       <tr>
-        <td><b>${v.FirstName || v.FullName || 'Unknown'} ${v.LastName || ''}</b></td>
-        <td><span class="badge ${v.AvailabilityStatus === 'available' ? 'badge-success' : 'badge-warning'}">${v.AvailabilityStatus || 'N/A'}</span></td>
+        <td><b>${escapeHtml(v.FirstName || v.FullName || 'Unknown')} ${escapeHtml(v.LastName || '')}</b></td>
+        <td><span class="badge ${v.AvailabilityStatus === 'available' ? 'badge-success' : 'badge-warning'}">${escapeHtml(v.AvailabilityStatus || 'N/A')}</span></td>
         <td><button class="btn-sm" onclick="viewVolunteer(${v.VolunteerID})">View</button></td>
       </tr>
     `).join('');
@@ -1107,14 +1362,81 @@ async function viewVolunteer(id) {
   const res = await api('GET', 'volunteers/' + id);
   if (!res.success) { toast(res.message, 'error'); return; }
   const v = res.data;
+  const canManage = CURRENT_USER && ['admin', 'staff'].includes(CURRENT_USER.role);
   showModal('Volunteer Details', `
-    <p><b>Name:</b> ${v.FirstName || v.FullName} ${v.LastName || ''}</p>
-    <p><b>Phone:</b> ${v.Phone || '-'}</p>
-    <p><b>Email:</b> ${v.Email || '-'}</p>
-    <p><b>Address:</b> ${v.Address || '-'}</p>
-    <p><b>Status:</b> ${v.AvailabilityStatus || '-'}</p>
-    <p><b>Volunteer Status:</b> ${v.VolunteerStatus || '-'}</p>
+    <p><b>Name:</b> ${escapeHtml(v.FirstName || v.FullName)} ${escapeHtml(v.LastName || '')}</p>
+    <p><b>Phone:</b> ${escapeHtml(v.Phone || '-')}</p>
+    <p><b>Email:</b> ${escapeHtml(v.Email || '-')}</p>
+    <p><b>Address:</b> ${escapeHtml(v.Address || '-')}</p>
+    <p><b>Status:</b> ${escapeHtml(v.AvailabilityStatus || '-')}</p>
+    <p><b>Volunteer Status:</b> ${escapeHtml(v.VolunteerStatus || '-')}</p>
+    ${canManage ? `<div class="flex-row gap-4" style="margin-top:16px;"><button class="btn-sm primary" onclick="editVolunteer(${id})">Edit</button><button class="btn-sm" onclick="deactivateVolunteer(${id})">Deactivate</button></div>` : ''}
   `);
+}
+
+function toggleAnonymousDonation() {
+  const anonymous = document.getElementById('don-anonymous').checked;
+  document.getElementById('donor-name-group').style.display = anonymous ? 'none' : 'block';
+  document.getElementById('don-email').disabled = anonymous;
+  if (anonymous) { document.getElementById('don-donor').value = ''; document.getElementById('don-email').value = ''; }
+}
+
+function openQuickDonate() {
+  const base = API_BASE.replace(/\/api\/?$/, '');
+  window.open(base + '/donate.php', '_blank');
+}
+
+function showCreateDonorAccount() {
+  showModal('Create Donor Account', `
+    <p class="text-muted">Create an account to keep a donation history. You can also donate anonymously without registering.</p>
+    <div class="form-group"><label>Full name</label><input id="donor-account-name"></div>
+    <div class="form-group"><label>Username</label><input id="donor-account-username"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="donor-account-email"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="donor-account-password"></div>
+    <button class="btn-blue" onclick="createDonorAccount()">Create Account</button>
+  `);
+}
+
+async function createDonorAccount() {
+  const data = { full_name: document.getElementById('donor-account-name').value.trim(), username: document.getElementById('donor-account-username').value.trim(), email: document.getElementById('donor-account-email').value.trim(), password: document.getElementById('donor-account-password').value, role: 'donor' };
+  if (!data.full_name || !data.username || !data.email || !data.password) { toast('All account fields are required', 'error'); return; }
+  const res = await api('POST', 'register', data);
+  if (res.success) { closeModal(); toast('Account created. Your registration is pending admin approval. You will be able to log in once approved.', 'success'); } else toast(res.message, 'error');
+}
+
+async function editVolunteer(id) {
+  const res = await api('GET', 'volunteers/' + id);
+  if (!res.success) { toast(res.message, 'error'); return; }
+  const v = res.data || {};
+  showModal('Edit Volunteer', `
+    <div class="form-group"><label>First name</label><input id="edit-vol-fname" value="${escapeHtml(v.FirstName || '')}"></div>
+    <div class="form-group"><label>Last name</label><input id="edit-vol-lname" value="${escapeHtml(v.LastName || '')}"></div>
+    <div class="form-group"><label>Phone</label><input id="edit-vol-phone" value="${escapeHtml(v.Phone || '')}"></div>
+    <div class="form-group"><label>Address</label><input id="edit-vol-address" value="${escapeHtml(v.Address || '')}"></div>
+    <div class="form-group"><label>Availability</label><select id="edit-vol-status"><option value="available" ${v.AvailabilityStatus === 'available' ? 'selected' : ''}>Available</option><option value="unavailable" ${v.AvailabilityStatus === 'unavailable' ? 'selected' : ''}>Unavailable</option><option value="on_leave" ${v.AvailabilityStatus === 'on_leave' ? 'selected' : ''}>On leave</option></select></div>
+    <button class="btn-blue" onclick="saveVolunteer(${id})">Save Changes</button>
+  `);
+}
+
+async function saveVolunteer(id) {
+  const data = {
+    first_name: document.getElementById('edit-vol-fname').value.trim(),
+    last_name: document.getElementById('edit-vol-lname').value.trim(),
+    phone: document.getElementById('edit-vol-phone').value.trim(),
+    address: document.getElementById('edit-vol-address').value.trim() || null,
+    status: document.getElementById('edit-vol-status').value
+  };
+  if (!data.first_name || !data.last_name || !data.phone) { toast('Name and phone are required', 'error'); return; }
+  const res = await api('PUT', 'volunteers/' + id, data);
+  if (res.success) { closeModal(); toast('Volunteer updated', 'success'); loadVolunteers(); }
+  else toast(res.message, 'error');
+}
+
+async function deactivateVolunteer(id) {
+  if (!window.confirm('Deactivate this volunteer?')) return;
+  const res = await api('DELETE', 'volunteers/' + id);
+  if (res.success) { closeModal(); toast('Volunteer deactivated', 'success'); loadVolunteers(); }
+  else toast(res.message, 'error');
 }
 
 async function registerVolunteer() {
@@ -1144,6 +1466,16 @@ let lastReportData = null;
 let lastReportKeys = null;
 let lastReportType = null;
 
+function formatReportColumnLabel(key) {
+  const words = String(key)
+    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return words.replace(/\b\w/g, letter => letter.toUpperCase()).replace(/\bId\b/g, 'ID');
+}
+
 async function loadReport() {
   const type = document.getElementById('rpt-type').value;
   const from = document.getElementById('rpt-from').value;
@@ -1159,7 +1491,7 @@ async function loadReport() {
     if (to) url += '&to_date=' + to;
     const res = await api('GET', url);
     document.getElementById('rpt-loading').style.display = 'none';
-    if (!res.success) { document.getElementById('rpt-table-wrap').innerHTML = '<p class="text-muted">' + res.message + '</p>'; document.getElementById('rpt-content').style.display = 'block'; return; }
+    if (!res.success) { document.getElementById('rpt-table-wrap').innerHTML = '<p class="text-muted">' + escapeHtml(res.message) + '</p>'; document.getElementById('rpt-content').style.display = 'block'; return; }
 
     const data = res.data || [];
     if (Array.isArray(data) && data.length === 0) {
@@ -1170,15 +1502,20 @@ async function loadReport() {
 
     let html = '';
     if (!Array.isArray(data)) {
+      // Flatten grouped summaries so CSV exports work for summary reports too.
+      lastReportKeys = ['section', 'item', 'value'];
+      lastReportData = [];
       html = '<table class="data-table"><tbody>';
       Object.entries(data).forEach(([key, val]) => {
         if (val && typeof val === 'object') {
-          html += `<tr><td colspan="2"><b>${key}</b></td></tr>`;
+          html += `<tr><td colspan="2"><b>${escapeHtml(key)}</b></td></tr>`;
           Object.entries(val).forEach(([k, v]) => {
-            html += `<tr><td style="padding-left:16px;">${k}</td><td><b>${v ?? '-'}</b></td></tr>`;
+            lastReportData.push({ section: key, item: k, value: v ?? '' });
+            html += `<tr><td style="padding-left:16px;">${escapeHtml(k)}</td><td><b>${escapeHtml(v ?? '-')}</b></td></tr>`;
           });
         } else {
-          html += `<tr><td>${key}</td><td><b>${val ?? '-'}</b></td></tr>`;
+          lastReportData.push({ section: '', item: key, value: val ?? '' });
+          html += `<tr><td>${escapeHtml(key)}</td><td><b>${escapeHtml(val ?? '-')}</b></td></tr>`;
         }
       });
       html += '</tbody></table>';
@@ -1186,9 +1523,10 @@ async function loadReport() {
       const keys = Object.keys(data[0]);
       lastReportKeys = keys;
       lastReportData = data;
-      html = '<table class="data-table"><thead><tr>' + keys.map(k => '<th>' + k.replace(/_/g, ' ') + '</th>').join('') + '</tr></thead><tbody>';
+      const scrollHint = keys.length > 4 ? '<p class="text-muted report-scroll-hint">Swipe horizontally to view all report columns.</p>' : '';
+      html = scrollHint + '<table class="data-table report-data-table" aria-label="' + escapeHtml(formatReportColumnLabel(type)) + ' report"><thead><tr>' + keys.map(k => '<th scope="col">' + escapeHtml(formatReportColumnLabel(k)) + '</th>').join('') + '</tr></thead><tbody>';
       data.forEach(row => {
-        html += '<tr>' + keys.map(k => '<td>' + (row[k] ?? '-') + '</td>').join('') + '</tr>';
+        html += '<tr>' + keys.map(k => '<td>' + escapeHtml(row[k] ?? '-') + '</td>').join('') + '</tr>';
       });
       html += '</tbody></table>';
     }
@@ -1202,26 +1540,190 @@ function printReport() {
   window.print();
 }
 
-function exportCsv() {
+async function saveReportExport(blob, fileName, mimeType) {
+  const capacitor = window.Capacitor;
+  if (capacitor?.isNativePlatform?.()) {
+    // Native Android WebViews do not save Blob links, so write through the Downloads plugin.
+    const reportExport = capacitor.Plugins?.ReportExport ||
+      (typeof capacitor.registerPlugin === 'function' ? capacitor.registerPlugin('ReportExport') : null);
+    if (!reportExport?.saveFile) {
+      throw new Error('The Android report saver is unavailable. Rebuild and reinstall the app.');
+    }
+    const fileReader = new FileReader();
+    const encodedData = await new Promise((resolve, reject) => {
+      fileReader.onload = () => resolve(String(fileReader.result).split(',')[1] || '');
+      fileReader.onerror = () => reject(new Error('Could not prepare the report file.'));
+      fileReader.readAsDataURL(blob);
+    });
+    const savedFile = await reportExport.saveFile({ fileName, mimeType, data: encodedData });
+    toast('Report saved to ' + (savedFile.location || 'Downloads'), 'success');
+    return;
+  }
+
+  // Desktop browsers handle Blob URLs directly; keep the URL alive through the download click.
+  const objectUrl = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = objectUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  toast('Report download started: ' + fileName, 'success');
+}
+
+async function exportCsv() {
   if (!lastReportData || !lastReportKeys) {
     toast('No table data to export. Generate a list-type report first.', 'error');
     return;
   }
-  const rows = [lastReportKeys.join(',')];
-  lastReportData.forEach(row => {
-    rows.push(lastReportKeys.map(k => {
-      const val = row[k] ?? '';
-      const s = String(val);
-      return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
-    }).join(','));
-  });
-  const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = (lastReportType || 'report') + '_report.csv';
-  link.click();
-  URL.revokeObjectURL(link.href);
-  toast('Report exported as CSV', 'success');
+  try {
+    // Quote every value so commas, quotes, and line breaks remain valid CSV cells.
+    const toCsvCell = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+    const rows = [lastReportKeys.map(formatReportColumnLabel).map(toCsvCell).join(',')];
+    lastReportData.forEach(row => {
+      rows.push(lastReportKeys.map(key => toCsvCell(row[key])).join(','));
+    });
+    // The UTF-8 BOM helps spreadsheet apps detect names and text correctly.
+    const blob = new Blob(['\uFEFF' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    await saveReportExport(blob, (lastReportType || 'report') + '_report.csv', 'text/csv');
+  } catch (error) {
+    toast(error.message || 'Could not save the CSV report', 'error');
+  }
+}
+
+async function exportXls() {
+  // CSV is a standards-based format that mobile spreadsheet apps can parse consistently.
+  await exportCsv();
+}
+
+// ==================== USERS & PROFILE ====================
+function escapeHtml(value) {
+  return String(value ?? '-').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  }[char]));
+}
+
+let usersCache = [];
+
+async function loadUsers() {
+  if (!CURRENT_USER || CURRENT_USER.role !== 'admin') {
+    toast('Only administrators can view users', 'error');
+    showScreen('dashboard');
+    return;
+  }
+  document.getElementById('users-loading').style.display = 'block';
+  document.getElementById('users-list').style.display = 'none';
+  try {
+    const res = await api('GET', 'users');
+    if (!res.success) { toast(res.message, 'error'); return; }
+    usersCache = Array.isArray(res.data) ? res.data : [];
+    renderUsers(usersCache);
+    document.getElementById('users-loading').style.display = 'none';
+    document.getElementById('users-list').style.display = 'block';
+  } catch (e) {
+    document.getElementById('users-loading').style.display = 'none';
+    toast('Failed to load users', 'error');
+  }
+}
+
+function renderUsers(users) {
+    document.getElementById('users-list').innerHTML = users.length ? users.map(user => `
+      <div class="list-item" style="align-items:flex-start;gap:12px;">
+        <div style="min-width:0;"><b>${escapeHtml(user.FullName || user.Username)}</b><div class="text-muted">@${escapeHtml(user.Username)}<br>${escapeHtml(user.Email)}</div></div>
+        <div style="text-align:right;white-space:nowrap;"><span class="badge badge-info">${escapeHtml(user.Role)}</span><br><span class="badge ${user.Status === 'active' ? 'badge-success' : 'badge-warning'}" style="margin-top:5px;">${escapeHtml(user.Status)}</span><br><button class="btn-sm" style="margin-top:6px;" onclick="editUser(${user.UserID})">Edit</button> ${user.UserID !== CURRENT_USER.id ? `<button class="btn-sm" style="margin-top:6px;" onclick="deactivateUser(${user.UserID})">Deactivate</button>` : ''}</div>
+      </div>`).join('') : '<p class="text-muted">No users found</p>';
+}
+
+function filterUsers() {
+  const query = document.getElementById('user-search').value.trim().toLowerCase();
+  renderUsers(usersCache.filter(user => [user.Username, user.FullName, user.Email].some(value => String(value || '').toLowerCase().includes(query))));
+}
+
+function showCreateUser() {
+  showModal('Add User', `
+    <div class="form-group"><label>Username</label><input id="new-user-username"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="new-user-email"></div>
+    <div class="form-group"><label>Full name</label><input id="new-user-full-name"></div>
+    <div class="form-group"><label>Phone</label><input id="new-user-phone"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="new-user-password"></div>
+    <div class="form-group"><label>Role</label><select id="new-user-role"><option value="staff">Staff</option><option value="volunteer">Volunteer</option><option value="donor">Donor</option><option value="admin">Admin</option></select></div>
+    <button class="btn-blue" onclick="createUser()">Create User</button>
+  `);
+}
+
+async function createUser() {
+  const data = { username: document.getElementById('new-user-username').value.trim(), email: document.getElementById('new-user-email').value.trim(), full_name: document.getElementById('new-user-full-name').value.trim() || null, phone: document.getElementById('new-user-phone').value.trim() || null, password: document.getElementById('new-user-password').value, role: document.getElementById('new-user-role').value, status: 'active' };
+  if (!data.username || !data.email || !data.password) { toast('Username, email, and password are required', 'error'); return; }
+  const res = await api('POST', 'users', data);
+  if (res.success) { closeModal(); toast('User created', 'success'); loadUsers(); } else toast(res.message, 'error');
+}
+
+function editUser(id) {
+  const user = usersCache.find(item => Number(item.UserID) === Number(id));
+  if (!user) return;
+  showModal('Edit User', `
+    <div class="form-group"><label>Full name</label><input id="edit-user-full-name" value="${escapeHtml(user.FullName || '')}"></div>
+    <div class="form-group"><label>Email</label><input type="email" id="edit-user-email" value="${escapeHtml(user.Email || '')}"></div>
+    <div class="form-group"><label>Phone</label><input id="edit-user-phone" value="${escapeHtml(user.Phone || '')}"></div>
+    <div class="form-group"><label>Role</label><select id="edit-user-role"><option value="admin" ${user.Role === 'admin' ? 'selected' : ''}>Admin</option><option value="staff" ${user.Role === 'staff' ? 'selected' : ''}>Staff</option><option value="volunteer" ${user.Role === 'volunteer' ? 'selected' : ''}>Volunteer</option><option value="donor" ${user.Role === 'donor' ? 'selected' : ''}>Donor</option></select></div>
+    <div class="form-group"><label>Status</label><select id="edit-user-status"><option value="active" ${user.Status === 'active' ? 'selected' : ''}>Active</option><option value="pending" ${user.Status === 'pending' ? 'selected' : ''}>Pending</option><option value="inactive" ${user.Status === 'inactive' ? 'selected' : ''}>Inactive</option></select></div>
+    <button class="btn-blue" onclick="saveUser(${id})">Save Changes</button>
+  `);
+}
+
+async function saveUser(id) {
+  const data = { full_name: document.getElementById('edit-user-full-name').value.trim(), email: document.getElementById('edit-user-email').value.trim(), phone: document.getElementById('edit-user-phone').value.trim() || null, role: document.getElementById('edit-user-role').value, status: document.getElementById('edit-user-status').value };
+  const res = await api('PUT', 'users/' + id, data);
+  if (res.success) { closeModal(); toast('User updated', 'success'); loadUsers(); } else toast(res.message, 'error');
+}
+
+async function deactivateUser(id) {
+  if (!window.confirm('Deactivate this user?')) return;
+  const res = await api('PUT', 'users/' + id, { status: 'inactive' });
+  if (res.success) { toast('User deactivated', 'success'); loadUsers(); } else toast(res.message, 'error');
+}
+
+async function loadProfile() {
+  if (!CURRENT_USER || !CURRENT_USER.id) return;
+  document.getElementById('profile-loading').style.display = 'block';
+  document.getElementById('profile-content').style.display = 'none';
+  try {
+    const res = await api('GET', 'users/' + encodeURIComponent(CURRENT_USER.id));
+    if (!res.success) { toast(res.message, 'error'); return; }
+    const user = res.data || {};
+    document.getElementById('profile-full-name').value = user.FullName || '';
+    document.getElementById('profile-email').value = user.Email || '';
+    document.getElementById('profile-phone').value = user.Phone || '';
+    const name = user.FullName || user.Username || CURRENT_USER.username;
+    document.getElementById('profile-avatar').textContent = String(name).trim().charAt(0).toUpperCase() || 'U';
+    document.getElementById('profile-name').textContent = name;
+    document.getElementById('profile-role').textContent = (user.Role || CURRENT_USER.role || '').toUpperCase() + ' • FSMS';
+    document.getElementById('profile-details').innerHTML = [
+      ['Username', user.Username], ['Email', user.Email], ['Full name', user.FullName],
+      ['Phone', user.Phone], ['Status', user.Status], ['Created', user.CreatedAt]
+    ].map(([label, value]) => `<div class="list-item"><span class="text-muted">${label}</span><b>${escapeHtml(value || 'Not provided')}</b></div>`).join('');
+    document.getElementById('profile-loading').style.display = 'none';
+    document.getElementById('profile-content').style.display = 'block';
+  } catch (e) {
+    document.getElementById('profile-loading').style.display = 'none';
+    toast('Failed to load profile', 'error');
+  }
+}
+
+async function saveProfile() {
+  const data = { full_name: document.getElementById('profile-full-name').value.trim(), email: document.getElementById('profile-email').value.trim(), phone: document.getElementById('profile-phone').value.trim() || null };
+  if (!data.full_name || !data.email) { toast('Full name and email are required', 'error'); return; }
+  const res = await api('PUT', 'users/' + CURRENT_USER.id, data);
+  if (res.success) { CURRENT_USER.fullName = data.full_name; localStorage.setItem('fsms_user', JSON.stringify(CURRENT_USER)); toast('Profile updated', 'success'); loadProfile(); } else toast(res.message, 'error');
+}
+
+async function savePassword() {
+  const password = document.getElementById('profile-new-password').value;
+  const confirmPassword = document.getElementById('profile-confirm-password').value;
+  if (!document.getElementById('profile-current-password').value || !password || password !== confirmPassword) { toast('Enter the current password and matching new passwords', 'error'); return; }
+  const res = await api('PUT', 'users/' + CURRENT_USER.id, { current_password: document.getElementById('profile-current-password').value, password, confirm_password: confirmPassword });
+  if (res.success) { toast('Password changed', 'success'); ['profile-current-password','profile-new-password','profile-confirm-password'].forEach(id => document.getElementById(id).value = ''); } else toast(res.message, 'error');
 }
 
 // ==================== MODAL ====================

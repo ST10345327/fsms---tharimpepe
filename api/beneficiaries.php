@@ -1,6 +1,7 @@
 <?php
 function handleBeneficiaries($method, $id) {
     $user = requireAuth();
+    requireApiRole($user, ['admin', 'staff']);
     $db = getDBConnection();
     $model = new Beneficiary($db);
 

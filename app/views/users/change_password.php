@@ -68,7 +68,7 @@ require_once __DIR__ . '/../includes/layout-header.php';
                 <div class="mb-3">
                     <label class="form-label" style="font-weight:600;">New Password</label>
                     <input type="password" class="form-control" name="new_password" id="newPassword" required
-                           placeholder="Enter new password" minlength="8">
+                           placeholder="Enter new password" minlength="8" pattern="(?=.*[A-Z])(?=.*[0-9]).{8,}" title="At least 8 characters, including an uppercase letter and a number">
                     <div class="password-requirements">
                         <div class="requirement" id="req-length">
                             <i class="fas fa-times"></i> At least 8 characters

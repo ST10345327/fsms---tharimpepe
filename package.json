@@ -7,7 +7,7 @@
     "mobile:copy": "npx cap copy",
     "mobile:run": "npx cap run android",
     "mobile:open": "npx cap open android",
-    "server:start": "php -S 0.0.0.0:8080 -t \".\" \"router.php\""
+    "server:start": "php -S 0.0.0.0:8080 -t \"public\" \"router.php\""
   },
   "dependencies": {
     "@capacitor/android": "^5.0.0",

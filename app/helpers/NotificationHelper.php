@@ -27,7 +27,7 @@ class NotificationHelper {
                 $notifications[] = [
                     'icon' => 'fas fa-user-clock',
                     'text' => "$pendingUsers user(s) pending approval",
-                    'link' => '../controllers/UserController.php?action=list&status=pending',
+                    'link' => '/controllers/UserController.php?action=list&status=pending',
                     'type' => 'warning'
                 ];
             }
@@ -40,7 +40,7 @@ class NotificationHelper {
                 $notifications[] = [
                     'icon' => 'fas fa-gift',
                     'text' => "$newDonations new donation(s) this week",
-                    'link' => '../controllers/ReportsController.php?action=donations',
+                    'link' => '/controllers/ReportsController.php?action=donations',
                     'type' => 'info'
                 ];
             }
@@ -51,7 +51,7 @@ class NotificationHelper {
                 $notifications[] = [
                     'icon' => 'fas fa-exclamation-triangle',
                     'text' => "$expired item(s) expired in stock",
-                    'link' => '../controllers/ReportsController.php?action=food_stock',
+                    'link' => '/controllers/ReportsController.php?action=food_stock',
                     'type' => 'danger'
                 ];
             }
@@ -62,7 +62,7 @@ class NotificationHelper {
                 $notifications[] = [
                     'icon' => 'fas fa-boxes',
                     'text' => "$lowStock item(s) low in stock",
-                    'link' => '../controllers/ReportsController.php?action=food_stock',
+                    'link' => '/controllers/ReportsController.php?action=food_stock',
                     'type' => 'warning'
                 ];
             }
@@ -75,7 +75,7 @@ class NotificationHelper {
             $notifications[] = [
                 'icon' => 'fas fa-envelope',
                 'text' => "$unreadMsgs unread message(s)",
-                'link' => '../controllers/MessageController.php?action=inbox',
+                'link' => '/controllers/MessageController.php?action=inbox',
                 'type' => 'primary'
             ];
         }

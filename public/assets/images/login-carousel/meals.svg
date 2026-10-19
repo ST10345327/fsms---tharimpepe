@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1000" role="img" aria-labelledby="title">
+  <title id="title">Nutritious food prepared for a community meal</title>
+  <defs><linearGradient id="bg" x2="0" y2="1"><stop stop-color="#ecd3a9"/><stop offset="1" stop-color="#b9744c"/></linearGradient><linearGradient id="table" x2="0" y2="1"><stop stop-color="#b27a53"/><stop offset="1" stop-color="#714b3d"/></linearGradient></defs>
+  <rect width="1440" height="1000" fill="url(#bg)"/><path d="M0 0h1440v350q-290 85-720 0T0 355Z" fill="#f6e6c9" opacity=".55"/><circle cx="1190" cy="205" r="105" fill="#f4bd67" opacity=".65"/>
+  <path d="M0 610q350-70 720 0t720 0v390H0Z" fill="url(#table)"/><path d="M100 710q420-105 1240 0v25q-670-75-1240 0Z" fill="#d39b65" opacity=".65"/>
+  <ellipse cx="720" cy="590" rx="345" ry="235" fill="#ddd6c3"/><ellipse cx="720" cy="570" rx="290" ry="185" fill="#faf4df"/><ellipse cx="720" cy="545" rx="234" ry="136" fill="#d37b3d"/>
+  <g fill="#84a249"><ellipse cx="594" cy="520" rx="52" ry="26" transform="rotate(-24 594 520)"/><ellipse cx="748" cy="601" rx="57" ry="26" transform="rotate(22 748 601)"/><ellipse cx="832" cy="497" rx="42" ry="22" transform="rotate(-18 832 497)"/><ellipse cx="672" cy="463" rx="47" ry="21" transform="rotate(12 672 463)"/></g>
+  <g fill="#f0c44f"><circle cx="642" cy="573" r="25"/><circle cx="779" cy="505" r="22"/><circle cx="855" cy="567" r="19"/><circle cx="704" cy="624" r="20"/></g>
+  <g fill="#9f493b"><circle cx="550" cy="574" r="25"/><circle cx="729" cy="469" r="20"/><circle cx="810" cy="623" r="23"/></g>
+  <path d="M375 418q-80-98 8-184 80 88-8 184Zm0 0q-122-20-141-120 120 0 141 120Zm0 0q30-122 140-146-10 118-140 146Z" fill="#78905a"/><path d="M1080 436q-54-94 28-168 56 83-28 168Zm0 0q-110-37-110-132 108 17 110 132Zm0 0q48-102 151-107-29 100-151 107Z" fill="#78905a"/>
+  <path d="M0 0h1440v1000H0Z" fill="#2f352a" opacity=".08"/>
+</svg>

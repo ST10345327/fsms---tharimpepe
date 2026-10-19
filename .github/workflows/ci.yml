@@ -11,7 +11,7 @@ on:
 
 jobs:
   php-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     services:
       mysql:
@@ -33,6 +33,7 @@ jobs:
       DB_USERNAME: root
       DB_PASSWORD: root
       DB_FALLBACKS: fsms,fsms_database,fsms_db
+      FSMS_TEST_SQLITE: 1
 
     steps:
       - name: Checkout repository

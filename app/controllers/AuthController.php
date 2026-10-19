@@ -16,6 +16,12 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'login';
 $error = "";
 $success = "";
 
+// Treat a repeated login POST from an already authenticated browser as a no-op.
+if ($action === 'login' && $_SERVER["REQUEST_METHOD"] === "POST" && isUserLoggedIn()) {
+    header("Location: /");
+    exit();
+}
+
 try {
     // Get database connection
     $db = getDBConnection();
@@ -31,51 +37,58 @@ try {
     if ($action === 'login' && $_SERVER["REQUEST_METHOD"] === "POST") {
         FormValidator::reset();
         
-        // Get and validate input
-        $username = FormValidator::getRequired('username', 'Username');
-        $password = FormValidator::getOptional('password', '');
-        
-        // Check required fields
-        if (empty($username) || empty($password)) {
-            $error = "Username and password are required";
+        // HZ-AUTH-001B: Validate CSRF token to prevent login-CSRF attacks
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!verifyCSRFToken($csrfToken)) {
+            $error = "Security validation failed. Please try again.";
+            $action = 'login';
         } else {
-            try {
-                // Attempt authentication
-                $user = $userModel->authenticate($username, $password);
+            // Get and validate input
+            $username = FormValidator::getRequired('username', 'Username');
+            $password = FormValidator::getOptional('password', '');
+            
+            // Check required fields
+            if (empty($username) || empty($password)) {
+                $error = "Username and password are required";
+            } else {
+                try {
+                    // Attempt authentication
+                    $user = $userModel->authenticate($username, $password);
 
-                if ($user) {
-                    // Check if user is pending approval
-                    if ($user['Status'] === 'pending') {
-                        $error = "Your account is pending approval. Please wait for an administrator to approve your registration.";
+                    if ($user) {
+                        // Check if user is pending approval
+                        if ($user['Status'] === 'pending') {
+                            $error = "Your account is pending approval. Please wait for an administrator to approve your registration.";
+                        } else {
+                            // HZ-AUTH-002: Create secure session with session regeneration
+                            session_regenerate_id(true);
+                            $_SESSION["user_id"] = $user["UserID"];
+                            $_SESSION["username"] = $user["Username"];
+                            $_SESSION["email"] = $user["Email"];
+                            $_SESSION["role"] = $user["Role"];
+                            $_SESSION["login_time"] = time();
+
+                            // Log login activity
+                            ActivityLog::log($user['UserID'], 'login', 'Users', $user['UserID'], 'User logged in');
+
+                            // Redirect to index which serves dashboard for authenticated users
+                            header("Location: index.php");
+                            exit();
+                        }
                     } else {
-                        // HZ-AUTH-002: Create secure session with session regeneration
-                        session_regenerate_id(true);
-                        $_SESSION["user_id"] = $user["UserID"];
-                        $_SESSION["username"] = $user["Username"];
-                        $_SESSION["email"] = $user["Email"];
-                        $_SESSION["role"] = $user["Role"];
-                        $_SESSION["login_time"] = time();
-
-                        // Log login activity
-                        ActivityLog::log($user['UserID'], 'login', 'Users', $user['UserID'], 'User logged in');
-
-                        // Redirect to index which serves dashboard for authenticated users
-                        header("Location: index.php");
-                        exit();
+                        $error = "Invalid username or password";
                     }
-                } else {
-                    $error = "Invalid username or password";
+                } catch (AuthenticationException $e) {
+                    $error = $e->getUserMessage();
+                } catch (\Throwable $e) {
+                    $error = "Login error: " . $e->getMessage();
+                    logMessage("Login error: " . $e->getMessage(), 'ERROR');
                 }
-            } catch (AuthenticationException $e) {
-                $error = $e->getUserMessage();
-            } catch (\Throwable $e) {
-                $error = "Login error: " . $e->getMessage();
-                logMessage("Login error: " . $e->getMessage(), 'ERROR');
             }
-        }
 
-        // Return to login form with error message
-        $action = 'login';
+            // Return to login form with error message
+            $action = 'login';
+        }
     }
 
     /**
@@ -86,74 +99,81 @@ try {
     if ($action === 'register' && $_SERVER["REQUEST_METHOD"] === "POST") {
         FormValidator::reset();
         
-        try {
-            // Get and validate input
-            $fullName = FormValidator::getRequired('full_name', 'Full Name');
-            $username = FormValidator::getRequired('username', 'Username');
-            $email = FormValidator::getRequired('email', 'Email');
-            $phone = FormValidator::getOptional('phone', '');
-            $role = FormValidator::getOptional('role', 'volunteer');
-            $password = FormValidator::getRequired('password', 'Password');
-            $password_confirm = FormValidator::getOptional('password_confirm', '');
+        // HZ-AUTH-003B: Validate CSRF token to prevent registration-CSRF attacks
+        $csrfToken = $_POST['csrf_token'] ?? '';
+        if (!verifyCSRFToken($csrfToken)) {
+            $error = "Security validation failed. Please try again.";
+            $action = 'register';
+        } else {
+            try {
+                // Get and validate input
+                $fullName = FormValidator::getRequired('full_name', 'Full Name');
+                $username = FormValidator::getRequired('username', 'Username');
+                $email = FormValidator::getRequired('email', 'Email');
+                $phone = FormValidator::getOptional('phone', '');
+                $role = FormValidator::getOptional('role', 'volunteer');
+                $password = FormValidator::getRequired('password', 'Password');
+                $password_confirm = FormValidator::getOptional('password_confirm', '');
 
-            // Validate allowed roles
-            if (!in_array($role, ['volunteer', 'donor', 'staff'])) {
-                $role = 'volunteer';
-            }
-
-            // Validate formats
-            FormValidator::validateUsername($username);
-            FormValidator::validateEmail($email);
-            FormValidator::validatePassword($password, 'Password');
-            
-            // Check password match
-            if ($password !== $password_confirm) {
-                $error = "Passwords do not match";
-            }
-
-            if (FormValidator::hasErrors()) {
-                throw new ValidationException("Validation failed", FormValidator::getErrors());
-            }
-
-            // Attempt registration in User model
-            $userId = $userModel->register($username, $email, $password, $role, $fullName, $phone);
-
-            if ($userId) {
-                // Create Volunteers record if role is volunteer
-                if (strtolower((string)$role) === 'volunteer') {
-                    try {
-                        $db = getDBConnection();
-                        $volunteerModel = new Volunteer($db);
-                        $parts = explode(' ', (string)$fullName, 2);
-                        $firstName = $parts[0];
-                        $lastName = $parts[1] ?? '';
-                        $volunteerModel->createVolunteer($userId, $firstName, $lastName, $phone, null, 'pending', 'unavailable');
-                    } catch (Exception $e) {
-                        logMessage("Failed to create volunteer profile during registration: " . $e->getMessage(), 'ERROR');
-                    }
+                // Validate allowed roles
+                if (!in_array($role, ['volunteer', 'donor', 'staff'])) {
+                    $role = 'volunteer';
                 }
 
-                // Log registration
-                ActivityLog::log($userId, 'register', 'Users', $userId, 'New user registered as ' . $role);
+                // Validate formats
+                FormValidator::validateUsername($username);
+                FormValidator::validateEmail($email);
+                FormValidator::validatePassword($password, 'Password');
                 
-                $success = "Account created successfully! Your account is pending admin approval. Redirecting to login...";
-                // Redirect after 3 seconds
-                header("Refresh: 3; URL=index.php?registered=success");
-            } else {
-                throw new Exception("Registration failed. Please try again.");
+                // Check password match
+                if ($password !== $password_confirm) {
+                    $error = "Passwords do not match";
+                }
+
+                if (FormValidator::hasErrors()) {
+                    throw new ValidationException("Validation failed", FormValidator::getErrors());
+                }
+
+                // Attempt registration in User model
+                $userId = $userModel->register($username, $email, $password, $role, $fullName, $phone);
+
+                if ($userId) {
+                    // Create Volunteers record if role is volunteer
+                    if (strtolower((string)$role) === 'volunteer') {
+                        try {
+                            $db = getDBConnection();
+                            $volunteerModel = new Volunteer($db);
+                            $parts = explode(' ', (string)$fullName, 2);
+                            $firstName = $parts[0];
+                            $lastName = $parts[1] ?? '';
+                            $volunteerModel->createVolunteer($userId, $firstName, $lastName, $phone, null, 'pending', 'unavailable');
+                        } catch (Exception $e) {
+                            logMessage("Failed to create volunteer profile during registration: " . $e->getMessage(), 'ERROR');
+                        }
+                    }
+
+                    // Log registration
+                    ActivityLog::log($userId, 'register', 'Users', $userId, 'New user registered as ' . $role);
+                    
+                    $success = "Account created successfully! Your account is pending admin approval. Redirecting to login...";
+                    // Redirect after 3 seconds
+                    header("Refresh: 3; URL=index.php?registered=success");
+                } else {
+                    throw new Exception("Registration failed. Please try again.");
+                }
+
+            } catch (ValidationException $e) {
+                $error = implode(", ", $e->getErrors());
+                $action = 'register';
+            } catch (DuplicateException $e) {
+                $error = $e->getUserMessage();
+                $action = 'register';
+            } catch (Exception $e) {
+                $error = $e->getMessage();
+                logMessage("Registration error: " . $e->getMessage(), 'ERROR');
+                $action = 'register';
             }
-
-        } catch (ValidationException $e) {
-            $error = implode(", ", $e->getErrors());
-        } catch (DuplicateException $e) {
-            $error = $e->getUserMessage();
-        } catch (Exception $e) {
-            $error = $e->getMessage();
-            logMessage("Registration error: " . $e->getMessage(), 'ERROR');
         }
-
-        // Return to register form with error/success message
-        $action = 'register';
     }
 
     /**

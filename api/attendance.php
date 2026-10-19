@@ -1,12 +1,26 @@
 <?php
 function handleAttendance($method, $id, $subresource) {
     $user = requireAuth();
+    if ($method === 'GET') {
+        requireApiRole($user, ['admin', 'staff', 'volunteer']);
+    } elseif ($method === 'POST') {
+        requireApiRole($user, ['admin', 'staff', 'volunteer']);
+    } elseif ($method === 'PUT' || $method === 'DELETE') {
+        requireApiRole($user, ['admin', 'staff']);
+    }
     $db = getDBConnection();
     $model = new Attendance($db);
 
     switch ($method) {
         case 'GET':
-            if ($subresource === 'today') {
+            // The router places the second path segment in $id, so named views like
+            // /attendance/history must be separated from numeric attendance IDs.
+            $view = $subresource;
+            if (!$view && in_array((string)$id, ['today', 'history', 'stats'], true)) {
+                $view = $id;
+            }
+
+            if ($view === 'today') {
                 $today = date('Y-m-d');
                 $data = $model->getDailyAttendanceSummary($today);
                 $stats = $model->getAttendanceStats($today, $today);
@@ -14,16 +28,16 @@ function handleAttendance($method, $id, $subresource) {
                     'records' => $data,
                     'stats' => $stats
                 ]);
-            } elseif ($subresource === 'history') {
-                $days = isset($_GET['days']) ? (int)$_GET['days'] : 7;
+            } elseif ($view === 'history') {
+                $days = isset($_GET['days']) ? max(1, min((int)$_GET['days'], 365)) : 7;
                 $data = $model->getAttendanceHistory($days);
                 apiJsonResponse(true, 'Attendance history retrieved', $data);
-            } elseif ($subresource === 'stats') {
+            } elseif ($view === 'stats') {
                 $startDate = $_GET['start_date'] ?? date('Y-m-d', strtotime('-30 days'));
                 $endDate = $_GET['end_date'] ?? date('Y-m-d');
                 $stats = $model->getAttendanceStats($startDate, $endDate);
                 apiJsonResponse(true, 'Attendance stats retrieved', $stats);
-            } elseif ($id) {
+            } elseif ($id && !$view) {
                 if ($subresource === 'beneficiary') {
                     $data = $model->getBeneficiaryAttendance((int)$id);
                     apiJsonResponse(true, 'Beneficiary attendance retrieved', $data);

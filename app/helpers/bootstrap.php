@@ -22,6 +22,17 @@ define('MODELS_PATH', APP_PATH . '/models');
 define('VIEWS_PATH', APP_PATH . '/views');
 define('PUBLIC_PATH', APP_ROOT . '/public');
 
+require_once HELPERS_PATH . '/Security.php';
+requireHttpsTransport();
+
+// Define BASE_URL for consistent URL routing across all deployment configurations
+// Supports XAMPP, vhost, and router-based deployments
+define('BASE_URL', getenv('BASE_URL') ?: (
+    isset($_SERVER['HTTP_HOST'])
+        ? (isHttpsTransport() ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] . '/'
+        : '/'
+));
+
 // Set environment mode (change to false for production)
 define('DEBUG_MODE', true);
 
@@ -53,24 +64,24 @@ require_once HELPERS_PATH . '/FormValidator.php';
 // Load database configuration
 require_once CONFIG_PATH . '/database.php';
 
-// Load session handler
-require_once HELPERS_PATH . '/SessionHandler.php';
-
-// Load RBAC (role-based access control) helpers
-require_once HELPERS_PATH . '/Rbac.php';
-
 // Configure secure session cookies before starting session
 if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
         'domain' => '',
-        'secure' => !empty($_SERVER['HTTPS']),
+        'secure' => isHttpsTransport(),
         'httponly' => true,
         'samesite' => 'Lax'
     ]);
     session_start();
 }
+
+// Load the session helpers after cookie settings and session initialization.
+require_once HELPERS_PATH . '/SessionHandler.php';
+
+// Load RBAC helpers after the session has started with the configured cookies.
+require_once HELPERS_PATH . '/Rbac.php';
 
 /**
  * HZ-BOOTSTRAP-001
@@ -260,11 +271,35 @@ function logMessage($message, $level = 'INFO')
 }
 
 /**
+ * HZ-BOOTSTRAP-009B
+ * Purpose: Generate application URLs with proper BASE_URL prefix
+ * Converts relative/absolute paths to consistent URLs across all deployments
+ * 
+ * @param string $path Path (can be relative or absolute, e.g. 'dashboard', '/controllers/BeneficiaryController.php')
+ * @return string Full URL with BASE_URL prefix
+ * 
+ * Examples:
+ *   url('dashboard') => '/dashboard'
+ *   url('/controllers/BeneficiaryController.php') => '/controllers/BeneficiaryController.php'
+ *   url('index.php?action=logout') => '/index.php?action=logout'
+ */
+function url($path = '')
+{
+    // Remove leading/trailing slashes for consistent handling
+    $path = trim((string)$path, '/');
+    
+    // Return with BASE_URL, ensuring single leading slash
+    $baseUrl = rtrim(BASE_URL, '/');
+    return $baseUrl . '/' . $path;
+}
+
+/**
  * HZ-BOOTSTRAP-010
  * Purpose: Generate CSRF token
  * 
  * @return string CSRF token
  */
+
 function generateCSRFToken()
 {
     if (empty($_SESSION['csrf_token'])) {
@@ -294,6 +329,6 @@ function verifyCSRFToken($token)
  */
 function csrfTokenInput()
 {
-    return '<input type="hidden" name="csrf_token" value="' . generateCSRFToken() . '">';
+    return '<input type="hidden" name="csrf_token" value="' . htmlspecialchars(generateCSRFToken(), ENT_QUOTES, 'UTF-8') . '">';
 }
 ?>

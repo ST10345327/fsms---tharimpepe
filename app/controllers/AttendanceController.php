@@ -22,9 +22,8 @@ requireLogin();
 // HZ-ATT-CTRL-RBAC: Enforce attendance permission (admin, staff, volunteer)
 rbacRequirePermission('attendance');
 
-// Initialize database connection
-$database = new Database();
-$db = $database->getConnection();
+// Initialize database connection using cached getDBConnection() helper (HZ-DB-CACHE-001)
+$db = getDBConnection();
 generateCSRFToken();
 
 // Initialize models

@@ -16,6 +16,25 @@ require_once __DIR__ . '/../app/helpers/bootstrap.php';
  */
 
 try {
+    // Dispatch controller URLs through the public entry point on both servers.
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+    if ($requestPath === '/donate.php') {
+        require __DIR__ . '/donate.php';
+        exit();
+    }
+    if (preg_match('#^/controllers/([A-Za-z]+Controller\.php)$#', $requestPath, $matches)) {
+        $controllerPath = __DIR__ . '/../app/controllers/' . $matches[1];
+        if (is_file($controllerPath)) {
+            require_once $controllerPath;
+            exit();
+        }
+    }
+
+    if ($requestPath === '/views/dashboard.php') {
+        header('Location: /');
+        exit();
+    }
+
     // Route: Handle login form submission
     if (isset($_REQUEST['action']) && $_REQUEST['action'] === 'login') {
         require_once __DIR__ . '/../app/controllers/AuthController.php';

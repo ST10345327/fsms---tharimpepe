@@ -14,7 +14,8 @@ $role = (string)($role ?? 'volunteer');
 $displayName = strtolower($username) === 'admin' ? 'Admin User' : $username;
 $displayRole = strtolower($role) === 'admin' ? 'Administrator' : ucfirst($role);
 $initials = strtolower($username) === 'admin' ? 'AD' : strtoupper(substr($username ?: 'G', 0, 1));
-$currentAction = basename($_SERVER['PHP_SELF'] ?? '');
+$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+$currentAction = basename($currentPath);
 
 $navItems = rbacNavItemsForRole($role);
 ?>
@@ -25,28 +26,30 @@ $navItems = rbacNavItemsForRole($role);
 <link rel="stylesheet" href="/assets/css/fsms-ui.css">
 
 <aside class="fsms-sidebar" aria-label="Primary navigation">
-    <a class="fsms-brand" href="../index.php">
+    <a class="fsms-brand" href="/">
         <img class="fsms-brand-logo" src="/assets/images/fsmslogo.png" alt="Tharimpepe" width="172" height="48">
         <span class="fsms-brand-title">Feeding Scheme Management</span>
     </a>
 
-    <nav class="fsms-nav">
+    <nav class="fsms-nav" aria-label="Primary navigation">
         <?php foreach ($navItems as $item): ?>
             <?php $isActive = ($currentAction !== '' && strpos($currentAction, $item['match'] ?? '') !== false) ? 'active' : ''; ?>
             <a class="fsms-nav-link <?php echo $isActive; ?>"
-               href="<?php echo htmlspecialchars($item['href']); ?>">
+               href="<?php echo htmlspecialchars($item['href']); ?>"
+               aria-label="<?php echo htmlspecialchars($item['label']); ?>"
+               title="<?php echo htmlspecialchars($item['label']); ?>" <?php echo $isActive !== '' ? 'aria-current="page"' : ''; ?>>
                 <i class="fas <?php echo htmlspecialchars($item['icon']); ?>" aria-hidden="true"></i>
                 <span class="fsms-nav-text"><?php echo htmlspecialchars($item['label']); ?></span>
             </a>
         <?php endforeach; ?>
-
-        <div class="fsms-nav-bottom">
-            <a class="fsms-nav-link" href="../../index.php?action=logout">
-                <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
-                <span class="fsms-nav-text">Logout</span>
-            </a>
-        </div>
     </nav>
+
+    <div class="fsms-nav-bottom">
+        <a class="fsms-nav-link" href="/index.php?action=logout" aria-label="Logout" title="Logout">
+            <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
+            <span class="fsms-nav-text">Logout</span>
+        </a>
+    </div>
 </aside>
 
 <!-- Offcanvas nav for small screens -->
@@ -56,18 +59,20 @@ $navItems = rbacNavItemsForRole($role);
         <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body">
-        <nav class="fsms-nav offcanvas-nav">
+        <nav class="fsms-nav offcanvas-nav" aria-label="Mobile primary navigation">
             <?php foreach ($navItems as $item): ?>
                 <?php $isActive = ($currentAction !== '' && strpos($currentAction, $item['match'] ?? '') !== false) ? 'active' : ''; ?>
                 <a class="fsms-nav-link <?php echo $isActive; ?>"
-                   href="<?php echo htmlspecialchars($item['href']); ?>">
+                   href="<?php echo htmlspecialchars($item['href']); ?>"
+                   aria-label="<?php echo htmlspecialchars($item['label']); ?>"
+                   title="<?php echo htmlspecialchars($item['label']); ?>" <?php echo $isActive !== '' ? 'aria-current="page"' : ''; ?>>
                     <i class="fas <?php echo htmlspecialchars($item['icon']); ?>" aria-hidden="true"></i>
                     <span class="fsms-nav-text"><?php echo htmlspecialchars($item['label']); ?></span>
                 </a>
             <?php endforeach; ?>
 
             <div class="fsms-nav-bottom">
-                <a class="fsms-nav-link" href="../../index.php?action=logout">
+                <a class="fsms-nav-link" href="/index.php?action=logout" aria-label="Logout" title="Logout">
                     <i class="fas fa-arrow-right-from-bracket" aria-hidden="true"></i>
                     <span class="fsms-nav-text">Logout</span>
                 </a>
@@ -121,7 +126,7 @@ $navItems = rbacNavItemsForRole($role);
                     <?php endforeach; ?>
                 <?php endif; ?>
                 </div>
-                <a href="../controllers/MessageController.php?action=inbox" style="display:block;padding:12px 16px;text-align:center;border-top:1px solid #e5e7eb;font-size:14px;font-weight:600;color:#1b3a5c;text-decoration:none;border-radius:0 0 10px 10px;">
+                <a href="/controllers/MessageController.php?action=inbox" style="display:block;padding:12px 16px;text-align:center;border-top:1px solid #e5e7eb;font-size:14px;font-weight:600;color:#1b3a5c;text-decoration:none;border-radius:0 0 10px 10px;">
                     <i class="fas fa-envelope me-1"></i> View All Messages
                 </a>
             </div>

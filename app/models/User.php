@@ -115,10 +115,7 @@ class User
             throw new Exception("Invalid email format");
         }
 
-        // Validation: Password strength (minimum 6 characters)
-        if (strlen($password) < 6) {
-            throw new Exception("Password must be at least 6 characters");
-        }
+        $this->validatePasswordStrength($password);
 
         // Hash password using PHP password_hash (bcrypt)
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
@@ -170,6 +167,36 @@ class User
         return false;
     }
 
+    public function getUserAuthById($userId)
+    {
+        $query = "SELECT UserID, Username, Email, PasswordHash, FullName, Phone, Role, CreatedAt, Status, UpdatedAt
+                  FROM " . $this->table . " WHERE UserID = :user_id LIMIT 1";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":user_id", $userId);
+        return $stmt->execute() ? $stmt->fetch(PDO::FETCH_ASSOC) : false;
+    }
+
+    public function updateDetails($userId, $email, $fullName, $phone, $role = null, $status = null)
+    {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new Exception("Invalid email format");
+        }
+
+        $fields = ["Email = :email", "FullName = :full_name", "Phone = :phone"];
+        $params = [':email' => $email, ':full_name' => $fullName, ':phone' => $phone, ':user_id' => $userId];
+        if ($role !== null) {
+            $fields[] = "Role = :role";
+            $params[':role'] = $role;
+        }
+        if ($status !== null) {
+            $fields[] = "Status = :status";
+            $params[':status'] = $status;
+        }
+
+        $stmt = $this->conn->prepare("UPDATE " . $this->table . " SET " . implode(', ', $fields) . " WHERE UserID = :user_id");
+        return $stmt->execute($params);
+    }
+
     /**
      * HZ-USER-006
      * Purpose: Deactivate user account (soft delete)
@@ -198,22 +225,53 @@ class User
      */
     public function changePassword($userId, $newPassword)
     {
-        // Validation: Password strength
-        if (strlen($newPassword) < 6) {
-            throw new Exception("Password must be at least 6 characters");
-        }
+        $this->validatePasswordStrength($newPassword);
 
         // Hash new password
         $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
 
-        $query = "UPDATE " . $this->table . " 
-                  SET PasswordHash = :password_hash 
-                  WHERE UserID = :user_id";
+        $ownsTransaction = !$this->conn->inTransaction();
+        if ($ownsTransaction) {
+            $this->conn->beginTransaction();
+        }
 
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":password_hash", $hashedPassword);
-        $stmt->bindParam(":user_id", $userId);
+        try {
+            $query = "UPDATE " . $this->table . "
+                      SET PasswordHash = :password_hash
+                      WHERE UserID = :user_id";
+            $stmt = $this->conn->prepare($query);
+            $updated = $stmt->execute([
+                ':password_hash' => $hashedPassword,
+                ':user_id' => $userId,
+            ]);
 
-        return $stmt->execute();
+            if (!$updated) {
+                if ($ownsTransaction) $this->conn->rollBack();
+                return false;
+            }
+
+            // Password changes invalidate every previously issued API bearer token.
+            $revoke = $this->conn->prepare(
+                'UPDATE ApiTokens SET RevokedAt = UTC_TIMESTAMP() WHERE UserID = :user_id AND RevokedAt IS NULL'
+            );
+            $revoke->execute([':user_id' => $userId]);
+
+            if ($ownsTransaction) {
+                $this->conn->commit();
+            }
+            return true;
+        } catch (Throwable $e) {
+            if ($ownsTransaction && $this->conn->inTransaction()) {
+                $this->conn->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    private function validatePasswordStrength($password)
+    {
+        if (strlen($password) < 8 || !preg_match('/[A-Z]/', $password) || !preg_match('/[0-9]/', $password)) {
+            throw new Exception('Password must be at least 8 characters and include an uppercase letter and a number');
+        }
     }
 }

@@ -102,7 +102,7 @@
                     <h1><i class="fas fa-calendar-day"></i> Daily Attendance Summary</h1>
                     <p class="mb-0 mt-2">Overview of meal distribution for <?php echo date('l, F d, Y', strtotime($sessionDate)); ?></p>
                 </div>
-                <a href="AttendanceController.php?action=list" class="btn btn-light">
+                <a href="<?php echo url('/index.php?action=attendance'); ?>" class="btn btn-light">
                     <i class="fas fa-arrow-left"></i> Back to List
                 </a>
             </div>
@@ -115,7 +115,7 @@
         <div class="date-selector">
             <div class="row align-items-center">
                 <div class="col-md-6">
-                    <form method="GET" action="AttendanceController.php" class="d-flex">
+                    <form method="GET" action="<?php echo url('/index.php'); ?>" class="d-flex">
                         <input type="hidden" name="action" value="daily-summary">
                         <input type="date" name="date" class="form-control me-2"
                                value="<?php echo htmlspecialchars($sessionDate); ?>" max="<?php echo date('Y-m-d'); ?>">
@@ -168,16 +168,16 @@
         <!-- Quick Actions -->
         <div class="quick-actions">
             <div class="d-flex justify-content-center gap-3">
-                <a href="AttendanceController.php?action=report&start_date=<?php echo $sessionDate; ?>&end_date=<?php echo $sessionDate; ?>" class="btn btn-info">
+                <a href="<?php echo url('/index.php?action=attendance&sub=report&start_date=' . urlencode($sessionDate) . '&end_date=' . urlencode($sessionDate)); ?>" class="btn btn-info">
                     <i class="fas fa-chart-bar"></i> Generate Report
                 </a>
                 <button type="button" class="btn btn-secondary" onclick="window.print()">
                     <i class="fas fa-print"></i> Print Summary
                 </button>
-                <a href="AttendanceController.php?action=daily-summary&date=<?php echo date('Y-m-d', strtotime($sessionDate . ' -1 day')); ?>" class="btn btn-outline-primary">
+                <a href="<?php echo url('/index.php?action=attendance&sub=daily-summary&date=' . urlencode(date('Y-m-d', strtotime($sessionDate . ' -1 day')))); ?>" class="btn btn-outline-primary">
                     <i class="fas fa-chevron-left"></i> Previous Day
                 </a>
-                <a href="AttendanceController.php?action=daily-summary&date=<?php echo date('Y-m-d', strtotime($sessionDate . ' +1 day')); ?>" class="btn btn-outline-primary">
+                <a href="<?php echo url('/index.php?action=attendance&sub=daily-summary&date=' . urlencode(date('Y-m-d', strtotime($sessionDate . ' +1 day')))); ?>" class="btn btn-outline-primary">
                     Next Day <i class="fas fa-chevron-right"></i>
                 </a>
             </div>
@@ -229,11 +229,11 @@
                                         ?>
                                     </span>
                                     <?php if ($beneficiary['attendance_status'] !== 'not_recorded'): ?>
-                                        <a href="AttendanceController.php?action=view&id=<?php echo $beneficiary['AttendanceID']; ?>" class="btn btn-sm btn-outline-primary">
+                                        <a href="<?php echo url('/index.php?action=attendance&sub=view&id=' . (int)$beneficiary['AttendanceID']); ?>" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     <?php else: ?>
-                                        <a href="AttendanceController.php?action=create" class="btn btn-sm btn-outline-secondary">
+                                        <a href="<?php echo url('/index.php?action=attendance&sub=create'); ?>" class="btn btn-sm btn-outline-secondary">
                                             <i class="fas fa-plus"></i>
                                         </a>
                                     <?php endif; ?>

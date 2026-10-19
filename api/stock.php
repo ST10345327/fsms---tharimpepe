@@ -1,6 +1,7 @@
 <?php
 function handleStock($method, $id) {
     $user = requireAuth();
+    requireApiRole($user, ['admin', 'staff']);
     $db = getDBConnection();
     $model = new FoodStock($db);
 

@@ -17,9 +17,12 @@ This Figma prototype showcases the complete user interface design for all module
 
 **Prototype screenshots:** See `docs/screenshots/`.
 
+Quick start: see [GETTING_STARTED.md](GETTING_STARTED.md) for a minimal, copy-paste workflow to clone, configure, and run the project.
+
 **Demo video:** 
 - Website: https://youtu.be/vvwGJumiVZw
 - Mobile App: https://youtu.be/GrrGO9rQQq0
+- Additional demo: https://youtube.com/shorts/jrbG3rI063A
 
 ## Stack
 
@@ -67,10 +70,10 @@ Open XAMPP Control Panel, start **Apache** and **MySQL**.
 **2. PHP dev server** (for Capacitor SPA + API)
 
 ```powershell
-php -S 0.0.0.0:8080 router.php
+php -S 0.0.0.0:8080 -t public router.php
 ```
 
-This serves the SPA at `http://localhost:8080/` and the API at `http://localhost:8080/api`.
+This serves the Apache-style PHP UI at `http://localhost:8080/` and the API at `http://localhost:8080/api`.
 
 ### Database setup
 
@@ -94,9 +97,9 @@ http://localhost/fsms - tharimpepe/public/index.php
 
 #### Prerequisites
 
-- PHP dev server running on port 8080 (`php -S 0.0.0.0:8080 router.php`)
+- Local HTTPS proxy exposing the LAN API on port 8080
 - Android device (emulator or physical) connected via ADB
-- Allowed `C:\xampp\php\php.exe` through Windows Firewall for port 8080
+- Allow the HTTPS proxy through Windows Firewall for port 8080
 
 #### Build & install
 
@@ -105,23 +108,17 @@ cd android
 .\gradlew assembleDebug
 ```
 
-**Emulator:** installs automatically, uses `10.0.2.2` to reach the host.
+The packaged Android app uses `https://192.168.18.73:8080/api`. The phone and computer must be on the same Wi-Fi network, and the HTTPS proxy must be running and reachable on port 8080. Android trusts the local certificate from `android/app/src/main/res/raw/fsms_local_dev_ca.pem`.
 
-**Physical device:** the APK targets `192.168.18.47:8080` (current LAN IP). If the IP changes, update `capacitor.config.json` and rebuild:
-
-```jsonc
-"server": {
-  "url": "http://YOUR_LAN_IP:8080",
-  "cleartext": true,
-  "allowNavigation": ["YOUR_LAN_IP", "YOUR_LAN_IP:*", "10.0.2.2", "10.0.2.2:*", "localhost", "localhost:*"]
-}
-```
+If the computer's LAN IP, proxy port, or HTTPS certificate changes, update `www/js/config.js` and `android/app/src/main/res/raw/fsms_local_dev_ca.pem`, then run `npm run mobile:copy` and rebuild.
 
 Install on a connected device:
 
 ```powershell
 adb -s <DEVICE_SERIAL> install -r app\build\outputs\apk\debug\app-debug.apk
 ```
+
+The debug APK can be sent to teammates for testing. They can install it by enabling permission to install unknown apps for the app they use to open the APK. For the API to work, their phone must be on the same Wi-Fi as this computer while the HTTPS proxy is running; otherwise use a shared HTTPS server and update the API host before rebuilding.
 
 #### Mobile features
 

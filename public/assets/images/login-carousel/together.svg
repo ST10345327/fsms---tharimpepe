@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1000" role="img" aria-labelledby="title">
+  <title id="title">Volunteers working together to prepare food baskets</title>
+  <defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#73959a"/><stop offset="1" stop-color="#e5bd86"/></linearGradient><linearGradient id="apron" x2="0" y2="1"><stop stop-color="#244e58"/><stop offset="1" stop-color="#183b46"/></linearGradient></defs>
+  <rect width="1440" height="1000" fill="url(#sky)"/><path d="M0 400q320-120 620 0t820-5v605H0Z" fill="#688563"/><path d="M0 620q260-100 510 0t470 0q210-100 460 0v380H0Z" fill="#405943"/>
+  <path d="M130 315 300 205l170 110v260H130Z" fill="#d6b487"/><path d="m105 320 195-150 195 150Z" fill="#775848"/><rect x="190" y="380" width="88" height="150" fill="#63828a"/><rect x="330" y="380" width="88" height="150" fill="#bd825b"/>
+  <g><circle cx="435" cy="421" r="75" fill="#8d533a"/><path d="M342 520q90-65 184 0l58 290H295Z" fill="#da9b69"/><path d="m350 548-105 118m294-118 108 104" stroke="#8d533a" stroke-width="35" stroke-linecap="round"/></g>
+  <g><circle cx="716" cy="365" r="78" fill="#724632"/><path d="M615 470q100-70 202 0l55 325H565Z" fill="url(#apron)"/><path d="m631 499-90 125m276-122 93 117" stroke="#724632" stroke-width="36" stroke-linecap="round"/></g>
+  <g><circle cx="1018" cy="416" r="73" fill="#a76c4c"/><path d="M926 512q88-65 181 0l57 283H876Z" fill="#d9bc72"/><path d="m933 542-90 122m271-121 91 118" stroke="#a76c4c" stroke-width="34" stroke-linecap="round"/></g>
+  <path d="M460 694q255-70 520 0v190H460Z" fill="#a96f48"/><path d="M490 676q220-80 457 0l-22 45q-207-62-412 0Z" fill="#d4a46d"/>
+  <g><path d="M615 663q0-105 92-110 95 8 95 110Z" fill="#eee3c9"/><path d="M627 647q77-66 160 0l-16 19H643Z" fill="#d88448"/><circle cx="681" cy="640" r="10" fill="#7b934d"/><circle cx="730" cy="647" r="11" fill="#e5c247"/></g>
+  <g fill="#718849"><path d="M550 681q-70-66-35-118 67 19 51 83 30-91 83-80-2 78-99 115Z"/><path d="M805 680q-20-75 33-106 48 46 5 92 58-74 101-48-30 73-139 62Z"/></g>
+  <rect width="1440" height="1000" fill="#132e32" opacity=".2"/>
+</svg>

@@ -20,50 +20,77 @@
 
         .login-shell {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: minmax(0, 1.16fr) minmax(420px, 0.84fr);
             min-height: 100vh;
         }
 
         .login-mission {
-            align-items: center;
             background: #1b3a5c;
             color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .login-slide {
+            inset: 0;
+            opacity: 0;
+            position: absolute;
+            transition: opacity 700ms ease, visibility 0s linear 700ms;
+            visibility: hidden;
+        }
+
+        .login-slide.is-active {
+            opacity: 1;
+            transition-delay: 0s;
+            visibility: visible;
+            z-index: 1;
+        }
+
+        .login-slide img {
+            height: 100%;
+            object-fit: cover;
+            width: 100%;
+        }
+
+        .login-mission::after {
+            background: linear-gradient(180deg, rgba(9, 25, 31, .3), transparent 36%, rgba(9, 25, 31, .64));
+            content: "";
+            inset: 0;
+            pointer-events: none;
+            position: absolute;
+            z-index: 2;
+        }
+
+        .login-mission-brand {
+            position: absolute;
+            z-index: 3;
+        }
+
+        .login-mission-brand {
+            align-items: center;
             display: flex;
-            justify-content: center;
-            padding: 48px;
-            text-align: center;
+            gap: 12px;
+            left: 36px;
+            top: 30px;
         }
 
-        .login-mission-inner {
-            max-width: 520px;
-        }
-
-        .login-logo {
-            display: block;
-            height: 96px;
-            margin: 0 auto 28px;
+        .login-mission-brand img {
+            background: rgba(255,255,255,.92);
+            border-radius: 10px;
+            height: 44px;
             object-fit: contain;
+            padding: 4px;
+            width: 58px;
         }
 
-        .login-mission h1 {
-            font-size: 36px;
-            font-weight: 700;
-            line-height: 1.12;
-            margin: 0 auto 24px;
-            max-width: 420px;
-        }
+        .login-mission-brand strong,
+        .login-mission-brand span { display: block; }
+        .login-mission-brand strong { font-size: 15px; }
+        .login-mission-brand span { color: rgba(255,255,255,.82); font-size: 12px; margin-top: 2px; }
 
-        .login-mission .system-name {
-            color: #fff;
-            font-size: 18px;
-            margin-bottom: 28px;
-        }
-
-        .login-mission .mission-copy {
-            color: rgba(255, 255, 255, 0.76);
-            font-size: 16px;
-            line-height: 1.55;
-            margin: 0;
+        @media (prefers-reduced-motion: reduce) {
+            .login-slide { transition: none; }
         }
 
         .login-panel {
@@ -170,6 +197,18 @@
             text-decoration: underline;
         }
 
+        .quick-donate {
+            display: block;
+            background: #168447;
+            border-radius: 8px;
+            color: #fff !important;
+            font-size: 15px !important;
+            font-weight: 700;
+            margin-top: 14px;
+            padding: 12px;
+            text-decoration: none !important;
+        }
+
         .login-footer {
             color: #46566b;
             font-size: 12px;
@@ -203,11 +242,20 @@
             }
 
             .login-mission {
-                min-height: 430px;
+                min-height: 320px;
+            }
+
+            .login-mission-brand { left: 24px; top: 22px; }
+
+            .login-panel {
+                min-height: 560px;
             }
         }
 
         @media (max-width: 520px) {
+            .login-mission { min-height: 270px; }
+            .login-mission-brand img { height: 38px; width: 50px; }
+            .login-mission-brand { font-size: 13px; }
             .login-card {
                 padding: 30px 20px;
             }
@@ -216,14 +264,20 @@
 </head>
 <body>
     <main class="login-shell">
-        <section class="login-mission" aria-label="Tharimpepe mission">
-            <div class="login-mission-inner">
-                 <img class="login-logo" src="/assets/images/fsmslogo.png" alt="Tharimpepe" loading="lazy" width="200" height="96">
-                <h1>Tharimpepe Feeding Scheme</h1>
-                <p class="system-name">Feeding Scheme Management System</p>
-                <p class="mission-copy">
-                    Empowering communities through efficient meal distribution and volunteer coordination
-                </p>
+        <!-- Keep this carousel image-led while retaining the organization logo and name. -->
+        <section class="login-mission" aria-label="Tharimpepe community stories" data-login-carousel>
+            <div class="login-slide is-active" data-slide aria-hidden="false">
+                <img src="/assets/images/login-carousel/catering.jpeg" alt="Community volunteers preparing fresh vegetables together" fetchpriority="high">
+            </div>
+            <div class="login-slide" data-slide aria-hidden="true">
+                <img src="/assets/images/login-carousel/donation.jpeg" alt="A volunteer handing a grocery parcel to a community member" loading="lazy">
+            </div>
+            <div class="login-slide" data-slide aria-hidden="true">
+                <img src="/assets/images/login-carousel/serving.jpg" alt="School children sharing a meal outdoors" loading="lazy">
+            </div>
+            <div class="login-mission-brand" aria-hidden="true">
+                <img src="/assets/images/fsmslogo.png" alt="" width="58" height="44">
+                <div><strong>Tharimpepe</strong><span>Feeding Scheme</span></div>
             </div>
         </section>
 
@@ -248,6 +302,7 @@
                 <?php endif; ?>
 
                 <form method="POST" action="/index.php?action=login">
+                    <?php echo csrfTokenInput(); ?>
                     <div class="form-group">
                         <label for="username">Username</label>
                         <div class="input-wrapper">
@@ -284,7 +339,8 @@
                 </form>
 
                 <div class="form-footer">
-                    <a href="/controllers/AuthController.php?action=register" or Create Account below>Don't have an account? Register here</a>
+                    <a href="/index.php?action=register">Don't have an account? Register here</a>
+                    <a class="quick-donate" href="/donate.php"><i class="fas fa-hand-holding-heart me-2" aria-hidden="true"></i>Quick Donate as Guest</a>
                 </div>
             </div>
 
@@ -295,5 +351,50 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        (() => {
+            const carousel = document.querySelector('[data-login-carousel]');
+            if (!carousel) return;
+
+            const slides = Array.from(carousel.querySelectorAll('[data-slide]'));
+            let current = 0;
+            let timer = null;
+
+            const showSlide = (index) => {
+                current = (index + slides.length) % slides.length;
+                slides.forEach((slide, i) => {
+                    const active = i === current;
+                    slide.classList.toggle('is-active', active);
+                    slide.setAttribute('aria-hidden', String(!active));
+                });
+            };
+
+            const stop = () => { if (timer) window.clearInterval(timer); timer = null; };
+            const start = () => {
+                stop();
+                if (!document.hidden && slides.length > 1) {
+                    timer = window.setInterval(() => showSlide(current + 1), 6000);
+                }
+            };
+            document.addEventListener('visibilitychange', () => start());
+            showSlide(0);
+            start();
+
+            const loginForm = document.querySelector('.login-card form');
+            const loginButton = loginForm?.querySelector('[type="submit"]');
+            if (loginForm && loginButton) {
+                loginForm.addEventListener('submit', (event) => {
+                    if (loginForm.dataset.submitting === 'true') {
+                        event.preventDefault();
+                        return;
+                    }
+                    loginForm.dataset.submitting = 'true';
+                    loginButton.disabled = true;
+                    loginButton.setAttribute('aria-busy', 'true');
+                    loginButton.textContent = 'Signing in...';
+                });
+            }
+        })();
+    </script>
 </body>
 </html>

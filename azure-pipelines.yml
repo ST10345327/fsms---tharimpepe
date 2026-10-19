@@ -1,0 +1,78 @@
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - backend/*
+      - frontend/*
+      - shared/*
+
+pr:
+  branches:
+    include:
+      - main
+
+jobs:
+  - job: PhpValidation
+    displayName: PHP lint and tests
+    pool:
+      vmImage: ubuntu-24.04
+    steps:
+      - checkout: self
+
+      - bash: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --yes php-cli php-sqlite3
+          php --version
+          php -r 'if (PHP_MAJOR_VERSION !== 8) { fwrite(STDERR, "PHP 8 is required.\n"); exit(1); }
+          if (!extension_loaded("pdo_sqlite")) { fwrite(STDERR, "The pdo_sqlite extension is required by the test suite.\n"); exit(1); }'
+        displayName: Install and verify PHP runtime
+
+      - bash: |
+          set -euo pipefail
+          git ls-files -z -- '*.php' | xargs -0 -r -n 1 php -l
+        displayName: Lint tracked PHP files
+
+      - bash: php tests/run_all_tests.php
+        displayName: Run FSMS automated tests
+        env:
+          FSMS_TEST_SQLITE: '1'
+
+  - job: AndroidDebugBuild
+    displayName: Build Android debug APK
+    pool:
+      vmImage: ubuntu-24.04
+    steps:
+      - checkout: self
+
+      - task: UseNode@1
+        displayName: Use Node.js 20
+        inputs:
+          version: '20.x'
+
+      - bash: npm ci
+        displayName: Install npm dependencies
+
+      - bash: npx cap sync android
+        displayName: Sync Capacitor Android project
+
+      - bash: |
+          set -euo pipefail
+          java -version
+          test -n "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}" || {
+            echo "Android SDK environment is not available on this agent." >&2
+            exit 1
+          }
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+          test -f app/build/outputs/apk/debug/app-debug.apk
+        workingDirectory: android
+        displayName: Compile Android debug APK
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Android debug APK
+        inputs:
+          targetPath: '$(Build.SourcesDirectory)/android/app/build/outputs/apk/debug/app-debug.apk'
+          artifact: fsms-android-debug-apk
+          publishLocation: pipeline

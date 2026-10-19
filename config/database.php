@@ -16,6 +16,16 @@ class Database
     private $password;
     private $charset;
     private $conn;
+    
+    /**
+     * HZ-DB-CACHE-001
+     * Static cache for resolved database name to avoid repeated probe queries
+     * This dramatically reduces connection overhead when multiple Database
+     * instances are created in a single request.
+     * 
+     * @var string|null Cached database name, null if not yet resolved
+     */
+    private static $resolvedDatabaseName = null;
 
     public function __construct()
     {
@@ -65,6 +75,11 @@ class Database
 
     private function resolveDatabaseName()
     {
+        // HZ-DB-CACHE-002: Return cached name if already resolved in this process
+        if (self::$resolvedDatabaseName !== null) {
+            return self::$resolvedDatabaseName;
+        }
+        
         $probe = $this->createConnection(null);
         $candidates = array_values(array_unique(array_merge([$this->db_name], $this->fallback_databases)));
 
@@ -78,10 +93,14 @@ class Database
             $stmt->execute([':database_name' => $databaseName]);
 
             if ($stmt->fetchColumn()) {
+                // Cache the resolved name for subsequent Database instances
+                self::$resolvedDatabaseName = $databaseName;
                 return $databaseName;
             }
         }
 
+        // Fallback to configured name and cache it
+        self::$resolvedDatabaseName = $this->db_name;
         return $this->db_name;
     }
 

@@ -1,6 +1,7 @@
 <?php
 function handleReports() {
     $user = requireAuth();
+    requireApiRole($user, ['admin', 'staff']);
     $db = getDBConnection();
     $model = new Reports($db);
 
