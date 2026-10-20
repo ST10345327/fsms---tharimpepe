@@ -65,13 +65,13 @@
                     <p class="mb-0 mt-2">Track meal distribution and beneficiary attendance</p>
                 </div>
                 <div class="d-flex gap-2">
-                    <a href="AttendanceController.php?action=create" class="btn btn-light">
+                    <a href="<?php echo url('/index.php?action=attendance&sub=create'); ?>" class="btn btn-light">
                         <i class="fas fa-plus"></i> Record Attendance
                     </a>
-                    <a href="AttendanceController.php?action=daily-summary" class="btn btn-light">
+                    <a href="<?php echo url('/index.php?action=attendance&sub=daily-summary'); ?>" class="btn btn-light">
                         <i class="fas fa-calendar-day"></i> Daily Summary
                     </a>
-                    <a href="AttendanceController.php?action=export&mode=list<?php echo !empty($dateFilter) ? '&date=' . urlencode($dateFilter) : ''; ?><?php echo !empty($statusFilter) ? '&status=' . urlencode($statusFilter) : ''; ?><?php echo !empty($beneficiaryId) ? '&beneficiary_id=' . (int)$beneficiaryId : ''; ?><?php echo !empty($searchTerm) ? '&search=' . urlencode($searchTerm) : ''; ?>"
+                    <a href="<?php echo url('/index.php?action=attendance&sub=export&mode=list' . (!empty($dateFilter) ? '&date=' . urlencode($dateFilter) : '') . (!empty($statusFilter) ? '&status=' . urlencode($statusFilter) : '') . (!empty($beneficiaryId) ? '&beneficiary_id=' . (int)$beneficiaryId : '') . (!empty($searchTerm) ? '&search=' . urlencode($searchTerm) : '')); ?>"
                        class="btn btn-light">
                         <i class="fas fa-download"></i> Export
                     </a>
@@ -127,7 +127,7 @@
 
         <!-- Filter Section -->
         <div class="filter-section">
-            <form method="GET" action="AttendanceController.php">
+            <form method="GET" action="<?php echo url('/index.php'); ?>">
                 <input type="hidden" name="action" value="list">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-3">
@@ -162,11 +162,11 @@
                         <button type="submit" class="btn btn-outline-primary">
                             <i class="fas fa-filter"></i> Apply Filters
                         </button>
-                        <a href="AttendanceController.php?action=list" class="btn btn-link">Clear Filters</a>
-                        <a href="AttendanceController.php?action=bulk-record" class="btn btn-success">
+                        <a href="<?php echo url('/index.php?action=attendance'); ?>" class="btn btn-link">Clear Filters</a>
+                        <a href="<?php echo url('/index.php?action=attendance&sub=bulk-record'); ?>" class="btn btn-success">
                             <i class="fas fa-users"></i> Bulk Record
                         </a>
-                        <a href="AttendanceController.php?action=report" class="btn btn-info">
+                        <a href="<?php echo url('/index.php?action=attendance&sub=report'); ?>" class="btn btn-info">
                             <i class="fas fa-chart-bar"></i> Reports
                         </a>
                     </div>
@@ -211,12 +211,12 @@
 
                             <!-- Action Buttons -->
                             <div class="btn-group-sm d-flex gap-2">
-                                <a href="AttendanceController.php?action=view&id=<?php echo $record['AttendanceID']; ?>"
+                                <a href="<?php echo url('/index.php?action=attendance&sub=view&id=' . (int)$record['AttendanceID']); ?>"
                                    class="btn btn-sm btn-outline-primary flex-grow-1">
                                     <i class="fas fa-eye"></i> View
                                 </a>
                                 <?php if (hasRole('admin') || hasRole('staff')): ?>
-                                    <a href="AttendanceController.php?action=edit&id=<?php echo $record['AttendanceID']; ?>"
+                                    <a href="<?php echo url('/index.php?action=attendance&sub=edit&id=' . (int)$record['AttendanceID']); ?>"
                                        class="btn btn-sm btn-outline-warning flex-grow-1">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
@@ -230,9 +230,9 @@
                     <div class="alert alert-info" role="alert">
                         <i class="fas fa-info-circle"></i> No attendance records found.
                         <?php if ($dateFilter || $statusFilter): ?>
-                            Try adjusting your filters or <a href="AttendanceController.php?action=list">clear filters</a>.
+                            Try adjusting your filters or <a href="<?php echo url('/index.php?action=attendance'); ?>">clear filters</a>.
                         <?php else: ?>
-                            <a href="AttendanceController.php?action=create">Record your first attendance</a>.
+                            <a href="<?php echo url('/index.php?action=attendance&sub=create'); ?>">Record your first attendance</a>.
                         <?php endif; ?>
                     </div>
                 </div>

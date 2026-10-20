@@ -72,8 +72,8 @@ try {
                 exit();
             }
 
-            if (strlen($newPassword) < 6) {
-                $_SESSION['error'] = "Password must be at least 6 characters";
+            if (strlen($newPassword) < 8 || !preg_match('/[A-Z]/', $newPassword) || !preg_match('/[0-9]/', $newPassword)) {
+                $_SESSION['error'] = "Password must be at least 8 characters and include an uppercase letter and a number";
                 header("Location: ProfileController.php?action=change_password");
                 exit();
             }

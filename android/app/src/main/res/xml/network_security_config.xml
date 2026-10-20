@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <base-config cleartextTrafficPermitted="true" />
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">10.0.2.2</domain>
-        <domain includeSubdomains="true">localhost</domain>
-        <domain includeSubdomains="true">192.168.18.47</domain>
-        <domain includeSubdomains="true">fsms.local</domain>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">192.168.18.73</domain>
+        <trust-anchors>
+            <certificates src="system" />
+            <!-- Trust this machine's current HTTPS server certificate only for the FSMS LAN API host. -->
+            <certificates src="@raw/fsms_local_dev_ca" />
+        </trust-anchors>
     </domain-config>
 </network-security-config>

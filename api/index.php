@@ -4,6 +4,11 @@ require_once __DIR__ . '/config.php';
 $endpoint = isset($_GET['endpoint']) ? trim($_GET['endpoint'], '/') : '';
 
 if (empty($endpoint)) {
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
+        apiJsonResponse(false, 'Method not allowed', null, 405);
+    }
+    $catalogUser = requireAuth();
+    requireApiRole($catalogUser, ['admin', 'staff', 'volunteer', 'donor']);
     apiJsonResponse(true, 'Tharimpepe FSMS API v1.0', [
         'endpoints' => [
             'POST /api/login',
@@ -38,6 +43,11 @@ $id = $parts[1] ?? null;
 $subresource = $parts[2] ?? null;
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+// Public authentication routes are the only operations that do not require an established token.
+if (!in_array($resource, ['login', 'register'], true)) {
+    authorizeApiOperation($resource, $method, $id);
+}
 
 try {
     switch ($resource) {

@@ -25,9 +25,8 @@ $error = $_GET['error'] ?? "";
 $success = $_GET['success'] ?? "";
 
 try {
-    // Initialize database connection
-    $database = new Database();
-    $db = $database->connect();
+    // Initialize database connection using cached getDBConnection() helper (HZ-DB-CACHE-001)
+    $db = getDBConnection();
 
     if (!$db) {
         throw new Exception("Database connection failed");

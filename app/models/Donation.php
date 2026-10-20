@@ -138,6 +138,15 @@ class Donation {
         }
     }
 
+    /** Return only the authenticated donor's own donation history. */
+    public function getDonationsByEmail($email) {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM {$this->table} WHERE LOWER(DonorEmail) = LOWER(?) ORDER BY DonationDate DESC, DonationID DESC"
+        );
+        $stmt->execute([trim((string)$email)]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     /**
      * HZ-DON-005: Update donation record
      * Validates data and updates existing record

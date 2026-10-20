@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 1000" role="img" aria-labelledby="title">
+  <title id="title">A welcoming community gathered around a shared meal</title>
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#365b68"/><stop offset="1" stop-color="#d28c56"/></linearGradient>
+    <linearGradient id="ground" x2="0" y2="1"><stop stop-color="#648156"/><stop offset="1" stop-color="#243e39"/></linearGradient>
+    <linearGradient id="shade" x2="0" y2="1"><stop stop-color="#122a32" stop-opacity=".08"/><stop offset="1" stop-color="#122a32" stop-opacity=".65"/></linearGradient>
+  </defs>
+  <rect width="1440" height="1000" fill="url(#sky)"/><circle cx="1180" cy="170" r="92" fill="#f8d49a" opacity=".78"/>
+  <path d="M0 490 170 280l150 210 190-270 180 270 180-220 200 220 140-185 230 185v180H0Z" fill="#405a50" opacity=".7"/>
+  <path d="M0 590q210-115 430 0t450 0q255-105 560 5v405H0Z" fill="url(#ground)"/>
+  <path d="M80 420h350v250H80z" fill="#d7b58a"/><path d="M55 420h400l-35-55H90z" fill="#705b4a"/><path d="M112 472h120v145H112z" fill="#49636a"/><path d="M267 472h120v145H267z" fill="#bb8156"/>
+  <path d="M0 510Q235 470 460 538L410 610Q200 560 0 620Zm1040-80Q1250 380 1440 460v100q-250-70-380 20Z" fill="#375942"/><circle cx="170" cy="470" r="105" fill="#587d55"/><circle cx="1280" cy="418" r="132" fill="#527b51"/>
+  <path d="M280 758q430-170 880 0v242H280Z" fill="#b47a4e"/><path d="M335 740q350-135 750 0l-55 45q-320-95-635 0Z" fill="#dfb779"/>
+  <ellipse cx="708" cy="718" rx="182" ry="52" fill="#f2e6c8"/><ellipse cx="708" cy="710" rx="149" ry="35" fill="#d88948"/><circle cx="655" cy="704" r="15" fill="#73904b"/><circle cx="716" cy="714" r="18" fill="#d7b649"/><circle cx="761" cy="698" r="13" fill="#789449"/>
+  <g><circle cx="400" cy="570" r="54" fill="#8e573d"/><path d="M330 640q70-55 142 0l35 190H300Z" fill="#e4a56d"/><path d="M335 646 250 570l18-20 90 68m112 31 67-94 23 13-55 124" stroke="#8e573d" stroke-width="28" stroke-linecap="round"/></g>
+  <g><circle cx="950" cy="550" r="57" fill="#754734"/><path d="M880 625q75-58 147 0l40 202H850Z" fill="#719597"/><path d="m890 640-73-83m190 86 82-78" stroke="#754734" stroke-width="29" stroke-linecap="round"/></g>
+  <g><circle cx="650" cy="520" r="52" fill="#a86949"/><path d="M587 592q64-55 132 0l22 123H565Z" fill="#c56e55"/><path d="m592 608-53-70m171 69 50-68" stroke="#a86949" stroke-width="24" stroke-linecap="round"/></g>
+  <rect width="1440" height="1000" fill="url(#shade)"/>
+</svg>

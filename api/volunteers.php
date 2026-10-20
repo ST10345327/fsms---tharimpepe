@@ -11,8 +11,15 @@ function handleVolunteers($method, $id) {
                 if (!$data) {
                     apiJsonResponse(false, 'Volunteer not found', null, 404);
                 }
+                if (!in_array(strtolower($user['Role'] ?? ''), ['admin', 'staff'], true)) {
+                    requireApiRole($user, ['volunteer']);
+                    if ((int)($data['UserID'] ?? 0) !== (int)$user['UserID']) {
+                        apiJsonResponse(false, 'You do not have permission to view this volunteer', null, 403);
+                    }
+                }
                 apiJsonResponse(true, 'Volunteer retrieved', $data);
             } else {
+                requireApiRole($user, ['admin', 'staff']);
                 $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 100;
                 $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : 0;
                 $status = $_GET['status'] ?? null;
@@ -38,6 +45,7 @@ function handleVolunteers($method, $id) {
             break;
 
         case 'POST':
+            requireApiRole($user, ['admin', 'staff']);
             $input = getJsonInput();
             validateRequired($input, ['user_id', 'first_name', 'last_name', 'phone']);
 
@@ -58,6 +66,7 @@ function handleVolunteers($method, $id) {
             break;
 
         case 'PUT':
+            requireApiRole($user, ['admin', 'staff']);
             if (!$id) {
                 apiJsonResponse(false, 'Volunteer ID is required', null, 400);
             }
@@ -88,6 +97,7 @@ function handleVolunteers($method, $id) {
             break;
 
         case 'DELETE':
+            requireApiRole($user, ['admin', 'staff']);
             if (!$id) {
                 apiJsonResponse(false, 'Volunteer ID is required', null, 400);
             }

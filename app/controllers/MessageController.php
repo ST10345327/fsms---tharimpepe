@@ -24,9 +24,8 @@ $currentUser = getCurrentUser();
 
 $action = isset($_GET['action']) ? $_GET['action'] : 'inbox';
 
-// Initialize database connection and models
-$database = new Database();
-$db = $database->getConnection();
+// Initialize database connection using cached getDBConnection() helper (HZ-DB-CACHE-001)
+$db = getDBConnection();
 $message = new Message($db);
 $activityLog = new ActivityLog($db);
 

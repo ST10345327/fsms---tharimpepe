@@ -30,6 +30,22 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 
 -- ==============================================================
+-- HZ-API-TOKEN-TABLE-001
+-- Purpose: Store hashed, expiring API bearer tokens for revocation
+-- ==============================================================
+CREATE TABLE IF NOT EXISTS ApiTokens (
+    TokenID BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    UserID INT NOT NULL,
+    TokenHash CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    ExpiresAt DATETIME NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    RevokedAt DATETIME DEFAULT NULL,
+    UNIQUE KEY uq_api_tokens_hash (TokenHash),
+    KEY idx_api_tokens_user_expiry (UserID, RevokedAt, ExpiresAt),
+    CONSTRAINT fk_api_tokens_user FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE
+);
+
+-- ==============================================================
 -- HZ-LOG-TABLE-001
 -- Purpose: Store user activity logs for audit trail
 -- Entity: ActivityLog

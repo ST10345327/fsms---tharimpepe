@@ -37,7 +37,7 @@ function rbacPermissions()
         'food_stock'            => ['admin', 'staff'],
         'volunteers'            => ['admin', 'staff'],
         'schedules'             => ['admin', 'staff', 'volunteer'],
-        'donations.manage'      => ['admin', 'staff'],
+        'donations.manage'      => ['admin', 'staff', 'volunteer'],
         'donations.own'         => ['donor'],
         'reports'               => ['admin', 'staff'],
         'messages'              => ['admin', 'staff', 'volunteer'],
@@ -56,7 +56,7 @@ function rbacPermissions()
         'api.stock'             => ['admin', 'staff'],
         'api.volunteers.manage' => ['admin', 'staff'],
         'api.volunteers.self'   => ['admin', 'staff', 'volunteer'],
-        'api.donations.manage'  => ['admin', 'staff'],
+        'api.donations.manage'  => ['admin', 'staff', 'volunteer'],
         'api.donations.own'     => ['admin', 'staff', 'donor'],
         'api.reports'           => ['admin', 'staff'],
         'api.dashboard.ops'     => ['admin', 'staff', 'volunteer'],
@@ -207,7 +207,7 @@ function rbacDefaultDashboardPath($role = null)
     if ($role === 'donor') {
         return '/controllers/DonorController.php?action=dashboard';
     }
-    return '/views/dashboard.php';
+    return '/';
 }
 
 function rbacDenyWeb($message = 'Access denied')

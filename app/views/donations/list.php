@@ -112,7 +112,10 @@ $totalDonations = $summary['total_donations'] ?? count($donations ?? []);
         </section>
 
         <section class="table-card">
-            <h2>Donation History</h2>
+            <div style="align-items:center;display:flex;justify-content:space-between;gap:16px;padding:20px 22px;">
+                <h2 style="padding:0;">Donation History</h2>
+                <a href="/controllers/DonationController.php?action=create" class="btn btn-success" style="font-weight:700;white-space:nowrap;">Record Donation</a>
+            </div>
             <table class="table prototype-table">
                 <thead>
                     <tr>

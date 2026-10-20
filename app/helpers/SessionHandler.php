@@ -8,6 +8,20 @@
  */
 
 if (session_status() === PHP_SESSION_NONE) {
+    $sessionPath = session_save_path();
+
+    if (!$sessionPath || !is_dir($sessionPath) || !is_writable($sessionPath)) {
+        $fallbackPath = rtrim(sys_get_temp_dir(), '\\/') . DIRECTORY_SEPARATOR . 'fsms-sessions';
+
+        if (!is_dir($fallbackPath)) {
+            @mkdir($fallbackPath, 0777, true);
+        }
+
+        if (is_dir($fallbackPath) && is_writable($fallbackPath)) {
+            session_save_path($fallbackPath);
+        }
+    }
+
     session_start();
 }
 
@@ -31,7 +45,7 @@ function isUserLoggedIn()
 function requireLogin()
 {
     if (!isUserLoggedIn()) {
-        header("Location: /views/login.php");
+        header("Location: /");
         exit();
     }
 }

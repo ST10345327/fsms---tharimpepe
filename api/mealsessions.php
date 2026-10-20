@@ -6,6 +6,7 @@ function handleMealSessions($method, $id) {
 
     switch ($method) {
         case 'GET':
+            requireApiRole($user, ['admin', 'staff', 'volunteer']);
             if ($id) {
                 $stmt = $db->prepare("SELECT * FROM MealSession WHERE MealSessionID = ?");
                 $stmt->execute([(int)$id]);
@@ -22,6 +23,7 @@ function handleMealSessions($method, $id) {
             break;
 
         case 'POST':
+            requireApiRole($user, ['admin', 'staff']);
             $input = getJsonInput();
             validateRequired($input, ['session_date', 'session_type']);
 

@@ -137,6 +137,7 @@
 
         <!-- HZ-UI-REGISTER-002: Registration Form -->
         <form method="POST" action="/index.php?action=register" class="register-form">
+            <?php echo csrfTokenInput(); ?>
             <div class="form-group">
                 <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
                 <input 

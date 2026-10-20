@@ -124,10 +124,10 @@ class FormValidator
      * 
      * @param string $password Password to validate
      * @param string $fieldName Display name for error messages
-     * @param int $minLength Minimum password length (default: 6)
+    * @param int $minLength Minimum password length (default: 8)
      * @return bool True if valid
      */
-    public static function validatePassword($password, $fieldName = 'Password', $minLength = 6)
+    public static function validatePassword($password, $fieldName = 'Password', $minLength = 8)
     {
         $password = trim($password ?? '');
         
@@ -143,6 +143,16 @@ class FormValidator
         
         if (strlen($password) > 255) {
             self::$errors[] = "{$fieldName} must not exceed 255 characters";
+            return false;
+        }
+
+        if (!preg_match('/[A-Z]/', $password)) {
+            self::$errors[] = "{$fieldName} must include an uppercase letter";
+            return false;
+        }
+
+        if (!preg_match('/[0-9]/', $password)) {
+            self::$errors[] = "{$fieldName} must include a number";
             return false;
         }
         

@@ -11,6 +11,8 @@ The FSMS testing framework provides unit and integration testing capabilities fo
 php tests/run_all_tests.php
 ```
 
+The command uses isolated in-memory SQLite fixtures so it does not need a local MySQL server or write to the development database. It returns a nonzero exit code when any test fails.
+
 ### Run Specific Test Suite
 ```bash
 php tests/TestAuthenticationAndValidation.php

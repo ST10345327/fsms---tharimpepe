@@ -66,5 +66,6 @@ echo "Passed: {$summary['passedTests']}\n";
 echo "Failed: {$summary['failedTests']}\n";
 echo "Assertions: {$summary['totalAssertions']}\n";
 echo "Done.\n";
+exit($summary['failedTests'] === 0 ? 0 : 1);
 
 ?>

@@ -55,7 +55,7 @@
                     <h1><i class="fas fa-clipboard-check"></i> Record Attendance</h1>
                     <p class="mb-0 mt-2">Mark beneficiary attendance for meal distribution</p>
                 </div>
-                <a href="AttendanceController.php?action=list" class="btn btn-light">
+                <a href="<?php echo url('/index.php?action=attendance'); ?>" class="btn btn-light">
                     <i class="fas fa-arrow-left"></i> Back to List
                 </a>
             </div>
@@ -81,10 +81,10 @@
         <div class="row justify-content-center mb-4">
             <div class="col-lg-8">
                 <div class="d-flex gap-2 justify-content-center">
-                    <a href="AttendanceController.php?action=daily-summary" class="btn btn-outline-primary">
+                    <a href="<?php echo url('/index.php?action=attendance&sub=daily-summary'); ?>" class="btn btn-outline-primary">
                         <i class="fas fa-calendar-day"></i> View Today's Summary
                     </a>
-                    <a href="AttendanceController.php?action=bulk-record" class="btn btn-outline-success">
+                    <a href="<?php echo url('/index.php?action=attendance&sub=bulk-record'); ?>" class="btn btn-outline-success">
                         <i class="fas fa-users"></i> Bulk Record Attendance
                     </a>
                 </div>
@@ -96,7 +96,7 @@
             <div class="col-lg-8">
                 <div class="form-card">
                     <!-- HZ-ATT-UI-002: Attendance recording form -->
-                    <form method="POST" action="AttendanceController.php?action=create" id="attendanceForm">
+                    <form method="POST" action="<?php echo url('/index.php?action=attendance&sub=create'); ?>" id="attendanceForm">
                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token'] ?? ''); ?>">
 
                         <!-- Session Date -->

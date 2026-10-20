@@ -1,6 +1,7 @@
 <?php
 function handleDashboard() {
     $user = requireAuth();
+    requireApiRole($user, ['admin', 'staff', 'volunteer']);
     $db = getDBConnection();
     $model = new Dashboard($db);
 

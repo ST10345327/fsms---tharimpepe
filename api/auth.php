@@ -19,7 +19,7 @@ function handleLogin() {
         apiJsonResponse(false, 'Account is not active. Please contact an administrator.', null, 403);
     }
 
-    $token = generateToken($user['UserID'], $user['Username'], $user['PasswordHash']);
+    $token = createApiToken($db, $user['UserID']);
 
     apiJsonResponse(true, 'Login successful', [
         'user' => [
@@ -28,7 +28,8 @@ function handleLogin() {
             'email' => $user['Email'],
             'role' => $user['Role'],
         ],
-        'token' => $token
+        'token' => $token['token'],
+        'token_expires_at' => $token['expires_at']
     ]);
 }
 
@@ -44,19 +45,34 @@ function handleRegister() {
     $userModel = new User($db);
 
     try {
+        $role = $input['role'] ?? 'volunteer';
+        if (!in_array($role, ['donor', 'volunteer'], true)) {
+            $role = 'donor';
+        }
         $uid = $userModel->register(
             $input['username'],
             $input['email'],
             $input['password'],
-            'volunteer',
+            $role,
             $input['full_name'] ?? null,
             $input['phone'] ?? null,
-            'active'
+            'pending'
         );
         if ($uid) {
+            $volunteerModel = new Volunteer(getDBConnection());
+            if ($role === 'volunteer') {
+                try {
+                    $parts = explode(' ', trim((string)($input['full_name'] ?? '')), 2);
+                    $firstName = $parts[0] ?: $input['username'];
+                    $lastName = $parts[1] ?? '';
+                    $volunteerModel->createVolunteer((int)$uid, $firstName, $lastName, $input['phone'] ?? null, null, 'pending', 'unavailable');
+                } catch (Exception $e) {
+                    logMessage("Failed to create volunteer profile during API registration: " . $e->getMessage(), 'ERROR');
+                }
+            }
             $data = $userModel->getUserById((int)$uid);
             unset($data['PasswordHash']);
-            apiJsonResponse(true, 'Account created successfully. You can now login.', $data, 201);
+            apiJsonResponse(true, 'Account created successfully. Your account is pending admin approval. You will be able to log in once an administrator approves your registration.', $data, 201);
         }
         apiJsonResponse(false, 'Failed to create account', null, 500);
     } catch (Exception $e) {
@@ -65,5 +81,12 @@ function handleRegister() {
 }
 
 function handleLogout() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        apiJsonResponse(false, 'Method not allowed', null, 405);
+    }
+
+    $user = requireAuth();
+    $db = getDBConnection();
+    revokeApiToken($db, $user['ApiTokenID']);
     apiJsonResponse(true, 'Logout successful');
 }

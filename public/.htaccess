@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# Keep API requests on the API router.
+RewriteRule ^api/(.*)$ ../api/index.php?endpoint=$1 [QSA,L]
+
+# Let the public entry point dispatch application controllers outside the web root.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
